@@ -36,6 +36,7 @@ export function SampleForm({ onSubmit }: { onSubmit: (v: { email: string }) => v
             </Input>
             {!field.state.meta.isValid && (
               <Text
+                selectable
                 testID="email-error"
                 accessibilityLiveRegion="polite"
                 className="text-destructive text-sm"

@@ -11,9 +11,8 @@ describe('i18n', () => {
 
   it('translates vi and falls back to en for missing keys', () => {
     expect(i18n.t('home.title', { lng: 'vi' })).toBe(vi.home.title);
-    expect(i18n.t('form.submitted', { lng: 'vi', email: 'a@b.co' })).toBe(
-      i18n.t('form.submitted', { lng: 'en', email: 'a@b.co' }),
-    );
+    i18n.addResource('en', 'translation', 'test.enOnly', 'only in en');
+    expect(i18n.t('test.enOnly', { lng: 'vi' })).toBe('only in en');
     expect(i18n.t('home.title', { lng: 'en' })).toBe(en.home.title);
   });
 });

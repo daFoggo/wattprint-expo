@@ -1,8 +1,27 @@
 {
-  "home": { "title": "Kiểm tra nền tảng" },
+  "tabs": { "home": "Trang chủ", "settings": "Cài đặt" },
+  "common": { "close": "Đóng" },
+  "home": {
+    "title": "Kiểm tra nền tảng",
+    "theme": "Giao diện: {{theme}}",
+    "themes": { "system": "Hệ thống", "light": "Sáng", "dark": "Tối" },
+    "secureStore": "Kiểm tra secure store",
+    "secureStoreOk": "secure-store: {{value}}",
+    "secureStoreError": "secure-store: lỗi {{message}}",
+    "openModal": "Mở hộp thoại",
+    "modalTitle": "Kiểm tra nền tảng",
+    "modalBody": "gluestack-ui v5 với Uniwind hoạt động."
+  },
   "form": {
     "email": "Email",
     "emailInvalid": "Nhập địa chỉ email hợp lệ",
-    "submit": "Gửi"
+    "submit": "Gửi",
+    "submitted": "Đã gửi: {{email}}"
+  },
+  "errors": { "title": "Đã xảy ra lỗi", "retry": "Thử lại" },
+  "notFound": {
+    "title": "Không tìm thấy trang",
+    "message": "Màn hình này không tồn tại.",
+    "goHome": "Về trang chủ"
   }
 }

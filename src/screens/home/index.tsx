@@ -17,11 +17,7 @@ import { usePreferencesStore, type ThemePreference } from '@/stores/preferences-
 
 import { SampleForm } from './sample-form';
 
-const THEMES: { value: ThemePreference; label: string }[] = [
-  { value: 'system', label: 'System' },
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-];
+const THEMES: ThemePreference[] = ['system', 'light', 'dark'];
 
 export function Home() {
   const { t } = useTranslation();
@@ -34,9 +30,11 @@ export function Home() {
   async function checkSecureStore() {
     try {
       await SecureStore.setItemAsync('base-check', 'ok');
-      setSecureStatus(`secure-store: ${await SecureStore.getItemAsync('base-check')}`);
+      setSecureStatus(
+        t('home.secureStoreOk', { value: await SecureStore.getItemAsync('base-check') }),
+      );
     } catch (error) {
-      setSecureStatus(`secure-store: error ${String(error)}`);
+      setSecureStatus(t('home.secureStoreError', { message: String(error) }));
     }
   }
 
@@ -50,15 +48,17 @@ export function Home() {
         {t('home.title')}
       </Text>
 
-      <Text className="text-muted-foreground text-sm">Theme: {theme}</Text>
+      <Text className="text-muted-foreground text-sm">
+        {t('home.theme', { theme: t(`home.themes.${theme}`) })}
+      </Text>
       {THEMES.map((item) => (
         <Button
-          key={item.value}
-          variant={theme === item.value ? 'default' : 'outline'}
-          accessibilityState={{ selected: theme === item.value }}
-          onPress={() => setTheme(item.value)}
+          key={item}
+          variant={theme === item ? 'default' : 'outline'}
+          accessibilityState={{ selected: theme === item }}
+          onPress={() => setTheme(item)}
         >
-          <ButtonText>{item.label}</ButtonText>
+          <ButtonText>{t(`home.themes.${item}`)}</ButtonText>
         </Button>
       ))}
 
@@ -68,28 +68,28 @@ export function Home() {
       )}
 
       <Button onPress={checkSecureStore}>
-        <ButtonText>Secure store check</ButtonText>
+        <ButtonText>{t('home.secureStore')}</ButtonText>
       </Button>
       {secureStatus !== null && <Text className="text-foreground">{secureStatus}</Text>}
 
       <Button onPress={() => setShowModal(true)}>
-        <ButtonText>Open modal</ButtonText>
+        <ButtonText>{t('home.openModal')}</ButtonText>
       </Button>
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
         <ModalBackdrop />
         <ModalContent>
           <ModalHeader>
-            <Text className="text-foreground text-lg font-semibold">Base check</Text>
-            <ModalCloseButton accessibilityLabel="Close" hitSlop={12} className="p-2">
+            <Text className="text-foreground text-lg font-semibold">{t('home.modalTitle')}</Text>
+            <ModalCloseButton accessibilityLabel={t('common.close')} hitSlop={12} className="p-2">
               <Text className="text-foreground">X</Text>
             </ModalCloseButton>
           </ModalHeader>
           <ModalBody>
-            <Text className="text-foreground">gluestack-ui v5 with Uniwind works.</Text>
+            <Text className="text-foreground">{t('home.modalBody')}</Text>
           </ModalBody>
           <ModalFooter>
             <Button onPress={() => setShowModal(false)}>
-              <ButtonText>Close</ButtonText>
+              <ButtonText>{t('common.close')}</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>

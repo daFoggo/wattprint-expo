@@ -1,9 +1,27 @@
 {
-  "home": { "title": "Base check" },
+  "tabs": { "home": "Home", "settings": "Settings" },
+  "common": { "close": "Close" },
+  "home": {
+    "title": "Base check",
+    "theme": "Theme: {{theme}}",
+    "themes": { "system": "System", "light": "Light", "dark": "Dark" },
+    "secureStore": "Secure store check",
+    "secureStoreOk": "secure-store: {{value}}",
+    "secureStoreError": "secure-store: error {{message}}",
+    "openModal": "Open modal",
+    "modalTitle": "Base check",
+    "modalBody": "gluestack-ui v5 with Uniwind works."
+  },
   "form": {
     "email": "Email",
     "emailInvalid": "Enter a valid email address",
     "submit": "Submit",
     "submitted": "Submitted: {{email}}"
+  },
+  "errors": { "title": "Something went wrong", "retry": "Try again" },
+  "notFound": {
+    "title": "Page not found",
+    "message": "This screen does not exist.",
+    "goHome": "Go to home"
   }
 }
