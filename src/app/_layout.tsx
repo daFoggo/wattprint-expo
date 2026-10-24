@@ -1,4 +1,5 @@
 import '../global.css';
+import '@/env';
 import '@/i18n';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';

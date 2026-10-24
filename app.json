@@ -33,11 +33,21 @@
       ],
       "./plugins/with-android-cmake-dir",
       "expo-secure-store",
-      ["expo-localization", { "supportedLocales": ["en", "vi"] }]
+      [
+        "expo-localization",
+        {
+          "supportedLocales": ["en", "vi"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b6012f6d-0fc1-4b6d-ad59-5451b11a3f70"
+      }
     }
   }
 }
