@@ -337,3 +337,45 @@ describe('createApiClient 401 refresh', () => {
     expect(e3).toMatchObject({ message: 'HTTP 422' });
   });
 });
+
+describe('createApiClient onRequest', () => {
+  it('reports path, status and duration of each attempt', async () => {
+    const onRequest = jest.fn();
+    fetchMock.mockResolvedValue(reply(200, { id: 1, name: 'a' }));
+    await createApiClient({ baseUrl: 'https://api.test', onRequest }).request('/items/1?x=1', {
+      schema: itemSchema,
+    });
+    expect(onRequest).toHaveBeenCalledTimes(1);
+    expect(onRequest).toHaveBeenCalledWith({
+      method: 'GET',
+      path: '/items/1?x=1',
+      status: 200,
+      ms: expect.any(Number),
+    });
+  });
+
+  it('reports error statuses, and status 0 when there was no response', async () => {
+    const onRequest = jest.fn();
+    const client = createApiClient({ baseUrl: 'https://api.test', onRequest });
+    fetchMock.mockResolvedValueOnce(reply(500, {}));
+    await client.request('/a', { schema: itemSchema }).catch(() => undefined);
+    fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
+    await client.request('/b', { schema: itemSchema }).catch(() => undefined);
+    expect(onRequest.mock.calls.map(([info]) => [info.path, info.status])).toEqual([
+      ['/a', 500],
+      ['/b', 0],
+    ]);
+  });
+
+  it('never breaks the request when the hook throws', async () => {
+    const onRequest = jest.fn(() => {
+      throw new Error('log failed');
+    });
+    fetchMock.mockResolvedValue(reply(200, { id: 1, name: 'a' }));
+    await expect(
+      createApiClient({ baseUrl: 'https://api.test', onRequest }).request('/a', {
+        schema: itemSchema,
+      }),
+    ).resolves.toEqual({ id: 1, name: 'a' });
+  });
+});

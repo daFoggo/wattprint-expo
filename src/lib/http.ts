@@ -10,7 +10,12 @@ export type ApiClientOptions = {
   refreshAccessToken?: () => Promise<string | null>;
   onSessionExpired?: () => void;
   timeoutMs?: number;
+  // Called once per HTTP attempt (a retry after a refresh is a second call), `status` 0 when no
+  // response arrived. For logging and benchmarks; an exception from the hook is swallowed.
+  onRequest?: (info: RequestInfo) => void;
 };
+
+export type RequestInfo = { method: string; path: string; status: number; ms: number };
 
 export type RequestOptions<S extends z.ZodType> = {
   schema: S;
@@ -52,7 +57,7 @@ function errorDetail(body: unknown): ApiErrorDetail {
 }
 
 export function createApiClient(options: ApiClientOptions) {
-  const { baseUrl, getAccessToken, refreshAccessToken, onSessionExpired } = options;
+  const { baseUrl, getAccessToken, refreshAccessToken, onSessionExpired, onRequest } = options;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   let refreshing: Promise<string | null> | null = null;
 
@@ -90,14 +95,19 @@ export function createApiClient(options: ApiClientOptions) {
     if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = `Bearer ${token}`;
 
+    const method = opts.method ?? 'GET';
+    const startedAt = Date.now();
+    let status = 0;
+
     try {
       const response = await fetch(`${baseUrl}${path}`, {
-        method: opts.method ?? 'GET',
+        method,
         headers,
         body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
         signal: controller.signal,
       });
-      return { status: response.status, ok: response.ok, text: await response.text() };
+      status = response.status;
+      return { status, ok: response.ok, text: await response.text() };
     } catch (error) {
       if (timedOut) throw new NetworkError('Request timed out', { cause: error });
       if (signal?.aborted) throw error;
@@ -105,6 +115,11 @@ export function createApiClient(options: ApiClientOptions) {
     } finally {
       clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
+      try {
+        onRequest?.({ method, path, status, ms: Date.now() - startedAt });
+      } catch {
+        // Instrumentation must never break a request.
+      }
     }
   }
 
