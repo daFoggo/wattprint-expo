@@ -53,7 +53,7 @@ docs/superpowers/               spec and plan this base was built from
 plugins/with-android-cmake-dir.js   config plugin, see Windows long-path workaround
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
-src/app/                        routes only: _layout.tsx, index.tsx, settings.tsx
+src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), (settings)
 src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider
 src/screens/home/               base-check screen and its sample form
 src/hooks/                      shared hooks
@@ -128,6 +128,10 @@ Requirements: `LongPathsEnabled=1` (`HKLM\SYSTEM\CurrentControlSet\Control\FileS
 produced CRLF checkouts, while Prettier requires LF.
 
 **Folders.** Library wiring lives in `src/lib`, `src/stores` and `src/i18n`; `src/app` holds routes only.
+
+**Styling vs the expo-native-ui skill.** That skill prefers inline styles and the `Color` API; this project deliberately
+styles with Uniwind classes and semantic tokens (the design-system skill says never to add a second system). The
+navigation theme is built from the same tokens (`src/hooks/use-nav-theme.ts`).
 
 **Pacer.** `@tanstack/react-pacer` is 0.x (pre-1.0), chosen by the user, used only via `useDebouncedValue`.
 Expect API changes.
