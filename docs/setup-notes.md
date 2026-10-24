@@ -13,7 +13,7 @@ Deviations, warnings and versions recorded during setup.
 - `eas-cli` 25.3.0 installed globally. `eas whoami` printed "Not logged in", so `eas init --id b6012f6d-0fc1-4b6d-ad59-5451b11a3f70` is PENDING (user must run `eas login`).
 
 - `nodeLinker: hoisted` added to `pnpm-workspace.yaml` (plan-sanctioned fallback). With the isolated linker, `.pnpm/<name@ver_hash>` paths pushed CMake/ninja paths over 260 chars, failing `react-native-screens` and `react-native-worklets` native builds ("build.ninja still dirty after 100 tries"). Hoisted fixed those two.
-- BLOCKER (Android dev build): `:app:buildCMakeDebug[x86_64]` still fails: "ninja: error: Stat(rngesturehandler_codegen_autolinked_build/.../D_/Dev_Projects/wattprint-expo/node_modules/react-native-gesture-handler/shared/shadowNodes/.../RNGestureHandlerDetectorShadowNode.cpp.o): Filename longer than 260 characters". Windows long paths are enabled in the registry but the NDK CMake 3.22.1 ninja is not long-path aware. The relative path is ~279 chars; the project folder (`D:\Dev_Projects\wattprint-expo`) contributes ~27 chars twice. `subst` does not help (node/gradle resolve to the real path). Needs a shorter project root (20+ chars saved, e.g. `D:\dev\wp`) or a newer CMake/ninja. Needs the user's decision.
+- RESOLVED (Android dev build): `:app:buildCMakeDebug[x86_64]` failed with "ninja: error: Stat(rngesturehandler_codegen_autolinked_build/.../RNGestureHandlerDetectorShadowNode.cpp.o): Filename longer than 260 characters" (relative path ~279 chars) because the default NDK CMake 3.22.1 ninja is not long-path aware. Fixed by using SDK CMake 4.1.2; see "Android long-path workaround (cmake.dir)" below. `subst` did not help.
 - Temporary `subst X:` removed. `android/` is generated and gitignored.
 
 ### Versions (pnpm list)
@@ -32,6 +32,6 @@ Deviations, warnings and versions recorded during setup.
     6 packages
 
 ### Android long-path workaround (cmake.dir)
-- Fix for the ">260 characters" CMake/ninja failure: use SDK CMake 4.1.2 (ninja 1.12.1, long-path capable) for ALL modules by adding this line to `android/local.properties`: `cmake.dir=C:/Users/Foggo/AppData/Local/Android/Sdk/cmake/4.1.2` (forward slashes).
-- Reproduce: delete stale `android/app/.cxx` and `node_modules/*/android/.cxx`, run `gradlew --stop`, then `npx expo run:android`. Result: app built, bundled (1314 modules) and ran on Medium_Phone_API_37.0; screenshot shows "Wattprint" with Home/Settings tabs; logcat only shows `Running "main"` (no errors).
-- `android/` is generated and gitignored (prebuild regenerates it and drops `local.properties` edits), so a config plugin or script will be needed to make this persistent.
+- Fix for the ">260 characters" CMake/ninja failure: AGP must use an SDK CMake >= 4.0 (4.1.2 here, ninja 1.12.1, long-path capable) for ALL modules via `cmake.dir=<sdk>/cmake/4.1.2` (forward slashes) in `android/local.properties`.
+- Persisted by the committed config plugin `plugins/with-android-cmake-dir.js` (registered in `app.json` `expo.plugins`). On prebuild it picks the highest installed CMake >= 4.0 under `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) + `/cmake` and writes exactly one `cmake.dir` line (replaces an existing one, never duplicates). If none is installed or ANDROID_HOME is unset it only prints a warning. Requires the CMake 4.x package in the Android SDK Manager.
+- Verified: after deleting `android/local.properties`, `npx expo prebuild --platform android --no-install` (run twice) leaves exactly one `cmake.dir` line. Earlier manual run: app built and ran on Medium_Phone_API_37.0 ("Wattprint" with Home/Settings tabs, Metro bundled 1314 modules, logcat only `Running "main"`).
