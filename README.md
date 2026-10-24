@@ -200,12 +200,13 @@ with action-validator and a clean clone; it has not run on GitHub yet.
 ## Open items
 
 1. CI has not run on GitHub: the first push must confirm `pnpm/action-setup@v6` works with the pnpm 12 lockfile.
-2. pnpm 12.14.0 support on EAS build images is unverified until the first `eas build`.
-3. `vi` as the second locale is an assumption; confirm with the owner.
-4. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
+2. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
    `splash-icon.png`, `android-icon-foreground.png`, `android-icon-background.png`, `android-icon-monochrome.png`,
    colours `#E6F4FE` / `#208AEF`). Replace before the first store or preview distribution; they do not block
    `eas build` development builds.
+
+Accepted without action (owner decision): `vi` stays as the second locale; pnpm 12.14.0 support on EAS build images stays
+unverified until the first `eas build`.
 
 Resolved: license is `UNLICENSED` (private); choose a licence if the repo becomes public. No LICENSE file.
 `claude-config-summary.md` (personal Claude config) is no longer tracked and is git-ignored, but it remains in the
