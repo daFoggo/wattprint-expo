@@ -6,12 +6,17 @@ import { FlatList, Text, View } from 'react-native';
 
 import { ErrorState } from '@/components/states/error-state';
 import { LoadingState } from '@/components/states/loading-state';
-import { benchLog } from '@/features/lab/bench/bench-log';
-import { RenderCount } from '@/features/lab/bench/render-count';
+import { benchLog } from '@/lib/bench-log';
+import { RenderCount, logRenderCounts } from '@/features/lab/bench/render-count';
 import { QuoteRow } from '@/features/lab/components/quote-row';
 import { quotesQueryOptions } from '@/features/lab/queries';
 import type { Quote } from '@/features/lab/schemas';
 
+// Benchmark runs must control the cache state, or the numbers mix a network fetch with list cost:
+// cold = app freshly started and nothing prefetched; warm = quotes prefetched (products screen
+// "Prefetch" button, or prefetchQuotes) before opening this screen. Each log line says which one
+// it was (the cached field). "first native layout" is the first row's onLayout callback, which fires after
+// the native layout pass, not after the pixels are on screen.
 export const BENCH_IMPLS = ['flash', 'flat'] as const;
 export const BENCH_SIZES = [100, 500, 1000] as const;
 export type BenchImpl = (typeof BENCH_IMPLS)[number];
@@ -39,31 +44,42 @@ const keyExtractor = (item: Quote) => String(item.id);
 export function ListBenchScreen(props: ListBenchScreenProps) {
   const { t } = useTranslation();
   const { impl, n } = parseBenchParams(props.impl, props.n);
-  const { data, error, isError, refetch } = useQuery(quotesQueryOptions(n));
+  const { data, dataUpdatedAt, error, isError, refetch } = useQuery(quotesQueryOptions(n));
 
   const [mountedAt] = useState(() => Date.now());
-  const dataAt = useRef<number | null>(null);
+  const dataLogged = useRef(false);
   const firstRowLogged = useRef(false);
 
+  // Data cached before this mount has dataUpdatedAt < mountedAt: no fetch was waited for.
+  const cached = dataUpdatedAt < mountedAt;
   useEffect(() => {
-    if (data !== undefined && dataAt.current === null) {
-      dataAt.current = Date.now();
-      benchLog({ event: 'bench-data', impl, n, ms: dataAt.current - mountedAt });
+    if (data !== undefined && !dataLogged.current) {
+      dataLogged.current = true;
+      benchLog({
+        event: 'bench-data',
+        impl,
+        n,
+        cached,
+        msSinceMount: cached ? 0 : dataUpdatedAt - mountedAt,
+      });
     }
-  }, [data, impl, n, mountedAt]);
+  }, [data, dataUpdatedAt, cached, impl, n, mountedAt]);
+
+  useEffect(() => logRenderCounts, []);
 
   const onFirstRowLayout = useCallback(() => {
     if (firstRowLogged.current) return;
     firstRowLogged.current = true;
     const now = Date.now();
     benchLog({
-      event: 'bench-first-row',
+      event: 'bench-first-native-layout',
       impl,
       n,
+      cached,
       msSinceMount: now - mountedAt,
-      msSinceData: dataAt.current === null ? null : now - dataAt.current,
+      msSinceData: now - Math.max(dataUpdatedAt, mountedAt),
     });
-  }, [impl, n, mountedAt]);
+  }, [impl, n, mountedAt, dataUpdatedAt, cached]);
 
   if (data === undefined) {
     if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;

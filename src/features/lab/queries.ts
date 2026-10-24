@@ -50,3 +50,8 @@ export const quotesQueryOptions = (n: number) =>
     queryKey: labKeys.quotes(n),
     queryFn: ({ signal }) => fetchQuotes(n, signal),
   });
+
+// Warm the quotes cache before opening the bench screen, so a run can start from a known cache state
+// (cold: nothing prefetched and the app freshly started; warm: prefetched).
+export const prefetchQuotes = (queryClient: QueryClient, n: number) =>
+  queryClient.prefetchQuery(quotesQueryOptions(n));

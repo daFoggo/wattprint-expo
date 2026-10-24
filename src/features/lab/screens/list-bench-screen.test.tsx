@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react-native';
 
 import '@/i18n';
 import * as api from '@/features/lab/api';
+import { labKeys } from '@/features/lab/queries';
 import { ListBenchScreen, parseBenchParams } from '@/features/lab/screens/list-bench-screen';
 import type { Quote } from '@/features/lab/schemas';
 
@@ -67,4 +68,32 @@ it('shows the error state when the request fails', async () => {
   (api.fetchQuotes as jest.Mock).mockRejectedValue(new Error('boom'));
   await renderScreen('flat', '500');
   expect(await screen.findByText('boom')).toBeTruthy();
+});
+
+describe('bench-data log', () => {
+  const dataEntries = () =>
+    (console.log as jest.Mock).mock.calls
+      .filter(([tag]) => tag === '[BENCH]')
+      .map(([, json]) => JSON.parse(json as string))
+      .filter((entry) => entry.event === 'bench-data');
+
+  it('says the data was fetched when the screen waited for it', async () => {
+    (api.fetchQuotes as jest.Mock).mockResolvedValue({ quotes: quotes(100) });
+    await renderScreen('flat', '100');
+    await screen.findByText('Quote 1');
+    expect(dataEntries()).toEqual([
+      expect.objectContaining({ impl: 'flat', n: 100, cached: false }),
+    ]);
+  });
+
+  it('says the data was cached when it predates the mount (prefetched)', async () => {
+    queryClient.setQueryData(
+      labKeys.quotes(100),
+      { quotes: quotes(100) },
+      { updatedAt: Date.now() - 5000 },
+    );
+    await renderScreen('flat', '100');
+    await screen.findByText('Quote 1');
+    expect(dataEntries()).toEqual([expect.objectContaining({ cached: true, msSinceMount: 0 })]);
+  });
 });
