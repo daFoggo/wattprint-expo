@@ -1,7 +1,8 @@
 {
   "tabs": {
     "home": "Trang chủ",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "lab": "Phòng thử"
   },
   "common": {
     "close": "Đóng"
@@ -40,5 +41,40 @@
   "states": {
     "loading": "Đang tải",
     "emptyTitle": "Chưa có gì ở đây"
+  },
+  "lab": {
+    "products": {
+      "title": "Sản phẩm",
+      "searchLabel": "Tìm sản phẩm",
+      "searchPlaceholder": "Tìm sản phẩm",
+      "emptyTitle": "Không tìm thấy sản phẩm",
+      "emptyDescription": "Không có kết quả cho \"{{q}}\".",
+      "pausedTitle": "Bạn đang ngoại tuyến",
+      "pausedDescription": "Sản phẩm sẽ tải khi có kết nối trở lại.",
+      "offlineBanner": "Ngoại tuyến. Đang hiển thị kết quả đã lưu.",
+      "refreshFailed": "Không thể làm mới. Đang hiển thị kết quả đã lưu.",
+      "openBench": "Mở thử nghiệm danh sách",
+      "rowLabel": "{{title}}, {{category}}, ${{price}}",
+      "loading": "Đang tải sản phẩm"
+    },
+    "detail": {
+      "title": "Sản phẩm",
+      "invalidId": "Mã sản phẩm không hợp lệ.",
+      "price": "Giá: ${{price}}",
+      "rating": "Đánh giá: {{rating}} / 5",
+      "category": "Danh mục: {{category}}",
+      "imageLabel": "Ảnh của {{title}}",
+      "loading": "Đang tải sản phẩm"
+    },
+    "bench": {
+      "title": "Thử nghiệm danh sách",
+      "summary": "{{impl}}, {{n}} câu trích dẫn",
+      "loading": "Đang tải câu trích dẫn",
+      "impl": {
+        "flash": "FlashList",
+        "flat": "FlatList"
+      },
+      "listLabel": "Danh sách câu trích dẫn"
+    }
   }
 }

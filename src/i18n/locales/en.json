@@ -1,7 +1,8 @@
 {
   "tabs": {
     "home": "Home",
-    "settings": "Settings"
+    "settings": "Settings",
+    "lab": "Lab"
   },
   "common": {
     "close": "Close"
@@ -40,5 +41,40 @@
   "states": {
     "loading": "Loading",
     "emptyTitle": "Nothing here yet"
+  },
+  "lab": {
+    "products": {
+      "title": "Products",
+      "searchLabel": "Search products",
+      "searchPlaceholder": "Search products",
+      "emptyTitle": "No products found",
+      "emptyDescription": "Nothing matches \"{{q}}\".",
+      "pausedTitle": "You are offline",
+      "pausedDescription": "Products will load when the connection is back.",
+      "offlineBanner": "Offline. Showing saved results.",
+      "refreshFailed": "Could not refresh. Showing saved results.",
+      "openBench": "Open list benchmark",
+      "rowLabel": "{{title}}, {{category}}, ${{price}}",
+      "loading": "Loading products"
+    },
+    "detail": {
+      "title": "Product",
+      "invalidId": "This product id is not valid.",
+      "price": "Price: ${{price}}",
+      "rating": "Rating: {{rating}} / 5",
+      "category": "Category: {{category}}",
+      "imageLabel": "Photo of {{title}}",
+      "loading": "Loading product"
+    },
+    "bench": {
+      "title": "List benchmark",
+      "summary": "{{impl}}, {{n}} quotes",
+      "loading": "Loading quotes",
+      "impl": {
+        "flash": "FlashList",
+        "flat": "FlatList"
+      },
+      "listLabel": "Quotes list"
+    }
   }
 }

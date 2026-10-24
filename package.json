@@ -77,7 +77,7 @@
   "jest": {
     "preset": "jest-expo",
     "transformIgnorePatterns": [
-      "node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@tanstack/react-pacer|@tanstack/pacer|@gluestack-ui/.*|uniwind))"
+      "node_modules/(?!(.pnpm|(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@tanstack/react-pacer|@tanstack/pacer|@shopify/flash-list|@gluestack-ui/.*|uniwind))"
     ],
     "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.ts"

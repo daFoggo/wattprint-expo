@@ -1,3 +1,6 @@
+// FlashList measures its layout natively; this gives it a fixed size under Jest.
+import '@shopify/flash-list/jestSetup';
+
 // react-native-mmkv's index imports react-native-nitro-modules at load time, which needs the
 // native TurboModule. MMKV itself switches to an in-memory mock under Jest (isTest()).
 jest.mock('react-native-nitro-modules', () => ({ NitroModules: {} }));
