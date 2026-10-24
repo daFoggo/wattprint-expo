@@ -1,5 +1,7 @@
 # Expo base project: design
 
+> Amendment 2026-10-24 (after execution): the final application id is `com.dafoggo.wattprint` with per-env suffixes `.dev`/`.preview` (production has none); claude-config-summary.md was later untracked; see README. The text below is the historical record and still says `com.wattprint.app` where it was written.
+
 Date: 2026-10-24. Status: draft, awaiting approval.
 
 ## Intent and why
@@ -71,9 +73,9 @@ Styling engine: user first leaned to NativeWind v5; after comparison chose **Uni
 - Env: `app.config.ts` reading `EXPO_PUBLIC_*`, validated by a small Zod module at startup; `.env.example` committed. `EXPO_PUBLIC_*` values are inlined in the bundle, so never secret.
 - Build/CI: EAS Build profiles (development, preview, production) and one EAS Workflow or GitHub Actions job running lint, typecheck, test.
 - Folder layout follows the `expo-project-structure` skill (new-project rules).
-- App display name `Wattprint`, bundle id `com.dafoggo.wattprint`.
+- App display name `Wattprint`, bundle id/package placeholder until the user decides.
 - CI: GitHub Actions workflow file (no remote exists yet, so it is syntax-checked only until a repo is pushed). The user already created the Expo project; its ID is `b6012f6d-0fc1-4b6d-ad59-5451b11a3f70` (an identifier, not a secret). After scaffolding, run `pnpm install --global eas-cli` and `eas init --id b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`, which writes the owner and project ID into the app config. This needs the user to be logged in to EAS (`eas login`, done by the user; the agent never handles the password). `eas build` waits until the user confirms the bundle identifier.
-- Bundle ID / package: `com.dafoggo.wattprint` (final, see README), flagged in the docs. Do not create EAS credentials or keystores until the user confirms the final identifier, because changing it later means a new app identity.
+- Bundle ID / package: placeholder `com.wattprint.app`, flagged in the docs. Do not create EAS credentials or keystores until the user confirms the final identifier, because changing it later means a new app identity.
 - "Zero warnings" means lint, typecheck and test output only. Install-time peer-dependency warnings and Metro/LogBox runtime warnings are recorded in the docs with the reason, not hidden.
 - Routing shell: keep a minimal Expo Router layout with Native Tabs and two empty placeholder routes (structure, not demo content). The single styled screen for verification lives in the first tab.
 - Error monitoring (Sentry) and E2E (Maestro): leave out of the first pass; add when needed.
