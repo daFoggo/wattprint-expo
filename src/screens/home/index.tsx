@@ -2,8 +2,8 @@ import { Text, View } from 'react-native';
 
 export function Home() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Wattprint</Text>
+    <View className="flex-1 items-center justify-center bg-white">
+      <Text className="text-3xl font-bold text-blue-600">Wattprint</Text>
     </View>
   );
 }

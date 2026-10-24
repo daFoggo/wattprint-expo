@@ -45,3 +45,10 @@ Deviations, warnings and versions recorded during setup.
 - `pnpm format` normalised CRLF to LF and reformatted `plugins/with-android-cmake-dir.js`, `src/app/*`, `src/screens/home/index.tsx`, `assets/expo.icon/icon.json`, `tsconfig.json`.
 - `pnpm typecheck` (`expo customize tsconfig.json`) is non-interactive and idempotent: the second run leaves tsconfig.json byte-identical. It prints "Generating: tsconfig.json" each run.
 - Warning kept: `pnpm peers check` still shows unmet optional peer `react@^19.3.1` from react-dom@19.3.1 (same as layer 1). pnpm also warns eslint@9.39.5 is deprecated (10.x exists; Expo's lint requires ^9 range chosen by expo lint).
+
+## Layer 3: Uniwind
+- Installed (lockfile): uniwind 1.13.0 (stable, peers: tailwindcss>=4, react-native>=0.81, react>=19), tailwindcss 4.3.3 via `npx expo install uniwind tailwindcss`.
+- `metro.config.js` wraps the Expo config with `withUniwindConfig` (cssEntryFile `./src/global.css`, dtsFile `./src/uniwind-types.d.ts`); `src/global.css` is only the tailwindcss + uniwind imports; `global.css` imported first in `src/app/_layout.tsx`.
+- Native rebuild succeeded (`BUILD SUCCESSFUL in 2m 6s`) with no lightningcss error, so lightningcss is NOT pinned. Metro bundled 1551 modules; logcat only `Running "main"`. Home screen shows large bold blue "Wattprint" centered on white.
+- Hard-link fallback messages ("Doing a slower copy instead") appear in Gradle output: harmless (store on a different drive).
+- Peer warning unchanged: unmet `react@^19.3.1` from react-dom@19.3.1.
