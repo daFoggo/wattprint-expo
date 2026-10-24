@@ -70,7 +70,11 @@ export function Home() {
       <Button onPress={checkSecureStore}>
         <ButtonText>{t('home.secureStore')}</ButtonText>
       </Button>
-      {secureStatus !== null && <Text className="text-foreground">{secureStatus}</Text>}
+      {secureStatus !== null && (
+        <Text selectable className="text-foreground">
+          {secureStatus}
+        </Text>
+      )}
 
       <Button onPress={() => setShowModal(true)}>
         <ButtonText>{t('home.openModal')}</ButtonText>
