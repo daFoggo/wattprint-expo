@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { envSchema, parseEnv } from '@/env';
 
@@ -23,7 +24,7 @@ describe('env', () => {
   });
 
   it('reads every key by static dot access', () => {
-    const src = fs.readFileSync('src/env.ts', 'utf8');
+    const src = fs.readFileSync(path.join(__dirname, 'env.ts'), 'utf8');
     for (const k of Object.keys(envSchema.shape)) expect(src).toContain(`process.env.${k}`);
     expect(src).not.toMatch(/process\.env\[/);
     expect(src).not.toMatch(/\}\s*=\s*process\.env\b/);

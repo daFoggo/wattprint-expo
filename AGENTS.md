@@ -35,7 +35,7 @@ Before calling work done, run and report real results:
 
 - No Expo Go. Use the dev build on the emulator (`Medium_Phone_API_37.0`): `pnpm android` for native changes,
   `npx expo start --dev-client` for JS-only changes.
-- Check: relaunch the app, take a screenshot, and read `adb logcat -d ReactNativeJS:V *:S`: no `E` lines.
+- Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb logcat -d ReactNativeJS:V *:S`: no `E` lines.
 - Android on Windows needs `LongPathsEnabled=1`, SDK CMake 4.x, JDK 17, `ANDROID_HOME`. The plugin
   `plugins/with-android-cmake-dir.js` writes `cmake.dir` only on prebuild; an existing `android/` is not
   re-processed.
@@ -43,6 +43,9 @@ Before calling work done, run and report real results:
 
 ## EAS
 
-- Never run `eas build` or create credentials/keystores until the user confirms the final bundle identifier
-  (placeholder `com.wattprint.app`). The user runs `eas login`; the agent never handles credentials.
+- Never run `eas build` or create credentials/keystores unless the user asks. The user runs `eas login`; the
+  agent never handles credentials.
+- Application ids: `com.dafoggo.wattprint` (production, in `app.json`), `.dev` (development) and `.preview`
+  suffixes added by `app.config.ts`. Local `pnpm android` installs `com.dafoggo.wattprint.dev`; use it for
+  `adb` commands. The id is cheap to change only until the first `eas build`.
 - The first tab (`src/screens/home`) is the base-check screen; replace it when building features.

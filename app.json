@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.wattprint.app"
+      "bundleIdentifier": "com.dafoggo.wattprint"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.wattprint.app"
+      "package": "com.dafoggo.wattprint"
     },
     "plugins": [
       "expo-router",

@@ -39,7 +39,7 @@ npx expo-doctor      # all checks must pass
 pnpm android         # then verify on the emulator (screenshot + logcat with no E ReactNativeJS lines)
 ```
 
-Device check: start Metro, relaunch the app, take a screenshot (`adb shell screencap -p`) and read
+Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch the app, take a screenshot (`adb shell screencap -p`) and read
 `adb logcat -d ReactNativeJS:V *:S`; there must be no `E` lines.
 
 ## Structure
@@ -50,6 +50,7 @@ Device check: start Metro, relaunch the app, take a screenshot (`adb shell scree
 docs/superpowers/               spec and plan this base was built from
 plugins/with-android-cmake-dir.js   config plugin, see Windows long-path workaround
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
+scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
 src/app/                        routes only: _layout.tsx, index.tsx, settings.tsx
 src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider
 src/screens/home/               base-check screen and its sample form
@@ -147,8 +148,8 @@ pnpm warns it is deprecated.
 **Typecheck output.** `expo customize tsconfig.json` prints "Generating: tsconfig.json" on every `pnpm typecheck`
 run; it is informational output, not a warning.
 
-**Theme and env at runtime.** The gluestack provider runs in `mode="system"` (wired to `Uniwind.setTheme` from the
-preferences store). An invalid `EXPO_PUBLIC_*` env makes the app throw at startup (red screen) by design.
+**Theme and env at runtime.** The gluestack provider receives `mode` from the preferences store (default `system`; see
+`src/stores/preferences-store.ts` and `src/app/_layout.tsx`), which also drives `Uniwind.setTheme`. An invalid `EXPO_PUBLIC_*` env makes the app throw at startup (red screen) by design.
 
 **Jest setup** (`jest.setup.ts`): mocks `react-native-nitro-modules` (MMKV is in-memory under Jest), polyfills
 `window.screen` (react-aria), mocks `@tanstack/devtools-event-client` (its interval kept workers alive), and
@@ -167,12 +168,28 @@ preferences store). An invalid `EXPO_PUBLIC_*` env makes the app throw at startu
 **Known limitations.** Dark-mode input placeholder has low contrast (gluestack template colours). Pacer is
 pre-1.0.
 
-**EAS and identifiers.** `eas.json` has `development` / `preview` / `production` profiles; no build has been run and
-no credentials exist. The bundle id / Android package is the placeholder `com.wattprint.app`.
-The `extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) was added by hand to `app.json` before login (the
+**EAS and identifiers.** `eas.json` has `development` / `preview` / `production` profiles, each setting
+`EXPO_PUBLIC_APP_ENV` and pinning `node` (22.23.3, equals `.nvmrc`) and `pnpm` (12.14.0, equals `packageManager`);
+both are documented build-profile fields (docs.expo.dev/eas/json). No build has been run and no credentials
+exist. `eas.json` assertions live in `scripts/app-identity.test.ts`.
+
+Identifiers: the base identifier is `com.dafoggo.wattprint`, chosen as `com.<owner>.wattprint` (owner `dafoggo`).
+It is cheap to change only until the first `eas build` / credentials exist. `app.json` holds the production id
+for `android.package` and `ios.bundleIdentifier`; `app.config.ts` appends a suffix from `EXPO_PUBLIC_APP_ENV`
+(`scripts/app-identity.js`), so the three builds coexist on a device:
+
+| Env (profile) | Application id                  | Display name              |
+| ------------- | ------------------------------- | ------------------------- |
+| development   | `com.dafoggo.wattprint.dev`     | `Wattprint (development)` |
+| preview       | `com.dafoggo.wattprint.preview` | `Wattprint (preview)`     |
+| production    | `com.dafoggo.wattprint`         | `Wattprint`               |
+
+Local `pnpm android` runs with the default env (`development`), so the local debug app is
+`com.dafoggo.wattprint.dev` (use it in `adb shell pm list packages`, `am force-stop`, `monkey -p`). The URL scheme
+`wattprint` is the same for all three. The `extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) was added by hand to `app.json` before login (the
 dynamic `app.config.ts` prevents `eas init` from writing it); after login `eas init` reported the project already linked and
-wrote `owner` (`dafoggo`, matches `eas whoami`) to `app.json`. `eas config --platform android --profile development --non-interactive` resolves with `developmentClient: true`. `app.config.ts` sets the name
-`Wattprint` (production) or `Wattprint (<env>)` in config only; the native app label changes on prebuild.
+wrote `owner` (`dafoggo`, matches `eas whoami`) to `app.json`. `eas config --platform android --profile <profile> --non-interactive`
+resolves for all three profiles. The display name changes the native app label on prebuild.
 `vi` is the second locale (`supportedLocales: en, vi`).
 
 **CI.** `.github/workflows/ci.yml` (checkout@v7, setup-node@v7, pnpm/action-setup@v6) was validated locally
@@ -180,11 +197,13 @@ with action-validator and a clean clone; it has not run on GitHub yet.
 
 ## Open items
 
-1. Confirm the final bundle identifier (placeholder `com.wattprint.app`) before any `eas build` or credentials.
-2. First push must confirm `pnpm/action-setup@v6` works with pnpm 12's lockfile in CI.
-3. Confirm `vi` as the second locale (assumption).
-4. No LICENSE yet: choose one (the template's was removed).
-5. App icon and splash (`assets/expo.icon`, `icon.png`, `splash-icon.png`, `android-icon-*`, background colours `#E6F4FE`/`#208AEF`) are Expo template placeholders; replace before the first `eas build`.
-6. All EAS profiles currently share `com.wattprint.app`, so development, preview and production builds replace each other on a device; decide together with the bundle id.
-7. `eas.json` pins no node/pnpm versions: pin them before the first `eas build`.
-8. `claude-config-summary.md` (personal Claude config) is tracked in git: decide whether it should be before the first push.
+1. CI has not run on GitHub: the first push must confirm `pnpm/action-setup@v6` works with the pnpm 12 lockfile.
+2. `vi` as the second locale is an assumption; confirm with the owner.
+3. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
+   `splash-icon.png`, `android-icon-foreground.png`, `android-icon-background.png`, `android-icon-monochrome.png`,
+   colours `#E6F4FE` / `#208AEF`). Replace before the first store or preview distribution; they do not block
+   `eas build` development builds.
+
+Resolved: license is `UNLICENSED` (private); choose a licence if the repo becomes public. No LICENSE file.
+`claude-config-summary.md` (personal Claude config) is no longer tracked and is git-ignored, but it remains in the
+history of earlier commits; the repo has not been pushed, so history can be rewritten later if wanted.

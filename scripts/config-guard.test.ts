@@ -22,11 +22,10 @@ const globFiles = (name: string, ignore: string[]): string[] => {
   return found;
 };
 
-test('app.json has no web config and uses placeholder ids', () => {
+test('app.json has no web config and uses the final base ids', () => {
   expect(appJson.expo.web).toBeUndefined();
-  expect(appJson.expo.web?.output).toBeUndefined();
-  expect(appJson.expo.android.package).toBe('com.wattprint.app');
-  expect(appJson.expo.ios.bundleIdentifier).toBe('com.wattprint.app');
+  expect(appJson.expo.android.package).toBe('com.dafoggo.wattprint');
+  expect(appJson.expo.ios.bundleIdentifier).toBe('com.dafoggo.wattprint');
 });
 
 test('no template scripts; web deps only as the recorded peer exception', () => {
@@ -35,6 +34,7 @@ test('no template scripts; web deps only as the recorded peer exception', () => 
   // Recorded exception (step 1.9): react-native-web and react-dom are required peers of
   // @gluestack-ui/core, @gluestack-ui/utils and @tanstack/react-pacer (expo-doctor).
   // They must stay unused: see the import scan below.
+  // The regex below only exempts these two recorded exceptions; any other *web* package fails.
   const allowed = ['react-native-web', 'react-dom'];
   const webLike = Object.keys({ ...pkg.dependencies, ...(pkg.devDependencies ?? {}) }).filter(
     (name) => /(^|[-/])web($|[-/])/.test(name) && !allowed.includes(name),
