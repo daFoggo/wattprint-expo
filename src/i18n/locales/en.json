@@ -1,0 +1,9 @@
+{
+  "home": { "title": "Base check" },
+  "form": {
+    "email": "Email",
+    "emailInvalid": "Enter a valid email address",
+    "submit": "Submit",
+    "submitted": "Submitted: {{email}}"
+  }
+}

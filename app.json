@@ -31,7 +31,9 @@
           "imageWidth": 76
         }
       ],
-      "./plugins/with-android-cmake-dir"
+      "./plugins/with-android-cmake-dir",
+      "expo-secure-store",
+      ["expo-localization", { "supportedLocales": ["en", "vi"] }]
     ],
     "experiments": {
       "typedRoutes": true,

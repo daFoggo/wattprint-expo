@@ -1,0 +1,8 @@
+{
+  "home": { "title": "Kiểm tra nền tảng" },
+  "form": {
+    "email": "Email",
+    "emailInvalid": "Nhập địa chỉ email hợp lệ",
+    "submit": "Gửi"
+  }
+}

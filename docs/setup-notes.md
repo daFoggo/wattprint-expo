@@ -63,3 +63,19 @@ Deviations, warnings and versions recorded during setup.
 - Edit to generated code: in `modal/index.tsx` removed `opacity: 0` from `ZoomIn...withInitialValues` (not in reanimated 4.7.1 `TransformsConfig` types, tsc TS2353; ZoomIn already fades in).
 - `src/global.css`: imports + the template's `@layer theme` (light/dark variables) and `@theme inline` colour mappings. No babel.config.js, `metro.config.js` unchanged from Task 3.
 - Lint of generated code: `pnpm lint --fix` left no findings; no eslint override needed.
+
+## Layer 5: core libraries
+- Checked before install: `@tanstack/react-pacer` 0.24.1 (pre-1.0; chosen by the user, TanStack family, used only via `useDebouncedValue`), peers `react >=16.8` and `react-dom >=16.8` (REQUIRED). `@tanstack/react-form` 1.33.5 (peer: react only).
+- Installed with `npx expo install` (lockfile): @tanstack/react-query 5.104.5, @tanstack/react-form 1.33.5, @tanstack/react-pacer 0.24.1, zod 4.6.7, zustand 5.0.16, react-native-mmkv 4.3.2, react-native-nitro-modules 0.37.1, expo-secure-store 58.0.2, i18next 26.5.6, react-i18next 17.1.4, expo-localization 58.0.5. Reanimated 4.7.1 / worklets 0.13.0 unchanged; `npx expo install --check` clean; no nativewind in lockfile.
+- react-dom 19.3.1 is back in node_modules/lockfile (NOT package.json) only as the auto-installed required peer of `@tanstack/react-pacer`; never imported by app code, no resolution error on Android. The existing unmet-peer note (react@^19.3.1 wanted by react-dom@19.3.1) is unchanged.
+- app.json plugins: `expo-secure-store`, `["expo-localization", {"supportedLocales": ["en","vi"]}]`. `npx expo config --type prebuild` exits 0.
+- Theme wiring: Branch A (generated provider takes `mode` and calls `Uniwind.setTheme`); `_layout.tsx` passes `mode={usePreferencesStore(s => s.theme)}`. No `use-theme-sync` hook.
+- Jest setup (`jest.setup.ts`, via `setupFilesAfterEnv`) was needed beyond the brief:
+  - MMKV: `react-native-mmkv` imports `react-native-nitro-modules` eagerly (native TurboModule missing in Jest) -> `jest.mock('react-native-nitro-modules')`. MMKV itself is the in-memory mock under Jest.
+  - react-aria (via @gluestack-ui/utils) reads `window.screen.orientation` at load when NODE_ENV=test; jest-expo defines `window` without `screen` -> `window.screen = {}` polyfill.
+  - `@tanstack/form-core` devtools EventClient starts a 300 ms `setInterval` that kept Jest workers alive ("failed to exit gracefully") -> mocked `@tanstack/devtools-event-client` with a no-op client. Note: on device in dev builds this interval still exists (harmless polling, never connects).
+  - transformIgnorePatterns allow-list extended with `@tanstack/react-pacer`, `@tanstack/pacer`, `@gluestack-ui/.*`, `uniwind` (ESM sources).
+- RNTL 14 is async: `renderHook`, `act`, `unmount`, `fireEvent` must be awaited (brief snippets adapted).
+- Metro/LogBox: after relaunch through the DCP deep link, logcat shows 2x `E ReactNativeJS` "Looks like you have configured linking in multiple places" / "multiple navigation containers" (expo-router + dev-client launcher deep link at relaunch). Not seen on the plain first launch; not a build/test warning. Recorded, not fixed.
+- Device (Medium_Phone_API_37.0): form validation/echo/submit, secure-store (`secure-store: ok`), dark persistence across force-stop, vi locale (`Kiểm tra nền tảng`, `Gửi`; `form.submitted` falls back to en) all verified. Cosmetic: input placeholder in dark mode has very low contrast (gluestack template colours); not changed.
+- Modal close control now has `accessibilityLabel="Close"`, `hitSlop={12}`, `p-2`.
