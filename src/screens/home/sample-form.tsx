@@ -22,7 +22,7 @@ export function SampleForm({ onSubmit }: { onSubmit: (v: { email: string }) => v
       <form.Field name="email">
         {(field) => (
           <View className="gap-1">
-            <Input>
+            <Input isInvalid={!field.state.meta.isValid}>
               <InputField
                 accessibilityLabel={t('form.email')}
                 placeholder="you@example.com"
@@ -34,7 +34,11 @@ export function SampleForm({ onSubmit }: { onSubmit: (v: { email: string }) => v
               />
             </Input>
             {!field.state.meta.isValid && (
-              <Text testID="email-error" className="text-destructive text-sm">
+              <Text
+                testID="email-error"
+                accessibilityLiveRegion="polite"
+                className="text-destructive text-sm"
+              >
                 {field.state.meta.errors.map((e) => e?.message).join(', ')}
               </Text>
             )}

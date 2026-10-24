@@ -4,13 +4,10 @@ import { createInput } from '@gluestack-ui/core/input/creator';
 import { View, Pressable, TextInput } from 'react-native';
 import { tva, withStyleContext } from '@gluestack-ui/utils/nativewind-utils';
 
-import { withUniwind } from 'uniwind';
 import type { VariantProps } from '@gluestack-ui/utils/nativewind-utils';
-import { UIIcon } from '@gluestack-ui/core/icon/creator';
+import { StyledUIIcon } from '../icon';
 
 const SCOPE = 'INPUT';
-
-const StyledUIIcon = withUniwind(UIIcon);
 
 const UIInput = createInput({
   Root: withStyleContext(View, SCOPE),
@@ -20,7 +17,7 @@ const UIInput = createInput({
 });
 
 const inputStyle = tva({
-  base: 'min-h-9 w-full flex-row items-center rounded-md border border-border  dark:bg-input/30 bg-transparent shadow-xs transition-[color,box-shadow] overflow-hidden data-[focus=true]:outline-none data-[focus=true]:border-ring dark:data-[focus=true]:border-ring data-[focus=true]:web:ring-[3px] data-[focus=true]:web:ring-ring/50 data-[invalid=true]:border-destructive/40 dark:data-[invalid=true]:border-destructive/40 data-[invalid=true]:web:ring-destructive/20 dark:data-[invalid=true]:web:ring-destructive/40 data-[disabled=true]:pointer-events-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50 px-3 gap-2',
+  base: 'min-h-9 w-full flex-row items-center rounded-md border border-border dark:bg-input/30 bg-transparent overflow-hidden data-[focus=true]:border-ring data-[invalid=true]:border-destructive/40 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 px-3 gap-2',
 });
 
 const inputIconStyle = tva({
@@ -28,11 +25,11 @@ const inputIconStyle = tva({
 });
 
 const inputSlotStyle = tva({
-  base: 'justify-center items-center web:disabled:cursor-not-allowed',
+  base: 'justify-center items-center',
 });
 
 const inputFieldStyle = tva({
-  base: 'flex-1 text-foreground text-sm md:text-sm py-1 h-full placeholder:text-muted-foreground  web:outline-none ios:leading-[0px] web:cursor-text web:data-[disabled=true]:cursor-not-allowed',
+  base: 'flex-1 text-foreground text-sm py-1 h-full',
 });
 
 type IInputProps = React.ComponentProps<typeof UIInput> &
@@ -82,6 +79,11 @@ const InputField = React.forwardRef<React.ComponentRef<typeof UIInput.Input>, II
     return (
       <UIInput.Input
         ref={ref}
+        placeholderTextColorClassName="accent-muted-foreground"
+        cursorColorClassName="accent-primary"
+        selectionHandleColorClassName="accent-primary"
+        selectionColorClassName="accent-primary/30"
+        underlineColorAndroidClassName="accent-transparent"
         {...props}
         className={inputFieldStyle({
           class: className,
