@@ -165,7 +165,7 @@ pre-1.0.
 **EAS and identifiers.** `eas.json` has `development` / `preview` / `production` profiles; no build has been run and
 no credentials exist. The bundle id / Android package is the placeholder `com.wattprint.app`.
 `extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) is static in `app.json` because the dynamic
-`app.config.ts` prevents `eas init` from writing it; `owner` is not set yet. `app.config.ts` sets the name
+`app.config.ts` prevents `eas init` from writing it; `owner` is `dafoggo` (set by `eas init`, matches `eas whoami`). `eas config --platform android --profile development --non-interactive` resolves with `developmentClient: true`. `app.config.ts` sets the name
 `Wattprint` (production) or `Wattprint (<env>)` in config only; the native app label changes on prebuild.
 `vi` is the second locale (`supportedLocales: en, vi`).
 
@@ -174,8 +174,6 @@ with action-validator and a clean clone; it has not run on GitHub yet.
 
 ## Open items
 
-1. Run `eas login`, then `eas init --id b6012f6d-0fc1-4b6d-ad59-5451b11a3f70` (adds `owner`; projectId is already in
-   `app.json`), then check `eas config --platform android --profile development --non-interactive`.
-2. Confirm the final bundle identifier (placeholder `com.wattprint.app`) before any `eas build` or credentials.
-3. First push must confirm `pnpm/action-setup@v6` works with pnpm 12's lockfile in CI.
-4. Confirm `vi` as the second locale (assumption).
+1. Confirm the final bundle identifier (placeholder `com.wattprint.app`) before any `eas build` or credentials.
+2. First push must confirm `pnpm/action-setup@v6` works with pnpm 12's lockfile in CI.
+3. Confirm `vi` as the second locale (assumption).
