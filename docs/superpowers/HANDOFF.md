@@ -26,6 +26,9 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
 ## G1 DONE (2026-10-25)
 Merged into main and pushed (990c145). Review APPROVED + one fix wave; pnpm check 71 tests, format, expo-doctor 20/20 green; CI on 0850acb was green. Device tests T1-T6 passed on emulator (T4 first-frame flash inconclusive in dev build). Not done: nav theme colours from tokens.
 
+## G2/G3/G5 research DONE; execution in flight
+Spec (binding): docs/superpowers/specs/2026-10-25-data-architecture-design.md (decision, gaps, rules, lab feature, benchmark method, execution steps 1-8). Branch `feat/data-foundation` for steps 1-4 (implementer), then lab (5), benchmarks (6), lock docs (7), persistence decision (8). Review each wave with one Opus reviewer; merge, push, check CI; update this file after each step.
+
 ## Order of work
 1) Finish G1 (review, merge, push, update this file). 2) Commit this HANDOFF on main. 3) Compact. 4) G3 validate with skills -> G2 research -> G5 design (spec, my calls) -> plan (writing-plans) -> subagent-driven execution incl. trial feature -> G4 benchmarks -> lock architecture -> final review -> merge + push -> final note to the user (what was done, decisions/rulings, open items).
 
