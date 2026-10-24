@@ -1,0 +1,116 @@
+diff --git a/src/app/_layout.tsx b/src/app/_layout.tsx
+index 01c922d..6ac6e47 100644
+--- a/src/app/_layout.tsx
++++ b/src/app/_layout.tsx
+@@ -8,6 +8,8 @@ import { useAppStateFocus } from '@/hooks/use-app-state-focus';
+ import { useNavTheme } from '@/hooks/use-nav-theme';
+ import { initOnlineManager } from '@/lib/online-manager';
+ import { queryClient } from '@/lib/query-client';
++import { benchFlags } from '@/lib/bench-flags';
++import { prefetchQuotes } from '@/features/lab/queries';
+ import { RouteError } from '@/screens/route-error';
+ import { usePreferencesStore } from '@/stores/preferences-store';
+ 
+@@ -24,6 +26,7 @@ Uniwind.setTheme(usePreferencesStore.getState().theme);
+ 
+ // Make TanStack Query follow the device connectivity (pause offline, resume on reconnect).
+ initOnlineManager();
++if (benchFlags.prefetch) for (const n of [100, 500, 1000]) void prefetchQuotes(queryClient, n);
+ 
+ export function ErrorBoundary(props: ErrorBoundaryProps) {
+   return <RouteError {...props} />;
+diff --git a/src/features/lab/api.ts b/src/features/lab/api.ts
+index 15c0f99..4544e49 100644
+--- a/src/features/lab/api.ts
++++ b/src/features/lab/api.ts
+@@ -7,6 +7,7 @@ import {
+   type ProductList,
+   type QuoteList,
+ } from '@/features/lab/schemas';
++import { withDelay } from '@/lib/bench-flags';
+ import { createApiClient } from '@/lib/http';
+ 
+ export const LAB_BASE_URL = 'https://dummyjson.com';
+@@ -21,23 +22,23 @@ export function fetchProducts(
+   { limit }: { limit: number },
+   signal?: AbortSignal,
+ ): Promise<ProductList> {
+-  return client.request(`/products?limit=${limit}`, { schema: productListSchema, signal });
++  return client.request(withDelay(`/products?limit=${limit}`), { schema: productListSchema, signal });
+ }
+ 
+ export function searchProducts(
+   { q, limit }: { q: string; limit: number },
+   signal?: AbortSignal,
+ ): Promise<ProductList> {
+-  return client.request(`/products/search?q=${encodeURIComponent(q)}&limit=${limit}`, {
++  return client.request(withDelay(`/products/search?q=${encodeURIComponent(q)}&limit=${limit}`), {
+     schema: productListSchema,
+     signal,
+   });
+ }
+ 
+ export function fetchProduct(id: number, signal?: AbortSignal): Promise<Product> {
+-  return client.request(`/products/${id}`, { schema: productSchema, signal });
++  return client.request(withDelay(`/products/${id}`), { schema: productSchema, signal });
+ }
+ 
+ export function fetchQuotes(n: number, signal?: AbortSignal): Promise<QuoteList> {
+-  return client.request(`/quotes?limit=${n}`, { schema: quoteListSchema, signal });
++  return client.request(withDelay(`/quotes?limit=${n}`), { schema: quoteListSchema, signal });
+ }
+diff --git a/src/features/lab/screens/product-detail-screen.tsx b/src/features/lab/screens/product-detail-screen.tsx
+index 9ef130a..136521f 100644
+--- a/src/features/lab/screens/product-detail-screen.tsx
++++ b/src/features/lab/screens/product-detail-screen.tsx
+@@ -1,4 +1,6 @@
+ import { useQuery, useQueryClient } from '@tanstack/react-query';
++import { useEffect, useRef, useState } from 'react';
++import { benchLog } from '@/lib/bench-log';
+ import { Image } from 'expo-image';
+ import { useTranslation } from 'react-i18next';
+ import { ScrollView, Text } from 'react-native';
+@@ -16,10 +18,22 @@ export function ProductDetailScreen({ id }: { id: string }) {
+   const queryClient = useQueryClient();
+   const productId = Number(id);
+   const valid = Number.isInteger(productId) && productId > 0;
+-  const { data, error, isError, fetchStatus, refetch } = useQuery({
++  const { data, error, isError, fetchStatus, refetch, isPlaceholderData } = useQuery({
+     ...productQueryOptions(productId, queryClient),
+     enabled: valid,
+   });
++  const [mountedAt] = useState(() => Date.now());
++  const seen = useRef({ content: false, real: false });
++  useEffect(() => {
++    if (data !== undefined && !seen.current.content) {
++      seen.current.content = true;
++      benchLog({ event: 'detail-content', ms: Date.now() - mountedAt, placeholder: isPlaceholderData });
++    }
++    if (data !== undefined && !isPlaceholderData && !seen.current.real) {
++      seen.current.real = true;
++      benchLog({ event: 'detail-real', ms: Date.now() - mountedAt });
++    }
++  }, [data, isPlaceholderData, mountedAt]);
+ 
+   if (!valid) return <ErrorState error={new Error(t('lab.detail.invalidId'))} />;
+   if (data === undefined) {
+diff --git a/src/lib/query-client.ts b/src/lib/query-client.ts
+index e82d4a1..799a74c 100644
+--- a/src/lib/query-client.ts
++++ b/src/lib/query-client.ts
+@@ -1,5 +1,6 @@
+ import { QueryClient } from '@tanstack/react-query';
+ 
++import { benchFlags } from './bench-flags';
+ import { isRetryable } from './errors';
+ 
+ export const shouldRetry = (failureCount: number, error: unknown): boolean =>
+@@ -8,7 +9,7 @@ export const shouldRetry = (failureCount: number, error: unknown): boolean =>
+ export function createQueryClient(): QueryClient {
+   return new QueryClient({
+     defaultOptions: {
+-      queries: { staleTime: 30_000, retry: shouldRetry },
++      queries: { staleTime: () => benchFlags.stale, retry: shouldRetry },
+       mutations: { retry: 0 },
+     },
+   });

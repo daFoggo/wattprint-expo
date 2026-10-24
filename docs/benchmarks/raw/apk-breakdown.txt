@@ -1,0 +1,9 @@
+other            compressed     866726 uncompressed    1058125
+assets (other)   compressed       3296 uncompressed       3871
+dex              compressed    2959309 uncompressed    6510460
+lib/arm64-v8a    compressed   25577248 uncompressed   25577248
+lib/armeabi-v7a  compressed   17565172 uncompressed   17565172
+lib/x86          compressed   26829952 uncompressed   26829952
+lib/x86_64       compressed   27222400 uncompressed   27222400
+hbc bundle       compressed    4916460 uncompressed    4916460
+res              compressed    1156756 uncompressed    2029048

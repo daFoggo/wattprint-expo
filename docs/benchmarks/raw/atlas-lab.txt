@@ -1,0 +1,30 @@
+modules 2490 minified-js-bytes(pre-hermes) 9494138
+  1587204   461 react-native
+  1434659   271 react-native-reanimated
+  1233257   417 expo-router
+   937400    95 zod
+   309225   151 culori
+   308431   113 react-native-svg
+   251171    39 [app] src (other)
+   236769    53 react-native-worklets
+   233407    52 @shopify/flash-list
+   212618    23 @tanstack/query-core
+   199794    49 expo
+   185838    91 react-aria
+   174152    14 @tanstack/pacer
+   170856    77 react-native-screens
+   152856    29 @tanstack/react-pacer
+   150355    13 @tanstack/form-core
+   131777    56 @gluestack-ui/core
+   109503     7 expo-symbols
+   106851    15 @react-native/virtualized-lists
+    97256    63 uniwind
+    90753     1 i18next
+    90041    14 tailwind-merge
+>> @shopify/flash-list {"n":52,"b":233407}
+>> expo-image {"n":12,"b":39531}
+>> @tanstack/react-pacer {"n":29,"b":152856}
+>> @tanstack/react-query {"n":22,"b":72158}
+>> zod {"n":95,"b":937400}
+>> [app] src/features/lab {"n":11,"b":46084}
+>> [app] src (other) {"n":39,"b":251171}
