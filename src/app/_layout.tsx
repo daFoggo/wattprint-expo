@@ -10,7 +10,12 @@ import { usePreferencesStore } from '@/stores/preferences-store';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
+import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
+import { Uniwind } from 'uniwind';
+
+// Apply the stored theme before the first render so the first frame is not the wrong theme.
+Uniwind.setTheme(usePreferencesStore.getState().theme);
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -19,6 +24,7 @@ export default function RootLayout() {
 
   return (
     <GluestackUIProvider mode={theme}>
+      <StatusBar style="auto" />
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <NativeTabs>
