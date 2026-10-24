@@ -31,13 +31,11 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
 .env.*
 !.env.example
 
 # typescript
 *.tsbuildinfo
-
 
 # generated native folders
 /ios
@@ -45,3 +43,6 @@ yarn-error.*
 
 # env files
 .env
+
+# personal Claude config (kept locally, not tracked)
+claude-config-summary.md
