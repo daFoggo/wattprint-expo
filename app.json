@@ -30,7 +30,8 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
-      ]
+      ],
+      "./plugins/with-android-cmake-dir"
     ],
     "experiments": {
       "typedRoutes": true,
