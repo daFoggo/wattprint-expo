@@ -1,5 +1,5 @@
 // Points AGP at an SDK CMake >= 4.0 (long-path capable ninja) via android/local.properties,
-// so native builds do not hit the Windows 260-character path limit. See docs/setup-notes.md.
+// so native builds do not hit the Windows 260-character path limit. See README.md (Windows long-path workaround).
 const { withDangerousMod } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
