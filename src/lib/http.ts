@@ -6,6 +6,7 @@ export type ApiClientOptions = {
   baseUrl: string;
   getAccessToken?: () => string | null | Promise<string | null>;
   // Returns a new access token, or null when the session cannot be refreshed.
+  // Must call the client with `auth: false` (a 401 there must not trigger another refresh).
   refreshAccessToken?: () => Promise<string | null>;
   onSessionExpired?: () => void;
   timeoutMs?: number;
@@ -17,6 +18,8 @@ export type RequestOptions<S extends z.ZodType> = {
   body?: unknown;
   signal?: AbortSignal;
   headers?: Record<string, string>;
+  // Default true. false: no Authorization header, no refresh, no onSessionExpired (login, refresh).
+  auth?: boolean;
 };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
@@ -37,7 +40,14 @@ function parseJson(text: string): { ok: true; value: unknown } | { ok: false } {
 function errorDetail(body: unknown): ApiErrorDetail {
   if (typeof body !== 'object' || body === null || !('detail' in body)) return undefined;
   const { detail } = body;
-  if (typeof detail === 'string' || Array.isArray(detail)) return detail as ApiErrorDetail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const items = detail.filter(
+      (d): d is { msg: string } =>
+        typeof d === 'object' && d !== null && typeof (d as { msg?: unknown }).msg === 'string',
+    );
+    return items.length > 0 ? items : undefined;
+  }
   return undefined;
 }
 
@@ -46,14 +56,16 @@ export function createApiClient(options: ApiClientOptions) {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   let refreshing: Promise<string | null> | null = null;
 
-  // Concurrent 401s share one refresh; the slot is freed once it settles.
+  // Concurrent 401s share one refresh; the slot is freed once it settles. A refresh that yields
+  // no token expires the session, once per settled refresh.
   function refreshOnce(): Promise<string | null> {
-    if (!refreshAccessToken) return Promise.resolve(null);
-    refreshing ??= refreshAccessToken()
-      .catch(() => null)
-      .finally(() => {
-        refreshing = null;
-      });
+    refreshing ??= (async () => {
+      const token = refreshAccessToken ? await refreshAccessToken().catch(() => null) : null;
+      if (!token) onSessionExpired?.();
+      return token;
+    })().finally(() => {
+      refreshing = null;
+    });
     return refreshing;
   }
 
@@ -100,12 +112,18 @@ export function createApiClient(options: ApiClientOptions) {
     path: string,
     opts: RequestOptions<S>,
   ): Promise<z.output<S>> {
-    let result = await send(path, opts, (await getAccessToken?.()) ?? null);
+    const auth = opts.auth !== false;
+    const sentToken = auth ? ((await getAccessToken?.()) ?? null) : null;
+    let result = await send(path, opts, sentToken);
 
-    if (result.status === 401) {
-      const token = await refreshOnce();
-      if (token) result = await send(path, opts, token);
-      if (result.status === 401) onSessionExpired?.();
+    if (result.status === 401 && sentToken) {
+      // Another request may already have refreshed while this one was in flight.
+      const current = (await getAccessToken?.()) ?? null;
+      const token = current && current !== sentToken ? current : await refreshOnce();
+      if (token) {
+        result = await send(path, opts, token);
+        if (result.status === 401) onSessionExpired?.();
+      }
     }
 
     const json = parseJson(result.text);

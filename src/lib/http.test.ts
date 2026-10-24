@@ -231,12 +231,109 @@ describe('createApiClient 401 refresh', () => {
 
   it('does not try to refresh without a refresh function', async () => {
     const onSessionExpired = jest.fn();
-    const client = createApiClient({ baseUrl: 'https://api.test', onSessionExpired });
+    const client = createApiClient({
+      baseUrl: 'https://api.test',
+      getAccessToken: () => 'old',
+      onSessionExpired,
+    });
     fetchMock.mockResolvedValue(reply(401, { detail: 'x' }));
     await expect(client.request('/me', { schema: itemSchema })).rejects.toMatchObject({
       status: 401,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('auth:false sends no token and never refreshes or expires on 401', async () => {
+    const { client, refreshAccessToken, onSessionExpired } = make();
+    fetchMock.mockResolvedValue(reply(401, { detail: 'bad credentials' }));
+    await expect(
+      client.request('/login', { schema: itemSchema, method: 'POST', auth: false }),
+    ).rejects.toMatchObject({ status: 401 });
+    expect(authHeader(0)).toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+    expect(onSessionExpired).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh when the request was sent without a token', async () => {
+    const { client, refreshAccessToken, onSessionExpired } = make({ getAccessToken: () => null });
+    fetchMock.mockResolvedValue(reply(401, { detail: 'x' }));
+    await expect(client.request('/me', { schema: itemSchema })).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(refreshAccessToken).not.toHaveBeenCalled();
+    expect(onSessionExpired).not.toHaveBeenCalled();
+  });
+
+  it('a 401 from a refresh made through the client settles without deadlock', async () => {
+    let client!: ReturnType<typeof createApiClient>;
+    const onSessionExpired = jest.fn();
+    client = createApiClient({
+      baseUrl: 'https://api.test',
+      getAccessToken: () => 'old',
+      refreshAccessToken: () =>
+        client
+          .request('/refresh', { schema: z.object({ token: z.string() }), auth: false })
+          .then((r) => r.token),
+      onSessionExpired,
+    });
+    fetchMock.mockResolvedValue(reply(401, { detail: 'expired' }));
+    await expect(client.request('/me', { schema: itemSchema })).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('a late 401 after another request refreshed reuses the new token without refreshing', async () => {
+    const { client, refreshAccessToken } = make();
+    let lateResolve: (r: FakeResponse) => void = () => {};
+    let first = true;
+    fetchMock.mockImplementation((_url, init) => {
+      const header = (init.headers as Record<string, string>).Authorization;
+      if (header === 'Bearer new') return Promise.resolve(reply(200, { id: 1, name: 'a' }));
+      if (first) {
+        first = false;
+        return Promise.resolve(reply(401, {}));
+      }
+      return new Promise((resolve) => (lateResolve = resolve));
+    });
+    const a = client.request('/a', { schema: itemSchema });
+    const b = client.request('/b', { schema: itemSchema });
+    await a;
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+    lateResolve(reply(401, {}));
+    await expect(b).resolves.toEqual({ id: 1, name: 'a' });
+    expect(refreshAccessToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('expires the session once for concurrent requests when the refresh fails', async () => {
+    const { client, onSessionExpired } = make({ refreshAccessToken: jest.fn(async () => null) });
+    fetchMock.mockResolvedValue(reply(401, {}));
+    await Promise.allSettled([
+      client.request('/a', { schema: itemSchema }),
+      client.request('/b', { schema: itemSchema }),
+      client.request('/c', { schema: itemSchema }),
+    ]);
+    expect(onSessionExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps only well-formed validation details', async () => {
+    fetchMock.mockResolvedValue(reply(422, { detail: [null, {}, { msg: 'ok' }] }));
+    const e1 = await createApiClient({ baseUrl: 'https://api.test' })
+      .request('/x', { schema: itemSchema })
+      .catch((e: unknown) => e);
+    expect(e1).toMatchObject({ detail: [{ msg: 'ok' }], message: 'ok' });
+    fetchMock.mockResolvedValue(reply(422, { detail: [null] }));
+    const e2 = await createApiClient({ baseUrl: 'https://api.test' })
+      .request('/x', { schema: itemSchema })
+      .catch((e: unknown) => e);
+    expect(e2).toMatchObject({ status: 422, detail: undefined, message: 'HTTP 422' });
+    fetchMock.mockResolvedValue(reply(422, { detail: [{}] }));
+    const e3 = await createApiClient({ baseUrl: 'https://api.test' })
+      .request('/x', { schema: itemSchema })
+      .catch((e: unknown) => e);
+    expect(e3).toMatchObject({ message: 'HTTP 422' });
   });
 });
