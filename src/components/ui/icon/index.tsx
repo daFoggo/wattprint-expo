@@ -25,7 +25,7 @@ const iconStyle = tva({
   },
 });
 
-const StyledUIIcon = withUniwind(UIIcon);
+export const StyledUIIcon = withUniwind(UIIcon);
 
 type IIConProps = IPrimitiveIcon &
   VariantProps<typeof iconStyle> &
@@ -50,13 +50,15 @@ export { Icon };
 type ParameterTypes = Omit<Parameters<typeof createIcon>[0], 'Root'>;
 
 const createIconUI = ({ ...props }: ParameterTypes) => {
-  const UIIconCreateIcon = createIcon({
-    Root: Svg,
-    ...props,
-  }) as React.ForwardRefExoticComponent<
-    React.ComponentPropsWithoutRef<typeof PrimitiveIcon> &
-      React.RefAttributes<React.ComponentRef<typeof Svg>>
-  >;
+  const UIIconCreateIcon = withUniwind(
+    createIcon({
+      Root: Svg,
+      ...props,
+    }) as React.ForwardRefExoticComponent<
+      React.ComponentPropsWithoutRef<typeof PrimitiveIcon> &
+        React.RefAttributes<React.ComponentRef<typeof Svg>>
+    >,
+  );
 
   return React.forwardRef<React.ComponentRef<typeof Svg>>(function UIIcon(
     {

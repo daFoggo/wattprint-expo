@@ -1,18 +1,16 @@
 'use client';
 import { createButton } from '@gluestack-ui/core/button/creator';
-import { UIIcon } from '@gluestack-ui/core/icon/creator';
 import {
   tva,
   useStyleContext,
   withStyleContext,
   type VariantProps,
 } from '@gluestack-ui/utils/nativewind-utils';
-import { withUniwind } from 'uniwind';
+import { StyledUIIcon } from '../icon';
 import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 const SCOPE = 'BUTTON';
 const Root = withStyleContext(Pressable, SCOPE);
-const StyledUIIcon = withUniwind(UIIcon);
 const UIButton = createButton({
   Root: Root,
   Text,
@@ -21,19 +19,17 @@ const UIButton = createButton({
   Icon: StyledUIIcon,
 });
 const buttonStyle = tva({
-  base: 'rounded-md flex-row items-center justify-center data-[focus-visible=true]:web:outline-none data-[focus-visible=true]:web:ring-2 data-[disabled=true]:opacity-40 gap-2 h-fit',
+  base: 'rounded-md flex-row items-center justify-center data-[disabled=true]:opacity-40 gap-2 h-fit',
   variants: {
     variant: {
-      default: 'bg-primary data-[hover=true]:bg-primary/90 data-[active=true]:bg-primary/90',
+      default: 'bg-primary data-[active=true]:bg-primary/90',
       destructive:
-        'bg-destructive data-[hover=true]:bg-destructive/90 data-[active=true]:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+        'bg-destructive data-[active=true]:bg-destructive/90 dark:bg-destructive/60 dark:data-[active=true]:bg-destructive/50',
       outline:
-        'border border-border bg-background shadow-xs data-[hover=true]:bg-accent data-[active=true]:bg-accent dark:bg-input/[0.045] dark:border-border/90 dark:data-[hover=true]:bg-input/[0.075] dark:data-[active=true]:bg-input/[0.075]',
-      secondary:
-        'bg-secondary text-secondary-foreground data-[hover=true]:bg-secondary/80 data-[active=true]:bg-secondary/80',
-      ghost:
-        'data-[hover=true]:bg-accent data-[active=true]:bg-accent dark:data-[hover=true]:bg-accent/50 dark:data-[active=true]:bg-accent/50',
-      link: 'text-primary underline-offset-4 data-[hover=true]:underline data-[active=true]:underline',
+        'border border-border bg-background data-[active=true]:bg-accent dark:bg-input/[0.045] dark:border-border/90 dark:data-[active=true]:bg-input/[0.075]',
+      secondary: 'bg-secondary text-secondary-foreground data-[active=true]:bg-secondary/80',
+      ghost: 'data-[active=true]:bg-accent dark:data-[active=true]:bg-accent/50',
+      link: 'text-primary underline-offset-4 data-[active=true]:underline',
     },
     size: {
       default: 'px-4 py-2',
@@ -44,16 +40,15 @@ const buttonStyle = tva({
   },
 });
 const buttonTextStyle = tva({
-  base: 'web:select-none font-sans',
+  base: '',
   parentVariants: {
     variant: {
       default: 'text-primary-foreground',
       destructive: 'text-white',
-      outline:
-        'text-foreground data-[hover=true]:text-accent-foreground data-[active=true]:text-accent-foreground',
+      outline: 'text-foreground data-[active=true]:text-accent-foreground',
       secondary: 'text-secondary-foreground',
       ghost: 'text-foreground ',
-      link: 'text-primary data-[hover=true]:underline data-[active=true]:underline',
+      link: 'text-primary data-[active=true]:underline',
     },
     size: {
       default: 'text-sm',
@@ -76,17 +71,30 @@ const buttonSpinnerStyle = tva({
   },
 });
 
+// ActivityIndicator takes its colour from the non-style `color` prop, so it needs an accent- class.
+const buttonSpinnerColorStyle = tva({
+  base: '',
+  parentVariants: {
+    variant: {
+      default: 'accent-primary-foreground',
+      destructive: 'accent-white',
+      outline: 'accent-foreground',
+      secondary: 'accent-secondary-foreground',
+      ghost: 'accent-foreground',
+      link: 'accent-primary',
+    },
+  },
+});
+
 const buttonIconStyle = tva({
   base: 'fill-none pointer-events-none shrink-0',
   parentVariants: {
     variant: {
       default: 'text-primary-foreground',
       destructive: 'text-white',
-      outline:
-        'text-foreground data-[hover=true]:text-accent-foreground data-[active=true]:text-accent-foreground',
+      outline: 'text-foreground',
       secondary: 'text-secondary-foreground',
-      ghost:
-        'text-foreground data-[hover=true]:text-accent-foreground data-[active=true]:text-accent-foreground',
+      ghost: 'text-foreground',
       link: 'text-primary',
     },
     size: {
@@ -160,10 +168,11 @@ const ButtonSpinner = React.forwardRef<
   React.ElementRef<typeof UIButton.Spinner>,
   React.ComponentPropsWithoutRef<typeof UIButton.Spinner>
 >(({ className, ...props }, ref) => {
-  const { size: parentSize } = useStyleContext(SCOPE);
+  const { size: parentSize, variant: parentVariant } = useStyleContext(SCOPE);
   return (
     <UIButton.Spinner
       ref={ref}
+      colorClassName={buttonSpinnerColorStyle({ parentVariants: { variant: parentVariant } })}
       {...props}
       className={buttonSpinnerStyle({ parentVariants: { size: parentSize }, class: className })}
     />
