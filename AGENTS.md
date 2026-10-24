@@ -34,11 +34,15 @@ Before calling work done, run and report real results:
 - Data layer: all HTTP goes through `createApiClient` (`src/lib/http.ts`) with a Zod `schema`; throw `ApiError`,
   `NetworkError`, `ContractError` (`src/lib/errors.ts`), never return fallback data. Retry only
   `isRetryable` errors (network, 5xx); query defaults live in `src/lib/query-client.ts`. Connectivity comes from
-  `initOnlineManager` (expo-network). Data screens render `components/states/{loading,empty,error}-state`.
+  `initOnlineManager` (expo-network). Data screens render `components/states/{loading,empty,error}-state` (paused uses `EmptyState`).
 - Import boundaries (`eslint.boundaries.js`, proved by `scripts/boundaries.test.ts`): `src/features/<name>` never
   imports `@/app`, `@/screens`, another feature or `../` (use `./` or `@/features/<name>/...`); `lib`, `stores`,
   `hooks`, `i18n`, `env.ts` never import `components`, `features`, `screens`, `app`; `components` never imports
-  `features`, `screens`, `app`. Per-feature rules are generated from the folders in `src/features`.
+  `features`, `screens`, `app`; `screens` never imports `app`. Per-feature rules are generated from the folders in `src/features`.
+- Architecture: feature slices with thin routes (`docs/architecture.md`): per feature `api.ts`, `schemas.ts`,
+  `queries.ts` (key factory + `queryOptions`), `hooks/`, `components/`, `screens/`, colocated tests; no barrel
+  files; extract to shared only when a second feature needs it. Data rules and measured choices (staleTime,
+  FlashList for a few hundred rows or more, placeholder from list rows): `docs/data-fetching.md`.
 - Routes: one folder per tab under `src/app` with its own `_layout.tsx` Stack; the root layout exports
   `ErrorBoundary`; `+not-found.tsx` exists. User-visible strings use i18n keys (en and vi, same keys); error
   text is `selectable`.
