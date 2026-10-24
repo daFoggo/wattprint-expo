@@ -1,4 +1,5 @@
 import { ESLint } from 'eslint';
+import path from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { boundaryConfigs } = require('../eslint.boundaries.js') as {
@@ -83,6 +84,8 @@ describe('shared layers', () => {
     ['src/components/states/error-state.tsx', '@/features/alpha/api'],
     ['src/components/ui/button/index.tsx', '@/screens/home'],
     ['src/components/states/error-state.tsx', '@/app/_layout'],
+    ['src/screens/home/index.tsx', '@/app/_layout'],
+    ['src/screens/home/index.tsx', '../../app/_layout'],
   ])('%s must not import %s', async (file, source) => {
     const messages = await lint(features, file, imp(source));
     expect(messages).toHaveLength(1);
@@ -107,4 +110,21 @@ describe('shared layers', () => {
     expect(await lint([], 'src/lib/http.ts', imp('@/components/ui/button'))).toHaveLength(1);
     expect(await lint([], 'src/screens/home/index.tsx', imp('@/features/x/api'))).toEqual([]);
   });
+});
+
+test('the real eslint.config.js enforces the boundaries', async () => {
+  // ESLint loads config files with a dynamic import, which Jest cannot run; load the real config
+  // here and hand it over as an override instead.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const realConfig = require('../eslint.config.js') as object[];
+  const eslint = new ESLint({
+    cwd: path.resolve(__dirname, '..'),
+    overrideConfigFile: true,
+    overrideConfig: realConfig as never,
+  });
+  const [result] = await eslint.lintText(imp('@/components/ui/button'), {
+    filePath: 'src/lib/x.ts',
+  });
+  const messages = result.messages.filter((m) => m.ruleId === 'no-restricted-imports');
+  expect(messages).toHaveLength(1);
 });
