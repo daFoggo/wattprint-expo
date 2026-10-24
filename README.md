@@ -104,9 +104,9 @@ Resolved from `pnpm-lock.yaml` (`pnpm list --depth 0`).
 Uniwind skips, without any warning, every class it cannot translate on native. Pitfalls:
 
 - Unsupported variants are silently ignored: `placeholder:`, `hover:`, `focus-visible:`, `before:`/`after:`, `web:`, `group-*` (Pro), `data-[hover=true]`. Use `data-[focus|active|disabled|invalid=true]:` states.
-- Non-style colour props (TextInput placeholder/cursor/selection, ActivityIndicator `color`, Svg/Lucide icon colour) need the `{prop}ClassName` binding with an `accent-` class, e.g. `placeholderTextColorClassName="accent-muted-foreground"`; `text-*` in `className` does not reach them.
+- Non-style colour props (TextInput placeholder/cursor/selection, ActivityIndicator `color`, and Svg/Lucide icons used directly) need the `{prop}ClassName` binding with an `accent-` class, e.g. `placeholderTextColorClassName="accent-muted-foreground"`; `text-*` in `className` does not reach them. The gluestack `Icon`/`ButtonIcon` take their colour from `text-*` (verified on device).
 - A third-party component needs `withUniwind` once, in one file, then is reused (`StyledUIIcon` in `src/components/ui/icon`).
-- `scripts/uniwind-guard.test.ts` fails on the unsupported classes and on missing colour bindings.
+- `scripts/uniwind-guard.test.ts` fails on unsupported classes inside string literals and on missing colour bindings on `ActivityIndicator` and `TextInput` (and their gluestack wrappers). It does not check Svg/Lucide icons.
 
 ## Decisions and recorded deviations
 
