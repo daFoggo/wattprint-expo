@@ -1,10 +1,19 @@
 {
-  "tabs": { "home": "Trang chủ", "settings": "Cài đặt" },
-  "common": { "close": "Đóng" },
+  "tabs": {
+    "home": "Trang chủ",
+    "settings": "Cài đặt"
+  },
+  "common": {
+    "close": "Đóng"
+  },
   "home": {
     "title": "Kiểm tra nền tảng",
     "theme": "Giao diện: {{theme}}",
-    "themes": { "system": "Hệ thống", "light": "Sáng", "dark": "Tối" },
+    "themes": {
+      "system": "Hệ thống",
+      "light": "Sáng",
+      "dark": "Tối"
+    },
     "secureStore": "Kiểm tra secure store",
     "secureStoreOk": "secure-store: {{value}}",
     "secureStoreError": "secure-store: lỗi {{message}}",
@@ -18,10 +27,18 @@
     "submit": "Gửi",
     "submitted": "Đã gửi: {{email}}"
   },
-  "errors": { "title": "Đã xảy ra lỗi", "retry": "Thử lại" },
+  "errors": {
+    "title": "Đã xảy ra lỗi",
+    "retry": "Thử lại",
+    "network": "Không có kết nối. Kiểm tra mạng và thử lại."
+  },
   "notFound": {
     "title": "Không tìm thấy trang",
     "message": "Màn hình này không tồn tại.",
     "goHome": "Về trang chủ"
+  },
+  "states": {
+    "loading": "Đang tải",
+    "emptyTitle": "Chưa có gì ở đây"
   }
 }

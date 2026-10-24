@@ -1,10 +1,19 @@
 {
-  "tabs": { "home": "Home", "settings": "Settings" },
-  "common": { "close": "Close" },
+  "tabs": {
+    "home": "Home",
+    "settings": "Settings"
+  },
+  "common": {
+    "close": "Close"
+  },
   "home": {
     "title": "Base check",
     "theme": "Theme: {{theme}}",
-    "themes": { "system": "System", "light": "Light", "dark": "Dark" },
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "secureStore": "Secure store check",
     "secureStoreOk": "secure-store: {{value}}",
     "secureStoreError": "secure-store: error {{message}}",
@@ -18,10 +27,18 @@
     "submit": "Submit",
     "submitted": "Submitted: {{email}}"
   },
-  "errors": { "title": "Something went wrong", "retry": "Try again" },
+  "errors": {
+    "title": "Something went wrong",
+    "retry": "Try again",
+    "network": "No connection. Check your network and try again."
+  },
   "notFound": {
     "title": "Page not found",
     "message": "This screen does not exist.",
     "goHome": "Go to home"
+  },
+  "states": {
+    "loading": "Loading",
+    "emptyTitle": "Nothing here yet"
   }
 }
