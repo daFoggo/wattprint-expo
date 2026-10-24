@@ -24,16 +24,39 @@ const globFiles = (name: string, ignore: string[]): string[] => {
 
 test('app.json has no web config and uses placeholder ids', () => {
   expect(appJson.expo.web).toBeUndefined();
+  expect(appJson.expo.web?.output).toBeUndefined();
   expect(appJson.expo.android.package).toBe('com.wattprint.app');
   expect(appJson.expo.ios.bundleIdentifier).toBe('com.wattprint.app');
 });
 
-test('no template scripts or web deps', () => {
+test('no template scripts; web deps only as the recorded peer exception', () => {
   expect(pkg.scripts).not.toHaveProperty('reset-project');
   expect(pkg.scripts).not.toHaveProperty('web');
-  // no exception recorded in step 1.9
-  expect(pkg.dependencies).not.toHaveProperty('react-native-web');
-  expect(pkg.devDependencies ?? {}).not.toHaveProperty('react-native-web');
+  // Recorded exception (step 1.9): react-native-web and react-dom are required peers of
+  // @gluestack-ui/core, @gluestack-ui/utils and @tanstack/react-pacer (expo-doctor).
+  // They must stay unused: see the import scan below.
+  const allowed = ['react-native-web', 'react-dom'];
+  const webLike = Object.keys({ ...pkg.dependencies, ...(pkg.devDependencies ?? {}) }).filter(
+    (name) => /(^|[-/])web($|[-/])/.test(name) && !allowed.includes(name),
+  );
+  expect(webLike).toEqual([]);
+});
+
+test('no source file imports react-native-web or react-dom', () => {
+  const offenders: string[] = [];
+  const webImport =
+    /(from\s+|import\s+|require\(\s*|import\(\s*)['"](react-native-web|react-dom)(\/[^'"]*)?['"]/;
+  const walk = (dir: string) => {
+    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) walk(rel);
+      else if (/\.(tsx?|jsx?)$/.test(entry.name)) {
+        if (webImport.test(read(rel))) offenders.push(rel);
+      }
+    }
+  };
+  walk('src');
+  expect(offenders).toEqual([]);
 });
 
 test.each([
