@@ -30,3 +30,8 @@ Deviations, warnings and versions recorded during setup.
     └── react-native-worklets@0.13.0
     
     6 packages
+
+### Android long-path workaround (cmake.dir)
+- Fix for the ">260 characters" CMake/ninja failure: use SDK CMake 4.1.2 (ninja 1.12.1, long-path capable) for ALL modules by adding this line to `android/local.properties`: `cmake.dir=C:/Users/Foggo/AppData/Local/Android/Sdk/cmake/4.1.2` (forward slashes).
+- Reproduce: delete stale `android/app/.cxx` and `node_modules/*/android/.cxx`, run `gradlew --stop`, then `npx expo run:android`. Result: app built, bundled (1314 modules) and ran on Medium_Phone_API_37.0; screenshot shows "Wattprint" with Home/Settings tabs; logcat only shows `Running "main"` (no errors).
+- `android/` is generated and gitignored (prebuild regenerates it and drops `local.properties` edits), so a config plugin or script will be needed to make this persistent.
