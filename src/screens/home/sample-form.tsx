@@ -24,6 +24,7 @@ export function SampleForm({ onSubmit }: { onSubmit: (v: { email: string }) => v
           <View className="gap-1">
             <Input isInvalid={!field.state.meta.isValid}>
               <InputField
+                testID="email-field"
                 accessibilityLabel={t('form.email')}
                 placeholder="you@example.com"
                 autoCapitalize="none"

@@ -20,6 +20,7 @@ describe('SampleForm', () => {
     await typeEmail('abc');
     await fireEvent.press(screen.getByText(en.form.submit));
     expect(await screen.findByTestId('email-error')).toHaveTextContent(en.form.emailInvalid);
+    expect(screen.getByTestId('email-field').props['data-invalid']).toBe('true');
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
