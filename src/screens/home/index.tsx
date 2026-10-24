@@ -46,13 +46,16 @@ export function Home() {
       contentContainerClassName="items-center gap-4 px-6 py-12"
       keyboardShouldPersistTaps="handled"
     >
-      <Text className="text-foreground text-3xl font-bold">{t('home.title')}</Text>
+      <Text accessibilityRole="header" className="text-foreground text-3xl font-bold">
+        {t('home.title')}
+      </Text>
 
       <Text className="text-muted-foreground text-sm">Theme: {theme}</Text>
       {THEMES.map((item) => (
         <Button
           key={item.value}
           variant={theme === item.value ? 'default' : 'outline'}
+          accessibilityState={{ selected: theme === item.value }}
           onPress={() => setTheme(item.value)}
         >
           <ButtonText>{item.label}</ButtonText>
