@@ -57,7 +57,9 @@ src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-f
 src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider
 src/screens/home/               base-check screen and its sample form
 src/hooks/                      shared hooks
-src/lib/                        library wiring: query-client, storage (MMKV)
+src/components/states/          loading, empty, error state components
+src/lib/                        wiring: http + errors, query-client, online-manager, nav-theme, storage (MMKV)
+eslint.boundaries.js            import boundary rules (tested by scripts/boundaries.test.ts)
 src/stores/                     Zustand stores (preferences, persisted)
 src/i18n/                       i18next setup and locales/{en,vi}.json
 src/env.ts                      zod-validated EXPO_PUBLIC_* env
