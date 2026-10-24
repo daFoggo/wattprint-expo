@@ -37,7 +37,7 @@ const modalStyle = tva({
 });
 
 const modalBackdropStyle = tva({
-  base: 'absolute left-0 top-0 right-0 bottom-0 bg-[#000]/50',
+  base: 'absolute left-0 top-0 right-0 bottom-0 bg-overlay/50',
 });
 
 const modalContentStyle = tva({

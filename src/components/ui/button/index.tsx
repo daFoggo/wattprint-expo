@@ -44,7 +44,7 @@ const buttonTextStyle = tva({
   parentVariants: {
     variant: {
       default: 'text-primary-foreground',
-      destructive: 'text-white',
+      destructive: 'text-destructive-foreground',
       outline: 'text-foreground data-[active=true]:text-accent-foreground',
       secondary: 'text-secondary-foreground',
       ghost: 'text-foreground ',
@@ -77,7 +77,7 @@ const buttonSpinnerColorStyle = tva({
   parentVariants: {
     variant: {
       default: 'accent-primary-foreground',
-      destructive: 'accent-white',
+      destructive: 'accent-destructive-foreground',
       outline: 'accent-foreground',
       secondary: 'accent-secondary-foreground',
       ghost: 'accent-foreground',
@@ -91,7 +91,7 @@ const buttonIconStyle = tva({
   parentVariants: {
     variant: {
       default: 'text-primary-foreground',
-      destructive: 'text-white',
+      destructive: 'text-destructive-foreground',
       outline: 'text-foreground',
       secondary: 'text-secondary-foreground',
       ghost: 'text-foreground',
