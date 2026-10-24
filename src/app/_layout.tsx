@@ -5,6 +5,7 @@ import '@/i18n';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAppStateFocus } from '@/hooks/use-app-state-focus';
 import { useNavTheme } from '@/hooks/use-nav-theme';
+import { initOnlineManager } from '@/lib/online-manager';
 import { queryClient } from '@/lib/query-client';
 import { RouteError } from '@/screens/route-error';
 import { usePreferencesStore } from '@/stores/preferences-store';
@@ -18,6 +19,9 @@ import { Uniwind } from 'uniwind';
 
 // Apply the stored theme before the first render so the first frame is not the wrong theme.
 Uniwind.setTheme(usePreferencesStore.getState().theme);
+
+// Make TanStack Query follow the device connectivity (pause offline, resume on reconnect).
+initOnlineManager();
 
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <RouteError {...props} />;
