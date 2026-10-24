@@ -1,5 +1,5 @@
-import { View } from 'react-native';
+import { Settings } from '@/screens/settings';
 
-export default function Settings() {
-  return <View className="flex-1 bg-background" />;
+export default function SettingsRoute() {
+  return <Settings />;
 }

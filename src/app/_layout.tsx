@@ -4,36 +4,43 @@ import '@/i18n';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAppStateFocus } from '@/hooks/use-app-state-focus';
+import { useNavTheme } from '@/hooks/use-nav-theme';
 import { queryClient } from '@/lib/query-client';
+import { RouteError } from '@/screens/route-error';
 import { usePreferencesStore } from '@/stores/preferences-store';
 
 import { QueryClientProvider } from '@tanstack/react-query';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
 import { NativeTabs } from 'expo-router/native-tabs';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Uniwind } from 'uniwind';
 
 // Apply the stored theme before the first render so the first frame is not the wrong theme.
 Uniwind.setTheme(usePreferencesStore.getState().theme);
 
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  return <RouteError {...props} />;
+}
+
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { t } = useTranslation();
   const theme = usePreferencesStore((s) => s.theme);
+  const navTheme = useNavTheme();
   useAppStateFocus();
 
   return (
     <GluestackUIProvider mode={theme}>
       <StatusBar style="auto" />
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={navTheme}>
           <NativeTabs>
-            <NativeTabs.Trigger name="index">
-              <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger name="(home)">
+              <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
               <NativeTabs.Trigger.Icon md="home" sf="house.fill" />
             </NativeTabs.Trigger>
-            <NativeTabs.Trigger name="settings">
-              <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+            <NativeTabs.Trigger name="(settings)">
+              <NativeTabs.Trigger.Label>{t('tabs.settings')}</NativeTabs.Trigger.Label>
               <NativeTabs.Trigger.Icon md="settings" sf="gearshape.fill" />
             </NativeTabs.Trigger>
           </NativeTabs>
