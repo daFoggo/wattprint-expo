@@ -76,11 +76,23 @@ test('single css entry', () =>
     'src/global.css',
   ]));
 
-test('babel has no nativewind', () => {
-  if (fs.existsSync(path.join(root, 'babel.config.js'))) {
-    expect(read('babel.config.js')).not.toMatch(/nativewind/);
-  }
+test.each(['nativewind', '@legendapp/motion'])('package.json has no %s', (name) => {
+  const all = { ...pkg.dependencies, ...(pkg.devDependencies ?? {}) };
+  expect(all).not.toHaveProperty(name);
 });
+
+test.each([
+  'babel.config.js',
+  'babel.config.cjs',
+  'tailwind.config.js',
+  'tailwind.config.ts',
+  'globals.css',
+  'nativewind-env.d.ts',
+  'src/globals.css',
+  'src/nativewind-env.d.ts',
+])('%s must not exist (no NativeWind/Babel/Tailwind config files)', (p) =>
+  expect(fs.existsSync(path.join(root, p))).toBe(false),
+);
 
 test.each([
   'tabs',

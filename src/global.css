@@ -1,15 +1,11 @@
 @import 'tailwindcss';
 @import 'uniwind';
 /* ─── UniWind theme variants ─────────────────────────────────────
-   Switched at runtime via Uniwind.setTheme('light' | 'dark' | 'adaptive').
-   Variable values match the nativewind config.ts tokens so that the
-   same Tailwind utility classes (bg-primary, text-foreground, etc.)
-   produce identical output regardless of styling engine.
+   Switched at runtime via Uniwind.setTheme('light' | 'dark' | 'system').
+   The variables back the Tailwind utility classes (bg-primary, text-foreground, etc.).
 
-   Uses :where(.dark, .dark *) selectors (not :root { @variant dark })
-   so that:
-     • Web:    selector matches html.dark directly, no nesting issues
-     • Native: ProcessorBuilder recognises :where(.dark) → theme-scoped vars  */
+   Uses :where(.dark, .dark *) selectors (not :root { @variant dark }) so that
+   Uniwind's ProcessorBuilder recognises :where(.dark) as theme-scoped variables.  */
 @layer theme {
   :where(.light, .light *) {
     --primary: 23 23 23;
