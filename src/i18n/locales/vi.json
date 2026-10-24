@@ -55,7 +55,9 @@
       "refreshFailed": "Không thể làm mới. Đang hiển thị kết quả đã lưu.",
       "openBench": "Mở thử nghiệm danh sách",
       "rowLabel": "{{title}}, {{category}}, ${{price}}",
-      "loading": "Đang tải sản phẩm"
+      "loading": "Đang tải sản phẩm",
+      "updating": "Đang cập nhật kết quả...",
+      "prefetchBench": "Tải trước 500 câu trích dẫn"
     },
     "detail": {
       "title": "Sản phẩm",

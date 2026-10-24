@@ -55,7 +55,9 @@
       "refreshFailed": "Could not refresh. Showing saved results.",
       "openBench": "Open list benchmark",
       "rowLabel": "{{title}}, {{category}}, ${{price}}",
-      "loading": "Loading products"
+      "loading": "Loading products",
+      "updating": "Updating results...",
+      "prefetchBench": "Prefetch 500 quotes"
     },
     "detail": {
       "title": "Product",

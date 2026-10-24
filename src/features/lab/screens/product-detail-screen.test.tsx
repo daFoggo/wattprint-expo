@@ -1,5 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
+import { act, render, screen } from '@testing-library/react-native';
 
 import '@/i18n';
 import * as api from '@/features/lab/api';
@@ -38,6 +38,7 @@ beforeEach(() => {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 });
 afterEach(() => {
+  onlineManager.setOnline(true);
   queryClient.clear();
   resetApiMocks();
 });
@@ -63,6 +64,22 @@ describe('ProductDetailScreen', () => {
     (api.fetchProduct as jest.Mock).mockRejectedValue(new Error('gone'));
     await renderScreen('3');
     expect(await screen.findByText('gone')).toBeTruthy();
+  });
+
+  it('shows the paused state when offline with nothing cached', async () => {
+    onlineManager.setOnline(false);
+    await renderScreen('3');
+    expect(await screen.findByText(en.lab.products.pausedTitle)).toBeTruthy();
+    expect(api.fetchProduct).not.toHaveBeenCalled();
+  });
+
+  it('keeps the product and says so when a refresh fails', async () => {
+    queryClient.setQueryData(labKeys.product(3), product);
+    (api.fetchProduct as jest.Mock).mockRejectedValue(new Error('boom'));
+    await renderScreen('3');
+    expect(await screen.findByText(en.lab.products.refreshFailed)).toBeTruthy();
+    expect(screen.getByText('A very good phone')).toBeTruthy();
+    await act(async () => undefined);
   });
 
   it('does not request anything for an invalid id', async () => {

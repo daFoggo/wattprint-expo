@@ -29,6 +29,8 @@ export function ProductRow({ product, onPress }: ProductRowProps) {
       <StyledImage
         source={product.thumbnail}
         contentFit="cover"
+        recyclingKey={String(product.id)}
+        cachePolicy="memory-disk"
         accessible={false}
         className="bg-muted size-16 rounded-md"
       />

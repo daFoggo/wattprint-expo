@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import '@/i18n';
 import * as api from '@/features/lab/api';
+import { labKeys } from '@/features/lab/queries';
 import { ProductsScreen } from '@/features/lab/screens/products-screen';
 import type { Product } from '@/features/lab/schemas';
 import en from '@/i18n/locales/en.json';
@@ -28,8 +29,9 @@ const resetApiMocks = () =>
 
 let queryClient: QueryClient;
 
-async function renderScreen() {
-  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+async function renderScreen(staleTime = 0, seed?: (qc: QueryClient) => void) {
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime } } });
+  seed?.(queryClient);
   return render(
     <QueryClientProvider client={queryClient}>
       <ProductsScreen />
@@ -99,6 +101,76 @@ describe('ProductsScreen', () => {
       .filter((entry) => entry.event === 'products-content');
     expect(logs).toHaveLength(1);
     expect(logs[0].ms).toEqual(expect.any(Number));
+  });
+
+  const benchEntries = (event: string) =>
+    (console.log as jest.Mock).mock.calls
+      .filter(([tag]) => tag === '[BENCH]')
+      .map(([, json]) => JSON.parse(json as string))
+      .filter((entry) => entry.event === event);
+
+  it('marks content that was fetched after mount as not from cache', async () => {
+    (api.fetchProducts as jest.Mock).mockResolvedValue({ products: [product(1, 'Phone')] });
+    await renderScreen();
+    await screen.findByText('Phone');
+    await act(async () => undefined);
+    expect(benchEntries('products-content')[0].fromCache).toBe(false);
+  });
+
+  it('marks content served from a fresh cache as fromCache', async () => {
+    await renderScreen(Infinity, (qc) =>
+      qc.setQueryData(labKeys.productList({ q: '', limit: 30 }), {
+        products: [product(1, 'Phone')],
+      }),
+    );
+    await screen.findByText('Phone');
+    await act(async () => undefined);
+    expect(api.fetchProducts).not.toHaveBeenCalled();
+    expect(benchEntries('products-content')[0].fromCache).toBe(true);
+  });
+
+  it('keeps the rows and says so when a refresh fails', async () => {
+    (api.fetchProducts as jest.Mock).mockResolvedValueOnce({ products: [product(1, 'Phone')] });
+    await renderScreen();
+    await screen.findByText('Phone');
+    (api.fetchProducts as jest.Mock).mockRejectedValue(new Error('boom'));
+    await act(async () => {
+      await queryClient.refetchQueries();
+    });
+    expect(await screen.findByText(en.lab.products.refreshFailed)).toBeTruthy();
+    expect(screen.getByText('Phone')).toBeTruthy();
+  });
+
+  it('keeps the rows and shows the offline banner when a refresh is paused', async () => {
+    (api.fetchProducts as jest.Mock).mockResolvedValue({ products: [product(1, 'Phone')] });
+    await renderScreen();
+    await screen.findByText('Phone');
+    onlineManager.setOnline(false);
+    await act(async () => {
+      void queryClient.invalidateQueries();
+    });
+    expect(await screen.findByText(en.lab.products.offlineBanner)).toBeTruthy();
+    expect(screen.getByText('Phone')).toBeTruthy();
+  });
+
+  it('names the searched query in the empty state, and shows a neutral banner while loading it', async () => {
+    (api.fetchProducts as jest.Mock).mockResolvedValue({ products: [product(1, 'Phone')] });
+    let resolveSearch: (value: { products: Product[] }) => void = () => undefined;
+    (api.searchProducts as jest.Mock).mockReturnValue(
+      new Promise((resolve) => {
+        resolveSearch = resolve;
+      }),
+    );
+    await renderScreen();
+    await screen.findByText('Phone');
+    await fireEvent.changeText(screen.getByLabelText(en.lab.products.searchLabel), 'zzz');
+    // Previous rows stay, with a banner that does not claim anything about 'zzz'.
+    expect(await screen.findByText(en.lab.products.updating)).toBeTruthy();
+    expect(screen.getByText('Phone')).toBeTruthy();
+    expect(screen.queryByText(/zzz./)).toBeNull();
+    await act(async () => resolveSearch({ products: [] }));
+    await waitFor(() => expect(screen.getByText('Nothing matches "zzz".')).toBeTruthy());
+    expect(screen.queryByText(en.lab.products.updating)).toBeNull();
   });
 
   it('has a labelled search field', async () => {

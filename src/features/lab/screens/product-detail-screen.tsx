@@ -37,6 +37,14 @@ export function ProductDetailScreen({ id }: { id: string }) {
 
   return (
     <ScrollView className="bg-background flex-1" contentContainerClassName="gap-3 p-4">
+      {isError && (
+        <Text
+          accessibilityLiveRegion="polite"
+          className="text-muted-foreground text-center text-sm"
+        >
+          {t('lab.products.refreshFailed')}
+        </Text>
+      )}
       <StyledImage
         source={data.thumbnail}
         contentFit="contain"
