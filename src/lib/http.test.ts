@@ -367,6 +367,21 @@ describe('createApiClient onRequest', () => {
     ]);
   });
 
+  it('reports both attempts when a 401 is refreshed and retried', async () => {
+    const onRequest = jest.fn();
+    const client = createApiClient({
+      baseUrl: 'https://api.test',
+      onRequest,
+      getAccessToken: () => 'old',
+      refreshAccessToken: async () => 'new',
+    });
+    fetchMock
+      .mockResolvedValueOnce(reply(401, {}))
+      .mockResolvedValueOnce(reply(200, { id: 1, name: 'a' }));
+    await client.request('/a', { schema: itemSchema });
+    expect(onRequest.mock.calls.map(([info]) => info.status)).toEqual([401, 200]);
+  });
+
   it('never breaks the request when the hook throws', async () => {
     const onRequest = jest.fn(() => {
       throw new Error('log failed');

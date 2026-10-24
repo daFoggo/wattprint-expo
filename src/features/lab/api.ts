@@ -1,4 +1,4 @@
-import { benchLog } from '@/features/lab/bench/bench-log';
+import { benchLog } from '@/lib/bench-log';
 import {
   productListSchema,
   productSchema,

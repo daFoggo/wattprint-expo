@@ -2,7 +2,7 @@ import '../global.css';
 import '@/i18n';
 
 import { env } from '@/env';
-import { benchLog } from '@/features/lab/bench/bench-log';
+import { benchLog } from '@/lib/bench-log';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAppStateFocus } from '@/hooks/use-app-state-focus';
 import { useNavTheme } from '@/hooks/use-nav-theme';
@@ -37,9 +37,10 @@ export default function RootLayout() {
   // The lab tab is a throwaway trial: hidden in production builds, decided once on the first render.
   const [hideLab] = useState(() => env.EXPO_PUBLIC_APP_ENV === 'production');
 
-  // Cold-start marker for the benchmarks: JS ms since app start when the first tabs have mounted.
+  // Cold-start marker for the benchmarks: wall-clock time when the first tabs have mounted. Compare it
+  // with the logcat timestamps (performance.now() is not since app start on RN 0.88).
   useEffect(() => {
-    benchLog({ event: 'home-ready', jsMs: Math.round(performance.now()) });
+    benchLog({ event: 'home-ready', epochMs: Date.now() });
   }, []);
 
   return (

@@ -12,10 +12,11 @@ export type ApiClientOptions = {
   timeoutMs?: number;
   // Called once per HTTP attempt (a retry after a refresh is a second call), `status` 0 when no
   // response arrived. For logging and benchmarks; an exception from the hook is swallowed.
-  onRequest?: (info: RequestInfo) => void;
+  // The hook sees the path including its query string: never put tokens or secrets in URLs.
+  onRequest?: (info: RequestLog) => void;
 };
 
-export type RequestInfo = { method: string; path: string; status: number; ms: number };
+export type RequestLog = { method: string; path: string; status: number; ms: number };
 
 export type RequestOptions<S extends z.ZodType> = {
   schema: S;
