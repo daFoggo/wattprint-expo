@@ -17,7 +17,7 @@ form, the persisted theme store, secure storage and i18n on a device. Replace it
 - pnpm 12 (`packageManager`: pnpm@12.14.0)
 - JDK 17
 - Android SDK with an AVD (developed on `Medium_Phone_API_37.0`), `ANDROID_HOME` set
-- Android SDK CMake 4.x installed (see "Windows long-path workaround")
+- Windows only: Android SDK CMake 4.x installed (see "Windows long-path workaround")
 - Windows only: `LongPathsEnabled=1` (see below)
 
 ## Setup
@@ -105,7 +105,7 @@ linker, `.pnpm/<name@ver_hash>` paths pushed CMake/ninja paths over 260 characte
 
 **Windows long-path workaround.** Even with hoisting, the default NDK CMake 3.22.1 ninja is not long-path
 aware (`Filename longer than 260 characters` in `rngesturehandler_codegen_autolinked_build`; `subst` did not
-help). `plugins/with-android-cmake-dir.js` (registered in `app.json`) writes `cmake.dir=<ANDROID_HOME>/cmake/<4.x>`
+help). `plugins/with-android-cmake-dir.js` (registered in `app.json`) runs only on Windows (or with `WATTPRINT_FORCE_CMAKE_DIR=1`; on other platforms and EAS it does nothing, because forcing CMake 4 can break old CMakeLists) and writes `cmake.dir=<ANDROID_HOME>/cmake/<4.x>`
 into `android/local.properties` on prebuild (picks the highest CMake >= 4.0, one line, no duplicates; warns
 only if none is installed or `ANDROID_HOME` is unset). It runs **only on prebuild**: an existing `android/`
 is not re-processed, so delete `android/` or run `npx expo prebuild --platform android` after changing it.
@@ -125,7 +125,7 @@ Expect API changes.
 uniwind, tailwindcss and safe-area-context, and rewrites Metro/Babel config. All of that was reverted. The
 components (provider, icon, button, input, modal) were hand-copied from the CLI's cached Uniwind template with
 stable `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6; web variants were not copied. One edit:
-`opacity: 0` removed from the modal `ZoomIn` initial values (not in Reanimated 4.7.1 types). Do not run
+`opacity: 0` removed from the modal `ZoomIn` `withInitialValues`: Reanimated builds ZoomIn's initial values from transform keys only, so the `opacity` key was ignored (and `tsc` rejected the type); removing it is a runtime no-op. Do not run
 `gluestack-ui add` or `init` blindly, and use no alpha components (Tabs, Table, BottomSheet, Calendar,
 DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer).
 
@@ -144,6 +144,12 @@ not pinned (no build error). Dev dependencies are added with `pnpm add -D` becau
 `expo-env.d.ts`, `src/uniwind-types.d.ts`). ESLint is 9.x because Expo's lint bootstrap selects `^9`;
 pnpm warns it is deprecated.
 
+**Typecheck output.** `expo customize tsconfig.json` prints "Generating: tsconfig.json" on every `pnpm typecheck`
+run; it is informational output, not a warning.
+
+**Theme and env at runtime.** The gluestack provider runs in `mode="system"` (wired to `Uniwind.setTheme` from the
+preferences store). An invalid `EXPO_PUBLIC_*` env makes the app throw at startup (red screen) by design.
+
 **Jest setup** (`jest.setup.ts`): mocks `react-native-nitro-modules` (MMKV is in-memory under Jest), polyfills
 `window.screen` (react-aria), mocks `@tanstack/devtools-event-client` (its interval kept workers alive), and
 `transformIgnorePatterns` allows ESM packages (pacer, gluestack, uniwind). RNTL 14 is async: await
@@ -151,7 +157,6 @@ pnpm warns it is deprecated.
 
 **Install and runtime warnings (recorded, not hidden).**
 
-- Unmet optional peer: `react@^19.3.1` wanted by `react-dom@19.3.1` while `react` is 19.3.0. `expo-doctor` passes.
 - pnpm "ignored build scripts" (global eas-cli install): `dtrace-provider@0.8.8`, `protobufjs@7.6.6`; not approved.
 - Gradle "Doing a slower copy instead" hard-link messages (store on another drive): harmless.
 - In dev builds the TanStack form devtools client polls on an interval that never connects: harmless.
@@ -164,8 +169,9 @@ pre-1.0.
 
 **EAS and identifiers.** `eas.json` has `development` / `preview` / `production` profiles; no build has been run and
 no credentials exist. The bundle id / Android package is the placeholder `com.wattprint.app`.
-`extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) is static in `app.json` because the dynamic
-`app.config.ts` prevents `eas init` from writing it; `owner` is `dafoggo` (set by `eas init`, matches `eas whoami`). `eas config --platform android --profile development --non-interactive` resolves with `developmentClient: true`. `app.config.ts` sets the name
+The `extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) was added by hand to `app.json` before login (the
+dynamic `app.config.ts` prevents `eas init` from writing it); after login `eas init` reported the project already linked and
+wrote `owner` (`dafoggo`, matches `eas whoami`) to `app.json`. `eas config --platform android --profile development --non-interactive` resolves with `developmentClient: true`. `app.config.ts` sets the name
 `Wattprint` (production) or `Wattprint (<env>)` in config only; the native app label changes on prebuild.
 `vi` is the second locale (`supportedLocales: en, vi`).
 
@@ -177,3 +183,8 @@ with action-validator and a clean clone; it has not run on GitHub yet.
 1. Confirm the final bundle identifier (placeholder `com.wattprint.app`) before any `eas build` or credentials.
 2. First push must confirm `pnpm/action-setup@v6` works with pnpm 12's lockfile in CI.
 3. Confirm `vi` as the second locale (assumption).
+4. No LICENSE yet: choose one (the template's was removed).
+5. App icon and splash (`assets/expo.icon`, `icon.png`, `splash-icon.png`, `android-icon-*`, background colours `#E6F4FE`/`#208AEF`) are Expo template placeholders; replace before the first `eas build`.
+6. All EAS profiles currently share `com.wattprint.app`, so development, preview and production builds replace each other on a device; decide together with the bundle id.
+7. `eas.json` pins no node/pnpm versions: pin them before the first `eas build`.
+8. `claude-config-summary.md` (personal Claude config) is tracked in git: decide whether it should be before the first push.

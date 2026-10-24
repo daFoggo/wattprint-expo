@@ -15,7 +15,9 @@ Before calling work done, run and report real results:
 
 - `src/app` is routes only. Screen bodies go in `src/screens`, wiring in `src/lib`, `src/stores`, `src/i18n`.
 - File names are kebab-case.
-- Install packages with `npx expo install <pkg>` only (versions come from the SDK). On Windows, add dev
+- Install packages with `npx expo install <pkg>` only (versions come from the SDK). Exception: keep the exact pins
+  `@gluestack-ui/core@5.0.15` and `@gluestack-ui/utils@5.0.6` (installed with `pnpm add` because their dist-tags
+  include alphas); never `expo install` or upgrade them blindly. On Windows, add dev
   deps with `pnpm add -D` (`npx expo install ... -- --dev` misplaces them). Never type versions from memory.
 - Style with Uniwind classes and semantic tokens only (`bg-background`, `text-foreground`, ...); no
   hard-coded colours. Not NativeWind.
