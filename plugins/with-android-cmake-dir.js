@@ -22,7 +22,10 @@ function findCmakeDir() {
     .filter((v) => /^\d+\.\d+(\.\d+)?/.test(v) && parseInt(v, 10) >= 4)
     .sort((a, b) => cmp(parse(a), parse(b)));
   if (!versions.length) return null;
-  return path.join(root, versions[versions.length - 1]).split(path.sep).join('/');
+  return path
+    .join(root, versions[versions.length - 1])
+    .split(path.sep)
+    .join('/');
 }
 
 module.exports = function withAndroidCmakeDir(config) {
@@ -32,7 +35,7 @@ module.exports = function withAndroidCmakeDir(config) {
       const cmakeDir = findCmakeDir();
       if (!cmakeDir) {
         console.warn(
-          '[with-android-cmake-dir] No SDK CMake >= 4.0 found (or ANDROID_HOME unset); skipping cmake.dir.'
+          '[with-android-cmake-dir] No SDK CMake >= 4.0 found (or ANDROID_HOME unset); skipping cmake.dir.',
         );
         return cfg;
       }
