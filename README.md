@@ -99,6 +99,15 @@ Resolved from `pnpm-lock.yaml` (`pnpm list --depth 0`).
 | @testing-library/react-native  | 14.1.0  | husky / lint-staged        | 9.1.7 / 17.6.0   |
 | @commitlint/cli                | 21.2.4  | eas-cli (global)           | 25.3.0           |
 
+## Uniwind native rules
+
+Uniwind skips, without any warning, every class it cannot translate on native. Pitfalls:
+
+- Unsupported variants are silently ignored: `placeholder:`, `hover:`, `focus-visible:`, `before:`/`after:`, `web:`, `group-*` (Pro), `data-[hover=true]`. Use `data-[focus|active|disabled|invalid=true]:` states.
+- Non-style colour props (TextInput placeholder/cursor/selection, ActivityIndicator `color`, Svg/Lucide icon colour) need the `{prop}ClassName` binding with an `accent-` class, e.g. `placeholderTextColorClassName="accent-muted-foreground"`; `text-*` in `className` does not reach them.
+- A third-party component needs `withUniwind` once, in one file, then is reused (`StyledUIIcon` in `src/components/ui/icon`).
+- `scripts/uniwind-guard.test.ts` fails on the unsupported classes and on missing colour bindings.
+
 ## Decisions and recorded deviations
 
 **Package manager and linker.** pnpm with `nodeLinker: hoisted` in `pnpm-workspace.yaml`. With the isolated

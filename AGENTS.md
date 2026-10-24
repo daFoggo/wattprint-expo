@@ -21,6 +21,7 @@ Before calling work done, run and report real results:
   deps with `pnpm add -D` (`npx expo install ... -- --dev` misplaces them). Never type versions from memory.
 - Style with Uniwind classes and semantic tokens only (`bg-background`, `text-foreground`, ...); no
   hard-coded colours. Not NativeWind.
+- Uniwind ignores unsupported variants silently (`placeholder:`, `hover:`, `focus-visible:`, `web:`, `group-*`); non-style colour props need `*ClassName="accent-..."`; wrap third-party components with `withUniwind` once. `scripts/uniwind-guard.test.ts` enforces this.
 - gluestack-ui: never run `gluestack-ui add/init` blindly (the CLI forces NativeWind when `android/` exists
   and installs alpha packages). Hand-copy from the Uniwind template, stable packages only. No alpha
   components (Tabs, Table, BottomSheet, Calendar, DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer).
