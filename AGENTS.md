@@ -39,6 +39,7 @@ Before calling work done, run and report real results:
 - Android on Windows needs `LongPathsEnabled=1`, SDK CMake 4.x, JDK 17, `ANDROID_HOME`. The plugin
   `plugins/with-android-cmake-dir.js` writes `cmake.dir` only on prebuild; an existing `android/` is not
   re-processed.
+- Deep-link relaunch: `adb shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2F10.0.2.2%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
 - Stop Metro after checking; do not leave it running.
 
 ## EAS

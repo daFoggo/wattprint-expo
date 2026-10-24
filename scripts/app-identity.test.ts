@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { identitySuffix, applicationId } = require('./app-identity');
+const { ENVS, identitySuffix, applicationId } = require('./app-identity');
 
 const BASE = 'com.dafoggo.wattprint';
 
@@ -14,6 +14,15 @@ describe('app identity', () => {
   ])('maps %s', (env, suffix, id) => {
     expect(identitySuffix(env)).toBe(suffix);
     expect(applicationId(BASE, env)).toBe(id);
+  });
+
+  it('exports the env list', () => {
+    expect(ENVS).toEqual(['development', 'preview', 'production']);
+  });
+
+  it('throws on a missing or empty base', () => {
+    expect(() => applicationId(undefined, 'development')).toThrow(/non-empty string/);
+    expect(() => applicationId('', 'development')).toThrow(/non-empty string/);
   });
 
   it('throws on an invalid env', () => {

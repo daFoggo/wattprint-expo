@@ -1,14 +1,11 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { applicationId } = require('./scripts/app-identity');
-
-const APP_ENVS = ['development', 'preview', 'production'] as const;
-type AppEnv = (typeof APP_ENVS)[number];
+const { ENVS, applicationId } = require('./scripts/app-identity');
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = process.env.EXPO_PUBLIC_APP_ENV ?? 'development';
-  if (!APP_ENVS.includes(appEnv as AppEnv)) {
+  if (!ENVS.includes(appEnv)) {
     throw new Error(`Invalid EXPO_PUBLIC_APP_ENV: ${appEnv}`);
   }
 

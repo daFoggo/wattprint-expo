@@ -39,6 +39,8 @@ npx expo-doctor      # all checks must pass
 pnpm android         # then verify on the emulator (screenshot + logcat with no E ReactNativeJS lines)
 ```
 
+Relaunch via the dev-client deep link with `adb shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2F10.0.2.2%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
+
 Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch the app, take a screenshot (`adb shell screencap -p`) and read
 `adb logcat -d ReactNativeJS:V *:S`; there must be no `E` lines.
 
@@ -198,8 +200,9 @@ with action-validator and a clean clone; it has not run on GitHub yet.
 ## Open items
 
 1. CI has not run on GitHub: the first push must confirm `pnpm/action-setup@v6` works with the pnpm 12 lockfile.
-2. `vi` as the second locale is an assumption; confirm with the owner.
-3. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
+2. pnpm 12.14.0 support on EAS build images is unverified until the first `eas build`.
+3. `vi` as the second locale is an assumption; confirm with the owner.
+4. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
    `splash-icon.png`, `android-icon-foreground.png`, `android-icon-background.png`, `android-icon-monochrome.png`,
    colours `#E6F4FE` / `#208AEF`). Replace before the first store or preview distribution; they do not block
    `eas build` development builds.
