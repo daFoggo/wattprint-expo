@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { Button, ButtonText } from '@/components/ui/button';
-import { NetworkError } from '@/lib/errors';
+import { errorMessage } from '@/lib/errors';
 
 type ErrorStateProps = {
   error: unknown;
@@ -12,12 +12,7 @@ type ErrorStateProps = {
 
 export function ErrorState({ error, title, onRetry }: ErrorStateProps) {
   const { t } = useTranslation();
-  const message =
-    error instanceof NetworkError
-      ? t('errors.network')
-      : error instanceof Error
-        ? error.message
-        : String(error);
+  const message = errorMessage(error, t);
   return (
     <View className="bg-background flex-1 items-center justify-center gap-3 p-6">
       <Text

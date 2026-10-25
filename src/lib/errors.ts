@@ -46,3 +46,10 @@ export function isRetryable(error: unknown): boolean {
   if (error instanceof NetworkError) return true;
   return error instanceof ApiError && error.status >= 500;
 }
+
+// User-facing text for any thrown value. `t` is passed in so `lib` stays free of React and i18n wiring.
+export function errorMessage(error: unknown, t: (key: 'errors.network') => string): string {
+  if (error instanceof NetworkError) return t('errors.network');
+  if (error instanceof Error) return error.message;
+  return String(error);
+}

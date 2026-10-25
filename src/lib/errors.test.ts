@@ -1,4 +1,4 @@
-import { ApiError, ContractError, NetworkError, isRetryable } from './errors';
+import { ApiError, ContractError, NetworkError, errorMessage, isRetryable } from './errors';
 
 describe('errors', () => {
   it('carries status, detail and body on ApiError', () => {
@@ -40,5 +40,23 @@ describe('isRetryable', () => {
     expect(isRetryable(new DOMException('aborted', 'AbortError'))).toBe(false);
     expect(isRetryable(new Error('x'))).toBe(false);
     expect(isRetryable('x')).toBe(false);
+  });
+});
+
+describe('errorMessage', () => {
+  const t = (key: string) => `t:${key}`;
+
+  it('uses the translated network message for NetworkError', () => {
+    expect(errorMessage(new NetworkError('socket'), t)).toBe('t:errors.network');
+  });
+
+  it('uses the message of any other Error, including ApiError detail', () => {
+    expect(errorMessage(new ApiError(404, 'Item not found', null), t)).toBe('Item not found');
+    expect(errorMessage(new Error('boom'), t)).toBe('boom');
+  });
+
+  it('stringifies non-Error values', () => {
+    expect(errorMessage('plain', t)).toBe('plain');
+    expect(errorMessage(42, t)).toBe('42');
   });
 });
