@@ -18,10 +18,13 @@ export function resolveScheme(
   return system === 'dark' ? 'dark' : 'light';
 }
 
+const WHITESPACE = /\s+/;
+const NUMBER = /^\d+(\.\d+)?$/;
+
 // Theme variables hold space separated triples ("255 255 255"); navigation needs a CSS colour.
 export function toCssColor(value: string): string {
-  const parts = value.trim().split(/\s+/);
-  const isTriple = parts.length === 3 && parts.every((p) => /^\d+(\.\d+)?$/.test(p));
+  const parts = value.trim().split(WHITESPACE);
+  const isTriple = parts.length === 3 && parts.every((p) => NUMBER.test(p));
   return isTriple ? `rgb(${parts.join(', ')})` : value;
 }
 
