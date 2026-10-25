@@ -114,6 +114,9 @@ Outside React (a module that runs before render), use `useXStore.getState()`, as
 
 Behaviour read from `middleware.mjs`:
 
+- **Same `version`, different shape:** nothing detects it; the default `merge` shallow-merges the old stored object into the
+  new state silently (missing or stale keys, wrong types). This is why a shape change must bump `version`, and why reads
+  need validation in `merge`.
 - **Version mismatch without `migrate`:** the stored state is not used, the store keeps its initial state and
   `console.error("State loaded from storage couldn't be migrated since no migrate function was provided")` is logged.
   That is a `console.error`, so it shows as an `E ReactNativeJS` line in the device check
@@ -131,22 +134,27 @@ runtime validation (verified: <https://zustand.docs.pmnd.rs/reference/middleware
 
 **Current state of our store:** `preferences-store` sets only `name` and `storage`: no `version`, `partialize` or `migrate`
 (verified: file). It stores one string and the stored value is not validated on read, so an unexpected `theme` string would pass
-through to `Uniwind.setTheme`. That is acceptable for a three-value preference today; the first change of its shape needs
-`version: 1` and a `migrate` (opinion). A new persisted store should start with:
+through to `Uniwind.setTheme`. That is acceptable for a three-value preference today. When its shape changes, set `version: 1`
+and add a `migrate` for the upgrade (opinion); a changed shape under the same version is not detected (see the next list).
+A new persisted store should start with:
 
 ```ts
 {
   name: 'cart',
   version: 1,
   storage: createJSONStorage(() => zustandStorage),
-  partialize: (state) => ({ items: state.items }),          // never persist actions or transient flags
-  migrate: (persisted, version) => parseCartV1(persisted),  // validate with Zod; throw or return initial on bad data
+  partialize: (state) => ({ items: state.items }), // never persist actions or transient flags
+  // Validation belongs in `merge` (or in the storage adapter): keep valid fields, fall back to the defaults.
+  merge: (persisted, current) => ({ ...current, ...(cartSchema.safeParse(persisted).data ?? {}) }),
+  // `migrate` is only for upgrading an older stored shape; it runs when the stored version differs.
+  migrate: (persisted, version) => (version === 0 ? upgradeCartV0(persisted) : persisted),
 }
 ```
 
 Rules for persisted stores (opinion): persist preferences and small user choices only; never tokens (SecureStore) or server
-data (query cache); bump `version` on every shape change; validate what you read from storage with a Zod schema, and
-treat a failed parse as "start from the default".
+data (query cache); bump `version` on every shape change and write a `migrate` that upgrades the old shape; validate what
+you read from storage in `merge` (or a validating storage adapter) with a Zod schema, and treat a failed parse as "start from
+the default".
 
 ## 5. Native specifics
 
@@ -211,7 +219,7 @@ it('persists theme to MMKV', () => {
 - [ ] The state has the right home from section 1; query data is not in a store.
 - [ ] Store in `src/stores` or `src/features/<name>/store.ts`; no UI imports; boundaries lint passes.
 - [ ] Components select one value (or use `useShallow` for an object); none read the whole store.
-- [ ] Persisted store: `name`, `version`, `partialize`, `migrate` or a stated reason, validated read; no secrets.
+- [ ] Persisted store: `name`, `version`, `partialize`, `migrate` for upgrades, validation in `merge`; no secrets.
 - [ ] A user-scoped store has `reset()` and is cleared on logout; a test proves it.
 - [ ] Colocated test resets MMKV and the store in `beforeEach` and asserts the persisted envelope.
 - [ ] Relaunched on the emulator and checked logcat for `E ReactNativeJS` after a persisted shape change.
@@ -221,11 +229,14 @@ it('persists theme to MMKV', () => {
 - Copying query results into a store with an effect (`useEffect(() => setItems(data))`).
 - Persisting tokens or large lists in MMKV.
 - `const store = useXStore()` in a component (re-renders on every change) or `(s) => ({ a: s.a })` without `useShallow`.
-- Changing a persisted shape without bumping `version` (the old value is dropped and an error is logged).
+- Changing a persisted shape without bumping `version`: the old stored shape is shallow-merged silently. Bumping `version`
+  without a `migrate`: the stored value is dropped and a `console.error` is logged.
+- Validating stored data inside `migrate`; it only runs on a version change. Use `merge` or a validating storage adapter.
 - Importing `react-native-mmkv` outside `src/lib/storage.ts`.
 - A store that imports a component, a screen or another feature.
 - Putting a Next-style store provider around the app "for SSR safety"; there is no SSR here.
-- Resetting a store in tests only with `setState` while MMKV still holds the previous test's value.
+- Clearing MMKV (`storage.clearAll()`) in tests without resetting the stores' in-memory state, or the reverse: other stores
+  and keys are left inconsistent. Reset both, as the pattern in section 7 does.
 
 ## Sources
 
