@@ -1,38 +1,40 @@
 # Design-system findings
 
-Opened: 2026-10-25. Source: `docs/design-system.md` sections 2 and 5, found while writing it and in review. Not fixed there
-(documentation only; no app code or token change on that branch).
+Opened: 2026-10-25. Source: `docs/design-system.md` sections 2 and 5, found while writing it and in review. The Input and token items were fixed in
+`fix/a11y-contrast-input` (see Done); the rest is under Remaining.
 
 ## Why it matters
 
 Template colours and one component fall short of the guidelines the docs now state.
 
-## Facts (measured or verified)
+## Done (branch `fix/a11y-contrast-input`, 2026-10-25)
 
-All ratios: `node scripts/contrast-report.js` (2026-10-25), WCAG 2.2 formula, alpha classes composited over their parent.
+Ratios from `node scripts/contrast-report.js`; Jest guards them in `scripts/contrast.test.ts`.
 
-- `Input` is `min-h-9` (36 dp) and `InputSlot` has no minimum, below the 48 dp Android guideline that `Button` already meets
-  (verified: `src/components/ui/input/index.tsx`).
-- `Input` uses `border-border`, and `--input` equals `--border` (229 light, 46 dark): the control boundary is 1.26:1 light and
-  1.46:1 dark (needs 3:1). Dividers may stay at that ratio, they are decorative.
-- Light `ring` (focused input border) is 2.52:1 (needs 3:1); dark is 4.18:1.
-- Invalid Input border (`border-destructive/40`) is 2.11:1 light and 1.95:1 dark; the error text below the field compensates.
-- Light `muted-foreground` on `muted` is 4.35:1; only the pressed row (`active:bg-muted`) renders it. Low priority.
-- Dark `destructive-foreground` on **solid** `destructive` is 2.77:1, but no class renders it: the dark destructive Button is
-  `bg-destructive/60` (6.20:1 over `background`, 5.77:1 over `card`) and 7.76:1 pressed at `/50`. Nothing to fix; the rule is
-  never to put `text-destructive-foreground` on a solid `bg-destructive` in dark.
-- Dark input placeholder (`muted-foreground` on `input/30` over `background`) computes to 7.08:1. `README.md` still lists a
-  "low-contrast dark input placeholder" as a known limitation: that note looks stale and is unverified on a device.
+- `Input` is `min-h-12` (48 dp), tested in `input.test.tsx`. No call site overrides it.
+- `Input` border is `border-input`; `--input` is 148 light / 100 dark (was 229 / 46): 3.03:1 / 3.35:1 on `background`, 3.03:1 /
+  3.03:1 on `card` (was 1.26 / 1.46). `--border` is unchanged (dividers). Other users of `--input`: the dark Input fill
+  (`dark:bg-input/30`, placeholder 5.93:1, text 14.69:1) and the outline Button fill (`dark:bg-input/[0.045]` and `/[0.075]`,
+  label 18.49:1 / 18.13:1); all pass.
+- Light `--ring` is 115 (was 163): 4.74:1 on `background` (was 2.52); dark ring unchanged (4.18:1). A ring of exactly 3:1 (grey
+  148) would equal the new light `--input` and give no focus change, so it was darkened further.
+- The stale-note check: dark placeholder is 5.93:1 now (was 7.08:1 before `--input` darkened); `README.md` still lists it as a
+  low-contrast limitation, see Remaining.
+
+## Remaining
+
+- Invalid Input border (`border-destructive/40`) is 2.11:1 light and 1.95:1 dark (needs 3:1). The error text below the field
+  compensates; the finding stays open. Idea: raise the opacity, or accept the error text as the cue. Labelled in
+  `KNOWN_FAILURES`.
+- Light `muted-foreground` on `muted` is 4.35:1; only the pressed row (`active:bg-muted`) renders it. Low priority. Labelled in
+  `KNOWN_FAILURES`.
+- Dark `ring` (115) vs dark `input` (100) differ by little, so the focus step in dark is subtle (opinion; check on a device).
+- `InputSlot` has no minimum size (no screen uses a slot).
+- `README.md` "low-contrast dark input placeholder" known limitation: computed ratio passes, device check recorded in the
+  fix branch report; confirm or remove.
 - `Modal` animations set no explicit `reduceMotion`; whether they honour the system setting is unverified.
-
-## Ideas (not verified)
-
-- Idea: make `Input` use `min-h-12` like `Button` (a vendored-file deviation to record in `README.md`).
-- Idea: make `Input` use `border-input` and darken `--input` to a grey of at least 148 in light (3.03:1 on white) and at least 100
-  in dark (3.35:1 on `background`); re-run the script (computed here for grey values only; the Input fill and other users of
-  `--input`, such as the outline Button `dark:bg-input/[0.045]`, were not re-checked).
-- Idea: darken light `--ring` to reach 3:1.
-- Idea: raise the invalid border opacity, or accept the error text as the cue.
+- Dark `destructive-foreground` on **solid** `destructive` is 2.77:1, but no class renders it (the dark destructive Button is
+  `bg-destructive/60`). Nothing to fix; never put `text-destructive-foreground` on a solid `bg-destructive` in dark.
 - Idea: a dev-only showcase screen rendering every token, variant and state (out of scope so far).
 
 ## Start when
@@ -41,10 +43,9 @@ A feature screen with forms is built, or before the first preview distribution.
 
 ## Done when
 
-`node scripts/contrast-report.js` shows no FAIL for the pairs that are actually rendered (pairs nothing renders, such as dark
-`destructive-foreground` on solid `destructive`, may stay and are labelled), `Input` meets 48 dp (test like `button.test.tsx`),
-the Modal reduce-motion behaviour is checked on the emulator with "Remove animations", the stale `README.md` placeholder note
-is confirmed or removed, and the tables in `docs/design-system.md` are updated.
+`node scripts/contrast-report.js` shows no FAIL for the pairs that are actually rendered (the invalid border and the pressed-row
+`muted-foreground` stay labelled), the Modal reduce-motion behaviour is checked on the emulator with "Remove animations", the
+`README.md` placeholder note is confirmed or removed. The Input 48 dp, boundary and ring items are done.
 
 ## Docs touched
 

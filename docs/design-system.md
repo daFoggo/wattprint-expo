@@ -36,9 +36,9 @@ and `bg-overlay/50` all exist (verified: `src/global.css`). `Uniwind.setTheme` s
 | `accent-foreground`      | 52 52 52        | 250 250 250     | Text on a pressed outline Button                                               |
 | `destructive`            | 231 0 11        | 255 100 103     | Destructive Button fill, error text (`text-destructive`), invalid input border |
 | `destructive-foreground` | 250 250 250     | 250 250 250     | Text on a destructive Button                                                   |
-| `border`                 | 229 229 229     | 46 46 46        | Dividers, outline Button and input border (`border-border`)                    |
-| `input`                  | 229 229 229     | 46 46 46        | Input fill tint in dark (`dark:bg-input/30`) and outline Button dark fill      |
-| `ring`                   | 163 163 163     | 115 115 115     | Focused input border (`data-[focus=true]:border-ring`)                         |
+| `border`                 | 229 229 229     | 46 46 46        | Dividers and outline Button border (`border-border`); decorative, not 3:1      |
+| `input`                  | 148 148 148     | 100 100 100     | Input border (`border-input`), dark Input fill tint (`dark:bg-input/30`), outline Button dark fill |
+| `ring`                   | 115 115 115     | 115 115 115     | Focused input border (`data-[focus=true]:border-ring`)                         |
 | `overlay`                | 0 0 0           | 0 0 0           | Modal backdrop (`bg-overlay/50`)                                               |
 
 Rules:
@@ -83,12 +83,19 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `destructive-foreground` on `destructive/60` over `background` (dark Button) | text | n/a | 6.20 pass |
 | `destructive-foreground` on `destructive/60` over `card` | text | n/a | 5.77 pass |
 | `destructive-foreground` on `destructive/50` over `background` (dark Button pressed) | text | n/a | 7.76 pass |
-| `muted-foreground` on `input/30` over `background` (dark Input fill and placeholder) | text | n/a | 7.08 pass |
+| `muted-foreground` on `input/30` over `background` (dark Input fill and placeholder) | text | n/a | 5.93 pass |
+| `foreground` on `input/30` over `background` (dark Input text) | text | n/a | 14.69 pass |
+| `foreground` on `input/4.5` and `input/7.5` over `background` (dark outline Button fill, pressed) | text | n/a | 18.49 / 18.13 pass |
 | `primary` on `background`             | ui   | 17.93 pass  | 18.51 pass  |
-| `border` on `background`              | ui   | **1.26 fail** | **1.46 fail** |
-| `input` on `background`               | ui   | **1.26 fail** | **1.46 fail** |
-| `ring` on `background`                | ui   | **2.52 fail** | 4.18 pass   |
+| `input` on `background` (Input border) | ui   | 3.03 pass   | 3.35 pass   |
+| `input` on `card`                     | ui   | 3.03 pass   | 3.03 pass   |
+| `ring` on `background` (focused Input border) | ui | 4.74 pass | 4.18 pass |
+| `ring` on `card`                      | ui   | 4.74 pass   | 3.78 pass   |
 | `destructive/40` over `background` (invalid Input border) | ui | **2.11 fail** | **1.95 fail** |
+
+Before the fix (same script): `input` on `background` was 1.26 light / 1.46 dark (the Input used `border-border`, and `--input`
+equalled `--border`); light `ring` was 2.52. `border` on `background` is still 1.26 light / 1.46 dark: it is for dividers and
+is deliberately not a checked pair.
 
 The script (`node scripts/contrast-report.js`) also composites alpha classes over their parent token, which is how
 `bg-destructive/60` renders; rows with "over" use that. It models only the pairs listed in `PAIRS`. The table is measured;
@@ -99,10 +106,14 @@ the reading below is opinion.
   `text-destructive-foreground` on a solid `bg-destructive` in dark.
 - `muted-foreground` text must sit on `background` or `card`, not on `muted` (light 4.35:1; only the pressed row
   `active:bg-muted` uses that, low priority).
-- `border` is for dividers, where 1.26:1 is decorative. `Input` also uses `border-border`, and `--input` equals `--border`,
-  so the control boundary is 1.26:1 light / 1.46:1 dark, below 3:1. The focused `ring` is 2.52:1 in light. The invalid
-  border (`/40`) is 2.11:1 / 1.95:1; the error text below the field compensates. Recorded with fixes in
-  `docs/superpowers/backlog/2026-10-25-design-system-findings.md`; not fixed in this documentation change.
+- `border` is for dividers, where 1.26:1 is decorative (unchanged). `Input` draws its boundary with `border-input`
+  (148 light, 100 dark), which clears 3:1 on `background` and `card`; the focused `ring` is 4.74:1 light and 4.18:1 dark. In
+  dark, `input` (100) and `ring` (115) differ by little, so focus feedback there is a small step (opinion; not changed). The
+  invalid border (`/40`) is still 2.11:1 / 1.95:1; the error text below the field compensates. It is the only boundary
+  failure left and is labelled in `KNOWN_FAILURES` in the script, with light `muted-foreground` on `muted`; the backlog file
+  records both.
+- `scripts/contrast.test.ts` runs the script's pairs in Jest: any pair below its threshold fails, except the labelled
+  known failures, and a known failure that starts passing fails too (stale entry).
 - `README.md` says the dark input placeholder has low contrast; the script computes 7.08:1 for `muted-foreground` on the dark
   input fill, so that note looks stale (unverified on a device).
 
@@ -158,8 +169,8 @@ Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do no
   `Button` enforces it: `default` `min-h-12`, `sm` `min-h-12`, `lg` `min-h-14`, `icon` `min-h-12 min-w-12`; Tailwind `h-12` is
   48 dp (verified: `button/index.tsx`, `button.test.tsx`). The modal close button adds `min-h-12 min-w-12`
   (verified: `screens/home/index.tsx`). A pressable row is tall enough through `py-3` plus content (`ProductRow` has a
-  64 dp image, `size-16`). **Known gap:** `Input` is `min-h-9` (36 dp) and `InputSlot` has no minimum
-  (verified: `input/index.tsx`); not changed here, see the backlog finding.
+  64 dp image, `size-16`). `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
+  **Known gap:** `InputSlot` has no minimum size (verified: `input/index.tsx`); no screen uses a slot yet.
 - **Dark mode:** the preference is `system | light | dark` in `usePreferencesStore`; the root layout calls
   `Uniwind.setTheme(usePreferencesStore.getState().theme)` at module load, before the first render (comment in
   `src/app/_layout.tsx`), and `GluestackUIProvider` calls `Uniwind.setTheme(mode)` in `useLayoutEffect` (verified: both
