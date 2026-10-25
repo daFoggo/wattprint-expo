@@ -11,6 +11,33 @@ Before calling work done, run and report real results:
 - `npx expo-doctor`
 - For UI or native changes: run on the emulator and verify (see Device verification).
 
+## Read the doc before changing the area
+
+Open the matching doc first; it holds the rules and the measured reasons. The skill column names a global skill (the repo
+has none of its own) to consult after the doc; the doc wins when they differ.
+
+| Working on                                         | Read                        | Skill                                            |
+| -------------------------------------------------- | --------------------------- | ------------------------------------------------ |
+| Feature folders, routes, imports, boundaries       | `docs/architecture.md`      | `expo-project-structure`, `expo-router`          |
+| Data, HTTP, cache, query keys, offline             | `docs/data-fetching.md`     | `expo-data-fetching`                             |
+| Components, composition, variants, vendored UI     | `docs/components.md`        | `vercel-composition-patterns`, `gluestack-ui-v5` |
+| Styling, tokens, type, touch targets, a11y, motion | `docs/design-system.md`     | `uniwind`, `expo-design-system`                  |
+| Client state, Zustand, MMKV, SecureStore, logout   | `docs/client-state.md`      | none                                             |
+| Performance, lists, images, startup, bundle size   | `docs/performance.md`       | `vercel-react-native-skills`                     |
+| Checking a change on a device                      | "Device verification" below | `run`, `expo-dev-client`                         |
+
+Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `plans/`, `reports/`, `backlog/`.
+
+## Doc maintenance
+
+- Change the rule, the doc and the skill in one commit. If a rule here or in a doc changes, update every place that states
+  it (this file, the doc, `README.md`, a repo or global skill you maintain) in that commit.
+- A spec lists the docs it touches; the plan's last task updates them; a report says which ones changed.
+- Doc conventions: header with the versions it was written against and links to related docs; claims labelled
+  `(verified: <file, command or URL>)` or `(opinion)`; measured numbers keep their caveats and come from `docs/benchmarks/`;
+  no invented numbers; end with Checklist, Anti-patterns, Sources. Lines near 110 characters (`docs/` is not checked by Prettier).
+- Open items go to `docs/superpowers/backlog/` (facts versus ideas), finished chunks to `docs/superpowers/reports/`.
+
 ## Code rules
 
 - `src/app` is routes only. Screen bodies go in `src/screens`, wiring in `src/lib`, `src/stores`, `src/i18n`.

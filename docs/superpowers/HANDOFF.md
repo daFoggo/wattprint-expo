@@ -33,7 +33,7 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
   stuck. Tell it to proceed and kill Metro (listener on :8081). Never block on non-terminating processes.
 - Evidence over claims: run commands, show results; benchmark before claiming "fast" (method: `docs/performance.md` section 8).
 - Documentation rule (`AGENTS.md`): change the rule, the doc and the skill in one commit; a spec lists the docs it touches.
-- Commits: conventional (commitlint), hooks run, never bypass them. Do not commit or push unless asked.
+- Commits: conventional (commitlint), hooks run (lint-staged, commitlint), never bypass them.
 
 ## Gates (implementer brief)
 
