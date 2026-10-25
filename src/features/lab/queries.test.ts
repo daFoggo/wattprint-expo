@@ -5,6 +5,7 @@ import {
   findCachedProduct,
   labKeys,
   productListQueryOptions,
+  prefetchQuotes,
   productQueryOptions,
   quotesQueryOptions,
 } from '@/features/lab/queries';
@@ -86,5 +87,23 @@ describe('detail placeholderData', () => {
       (productQueryOptions(2, client).placeholderData as () => Product | undefined)();
     expect(placeholder(qc)?.id).toBe(2);
     expect(placeholder()).toBeUndefined();
+  });
+});
+
+describe('prefetchQuotes', () => {
+  it('puts the quotes in the cache', async () => {
+    (api.fetchQuotes as jest.Mock).mockResolvedValue({ quotes: [] });
+    const qc = new QueryClient();
+    await prefetchQuotes(qc, 5);
+    expect(qc.getQueryData(labKeys.quotes(5))).toEqual({ quotes: [] });
+    qc.clear();
+  });
+
+  it('resolves, never rejects, when the api fails', async () => {
+    (api.fetchQuotes as jest.Mock).mockRejectedValue(new Error('down'));
+    const qc = new QueryClient();
+    await expect(prefetchQuotes(qc, 6)).resolves.toBeUndefined();
+    expect(qc.getQueryData(labKeys.quotes(6))).toBeUndefined();
+    qc.clear();
   });
 });

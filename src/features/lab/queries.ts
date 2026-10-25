@@ -1,4 +1,4 @@
-import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { noop, queryOptions, type QueryClient } from '@tanstack/react-query';
 
 import { fetchProduct, fetchProducts, fetchQuotes, searchProducts } from '@/features/lab/api';
 import type { Product, ProductList } from '@/features/lab/schemas';
@@ -53,5 +53,6 @@ export const quotesQueryOptions = (n: number) =>
 
 // Warm the quotes cache before opening the bench screen, so a run can start from a known cache state
 // (cold: nothing prefetched and the app freshly started; warm: prefetched).
-export const prefetchQuotes = (queryClient: QueryClient, n: number) =>
-  queryClient.prefetchQuery(quotesQueryOptions(n));
+// Resolves once the fetch settles and never rejects (`prefetchQuery` is deprecated; `query` rejects).
+export const prefetchQuotes = (queryClient: QueryClient, n: number): Promise<void> =>
+  queryClient.query(quotesQueryOptions(n)).then(noop).catch(noop);
