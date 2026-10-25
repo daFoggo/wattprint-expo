@@ -12,7 +12,7 @@ Labels: **(verified: ...)** names the file, command or URL that was checked. **(
 
 The rules follow the Vercel `composition-patterns` skill (MIT, version 1.0.0), published at
 <https://github.com/vercel-labs/agent-skills/tree/main/skills/composition-patterns> and installed as
-`~/.claude/skills/vercel-composition-patterns` (verified: `SKILL.md` and `rules/*.md` read on 2026-10-25). It has
+`~/.claude/skills/vercel-composition-patterns` (verified: its SKILL.md and rules files read on 2026-10-25). It has
 eight rules; the skill's examples use `TextInput`, so it covers React Native, and we adapt each one to gluestack and Uniwind:
 
 | #   | Skill rule                            | Our adaptation                                                            | Section |

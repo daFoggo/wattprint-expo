@@ -13,18 +13,21 @@ Before calling work done, run and report real results:
 
 ## Read the doc before changing the area
 
-Open the matching doc first; it holds the rules and the measured reasons. The skill column names a global skill (the repo
-has none of its own) to consult after the doc; the doc wins when they differ.
+Open the matching doc first; it holds the rules and the measured reasons. The project skill `wattprint-base`
+(`.claude/skills/wattprint-base`, tracked in git) is a router and digest of these docs with evals; use it to find the right doc
+fast. The skill column names the other skills to consult after the doc (global ones, installed in `~/.claude/skills`); the doc wins
+when they differ.
 
-| Working on                                         | Read                        | Skill                                            |
-| -------------------------------------------------- | --------------------------- | ------------------------------------------------ |
-| Feature folders, routes, imports, boundaries       | `docs/architecture.md`      | `expo-project-structure`, `expo-router`          |
-| Data, HTTP, cache, query keys, offline             | `docs/data-fetching.md`     | `expo-data-fetching`                             |
-| Components, composition, variants, vendored UI     | `docs/components.md`        | `vercel-composition-patterns`, `gluestack-ui-v5` |
-| Styling, tokens, type, touch targets, a11y, motion | `docs/design-system.md`     | `uniwind`, `expo-design-system`                  |
-| Client state, Zustand, MMKV, SecureStore, logout   | `docs/client-state.md`      | none                                             |
-| Performance, lists, images, startup, bundle size   | `docs/performance.md`       | `vercel-react-native-skills`                     |
-| Checking a change on a device                      | "Device verification" below | `expo-dev-client`                                |
+| Working on                                         | Read                                     | Skill                                            |
+| -------------------------------------------------- | ---------------------------------------- | ------------------------------------------------ |
+| Any area: find the right doc and the traps         | `.claude/skills/wattprint-base/SKILL.md` | `wattprint-base`                                 |
+| Feature folders, routes, imports, boundaries       | `docs/architecture.md`                   | `expo-project-structure`, `expo-router`          |
+| Data, HTTP, cache, query keys, offline             | `docs/data-fetching.md`                  | `expo-data-fetching`                             |
+| Components, composition, variants, vendored UI     | `docs/components.md`                     | `vercel-composition-patterns`, `gluestack-ui-v5` |
+| Styling, tokens, type, touch targets, a11y, motion | `docs/design-system.md`                  | `uniwind`, `expo-design-system`                  |
+| Client state, Zustand, MMKV, SecureStore, logout   | `docs/client-state.md`                   | none                                             |
+| Performance, lists, images, startup, bundle size   | `docs/performance.md`                    | `vercel-react-native-skills`                     |
+| Checking a change on a device                      | "Device verification" below              | `expo-dev-client`                                |
 
 Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `plans/`, `reports/`, `backlog/`.
 
@@ -36,6 +39,9 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 - Doc conventions: header with the versions it was written against and links to related docs; claims labelled
   `(verified: <file, command or URL>)` or `(opinion)`; measured numbers keep their caveats and come from `docs/benchmarks/` or a committed script;
   no invented numbers; end with Checklist, Anti-patterns, Sources. Lines near 110 characters (`docs/` is not checked by Prettier).
+- `scripts/docs-links.test.ts` fails on a broken relative link, a backticked repo path that does not exist, or a skill in the
+  routing table above that is neither under `.claude/skills` nor listed as global in that test. Fenced code blocks, URLs, globs and
+  `<placeholders>` are ignored; `docs/superpowers/plans/` is historical and skipped. Keep `wattprint-base` in step with the docs.
 - Open items go to `docs/superpowers/backlog/` (facts versus ideas), finished chunks to `docs/superpowers/reports/`.
 
 ## Code rules

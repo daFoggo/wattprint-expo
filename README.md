@@ -49,6 +49,7 @@ Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch t
 ```
 .github/workflows/ci.yml        CI: install --frozen-lockfile, pnpm check, expo-doctor
 .husky/                         pre-commit (lint-staged), commit-msg (commitlint)
+.claude/skills/wattprint-base/  project skill (tracked): SKILL.md router, references/ digests of docs/, evals/evals.json
 docs/architecture.md            feature-slice architecture and import rules
 docs/data-fetching.md           data layer rules, measured choices, open decisions
 docs/components.md              composition rules, variants, vendored UI exceptions
@@ -64,6 +65,7 @@ scripts/uniwind-guard.test.ts   guards Uniwind native pitfalls
 scripts/design-guard.test.ts    guards hard-coded colours and dark: colour pairs
 scripts/guard-utils.ts          file walker and source scanner shared by the guard tests
 scripts/contrast-report.js      prints WCAG contrast ratios for the tokens in src/global.css
+scripts/docs-links.test.ts      guards docs: relative links, backticked repo paths, skills named in AGENTS.md
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
 src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), lab, (settings)

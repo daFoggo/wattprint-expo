@@ -38,8 +38,8 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
 ## Gates (implementer brief)
 
 You are the implementer. A task is done only when every gate below ran and you report the real result, including failures.
-Run from the repo root on a clean working tree. `.claude/` is ignored by lint, Jest and Prettier; do not delete other sessions'
-worktrees.
+Run from the repo root on a clean working tree. `.claude/worktrees/` is ignored by git, lint, Jest and Prettier (`.claude/skills/` is tracked and checked); do not delete
+other sessions' worktrees.
 
 | #   | Gate                  | Command                                                  | Pass condition                                                  |
 | --- | --------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |
@@ -56,6 +56,7 @@ Guards inside gate 2 (each has self-tests that fail first when you break the rul
 | `scripts/boundaries.test.ts`    | import boundaries (`eslint.boundaries.js`)                                                   |
 | `scripts/uniwind-guard.test.ts` | classes Uniwind ignores on native, missing `*ClassName` colour bindings                      |
 | `scripts/design-guard.test.ts`  | hex and `rgb()`/`hsl()` literals, `dark:` colour pairs outside `src/components/ui`            |
+| `scripts/docs-links.test.ts`    | broken relative doc links, backticked repo paths that do not exist, routing-table skills that are neither project nor listed global |
 | `scripts/config-guard.test.ts`  | web imports, NativeWind or template leftovers, Metro and Uniwind wiring                      |
 | `scripts/app-identity.test.ts`, `scripts/app-config.test.ts` | application ids per env, `eas.json` assertions            |
 
@@ -72,7 +73,7 @@ item), Next. Reference report: `reports/2026-10-25-base-and-data-layer.md`.
 
 - **G1 to G5 done and merged to `main`** (Uniwind native compatibility, data-fetching research, validation with the Expo skills,
   benchmarks, architecture). Details: `reports/2026-10-25-base-and-data-layer.md`.
-- **Documentation pass** (branch `docs/base-documentation`): `docs/components.md`, `design-system.md`, `client-state.md`,
+- **Documentation pass** (branch docs/base-documentation): `docs/components.md`, `design-system.md`, `client-state.md`,
   `performance.md`, the routing table in `AGENTS.md`, `scripts/design-guard.test.ts`, reports and backlog folders.
 - **Open items** (each a file in `backlog/`): query persistence spike, auth and session store, chat streaming, per-tab
   ErrorBoundary, production-env build check, image-row list performance on a device, first-frame theme flash in a release
@@ -96,7 +97,7 @@ Build the first real feature as `src/features/<name>` (see `docs/architecture.md
 - The gluestack CLI forces NativeWind when `android/` exists and installs alpha packages: never run it; components are hand-copied
   (stable core 5.0.15, utils 5.0.6).
 - Skills are installed globally with `npx skills add <repo> --skill '*' -g -y` in PowerShell (Windows junctions from
-  `~/.claude/skills` to `~/.agents/skills`). Git Bash symlinks are not readable by native Windows tools. The repo has no
-  repo-local skills; the routing table names global ones.
+  `~/.claude/skills` to `~/.agents/skills`). Git Bash symlinks are not readable by native Windows tools. The only repo-local skill is
+  `wattprint-base` (`.claude/skills/wattprint-base`, tracked); the routing table names it and the global ones.
 - Bash heredocs with unbalanced quotes can break the tool: write files with the Write tool.
 - `docs/` is in `.prettierignore`, so Prettier does not check Markdown there; keep lines near 110 characters by hand.
