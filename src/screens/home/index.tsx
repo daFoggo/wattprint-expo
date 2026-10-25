@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 
 import { Button, ButtonText } from '@/components/ui/button';
+import { CloseIcon, Icon } from '@/components/ui/icon';
 import {
   Modal,
   ModalBackdrop,
@@ -83,9 +84,11 @@ export function Home() {
         <ModalBackdrop />
         <ModalContent>
           <ModalHeader>
-            <Text className="text-foreground text-lg font-semibold">{t('home.modalTitle')}</Text>
+            <Text accessibilityRole="header" className="text-foreground text-lg font-semibold">
+              {t('home.modalTitle')}
+            </Text>
             <ModalCloseButton accessibilityLabel={t('common.close')} hitSlop={12} className="p-2">
-              <Text className="text-foreground">X</Text>
+              <Icon as={CloseIcon} size="md" />
             </ModalCloseButton>
           </ModalHeader>
           <ModalBody>
