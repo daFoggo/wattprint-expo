@@ -1,8 +1,9 @@
+import type { ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyState } from './empty-state';
 
-type OfflineStateProps = Omit<React.ComponentProps<typeof EmptyState>, 'title' | 'children'>;
+type OfflineStateProps = Omit<ComponentProps<typeof EmptyState>, 'title' | 'children'>;
 
 // Explicit variant of EmptyState for a query that is paused because the device is offline.
 export function OfflineState({ description, ...props }: OfflineStateProps) {
