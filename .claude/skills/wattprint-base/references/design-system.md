@@ -15,7 +15,7 @@ table: [docs/design-system.md](../../../../docs/design-system.md); native pitfal
 | New or changed token                    | Edit both theme blocks in `src/global.css`, run `node scripts/contrast-report.js`, update the table                           |
 | Third-party component with `className`  | `withUniwind` once in one file (`StyledUIIcon`, `StyledImage`)                                                                |
 | Pressable size                          | At least 48 dp wide and tall; `Button` sizes enforce `min-h-12`; text containers use `min-h-*`, never `h-*`                   |
-| Input field                             | Known gap: `Input` is `min-h-9` (36 dp) and `InputSlot` has no minimum; do not claim it passes                                |
+| Input field                             | `Input` is `min-h-12` (48 dp) with a 3:1 `border-input`; `InputSlot` has no minimum size                                      |
 | Titles, icon-only controls, errors      | `accessibilityRole="header"`; `accessibilityLabel`; `selectable` text with a polite live region                               |
 | Spacing                                 | Tailwind scale tiers (`gap-1..4`, `px-4`, `py-3`); no arbitrary values (`w-[320px]`)                                          |
 | Animation                               | Opacity and transform, short, never meaning by motion alone; check reduced motion                                             |

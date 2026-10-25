@@ -103,7 +103,7 @@
         "Does not use `forwardRef` in this own component; `ref` is a regular prop typed `React.Ref<TextInput>`, and the answer notes `forwardRef` is allowed only in vendored `src/components/ui/**`",
         "The clear control is at least 48 dp wide and tall (`size=\"icon\"` gives `min-h-12 min-w-12`); no `h-8 w-8` override at the call site",
         "The icon is a `ButtonIcon` (or `Icon`) child of a `Button`, not an `icon` prop, and the button has an `accessibilityLabel`",
-        "Says `Input` is `min-h-9` (36 dp) and `InputSlot` has no minimum, a known gap recorded in the backlog; does not claim the field already meets 48 dp",
+        "Says `Input` is `min-h-12` (48 dp) but `InputSlot` has no minimum size, so an icon slot inside the field must not be treated as a 48 dp target on its own",
         "Sets `accessibilityLabel` on `InputField`, shows the error text `selectable` with a polite live region, and uses i18n keys",
         "Does not add `useMemo` or `useCallback` by habit because React Compiler is on"
       ]

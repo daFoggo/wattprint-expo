@@ -53,7 +53,7 @@ restates them: **when this skill and a doc differ, the doc wins**. Change a rule
    `focus-visible:`, `web:`, `group-*`) (`scripts/design-guard.test.ts`, `scripts/uniwind-guard.test.ts`).
 5. **Own components use `ref` as a prop**, never `forwardRef` or `useContext`; vendored `src/components/ui/**` keeps upstream.
    Pick `variant` or `size`, never call-site size or colour overrides, never boolean look props.
-6. **48 dp touch targets.** `Button` enforces it; `Input` is a known gap (`min-h-9`) recorded in the backlog.
+6. **48 dp touch targets.** `Button` and `Input` enforce it (`min-h-12`); `InputSlot` has no minimum size.
 7. **Packages.** `npx expo install <pkg>`; `pnpm add -D` for dev deps on Windows; keep the gluestack pins; never run
    `gluestack-ui add` or `init`; no alpha components.
 8. **State has one home.** Query data is not store state; no tokens in MMKV; one store per concern.
