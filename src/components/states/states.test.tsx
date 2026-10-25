@@ -9,6 +9,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingState } from './loading-state';
+import { OfflineState } from './offline-state';
 
 describe('LoadingState', () => {
   it('is an accessible progress indicator with a label', async () => {
@@ -47,6 +48,20 @@ describe('EmptyState', () => {
   it('renders no action slot without children', async () => {
     await render(<EmptyState testID="empty" title="No data" />);
     expect(screen.getByTestId('empty').children).toHaveLength(1);
+  });
+});
+
+describe('OfflineState', () => {
+  it('shows the generic offline copy in the paused state', async () => {
+    await render(<OfflineState />);
+    expect(screen.getByText(en.states.pausedTitle)).toBeTruthy();
+    expect(screen.getByText(en.states.pausedDescription)).toBeTruthy();
+  });
+
+  it('allows a custom description and a layout className', async () => {
+    await render(<OfflineState testID="offline" description="Products later" className="p-0" />);
+    expect(screen.getByText('Products later')).toBeTruthy();
+    expect(screen.getByTestId('offline').props.className).toContain('p-0');
   });
 });
 

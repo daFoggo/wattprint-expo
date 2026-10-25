@@ -40,7 +40,9 @@
   },
   "states": {
     "loading": "Loading",
-    "emptyTitle": "Nothing here yet"
+    "emptyTitle": "Nothing here yet",
+    "pausedTitle": "You are offline",
+    "pausedDescription": "Content will load when the connection is back."
   },
   "lab": {
     "products": {
@@ -49,8 +51,6 @@
       "searchPlaceholder": "Search products",
       "emptyTitle": "No products found",
       "emptyDescription": "Nothing matches \"{{q}}\".",
-      "pausedTitle": "You are offline",
-      "pausedDescription": "Products will load when the connection is back.",
       "offlineBanner": "Offline. Showing saved results.",
       "refreshFailed": "Could not refresh. Showing saved results.",
       "openBench": "Open list benchmark",

@@ -11,7 +11,7 @@ Backend: external FastAPI (no Expo `+api` routes). Test API for experiments: dum
 - Detail screens use the cached list row as `placeholderData` (measured on the emulator, n=5: first content in ~5 ms; with a warm connection the real data arrives at ~76 ms, and with a 1000 ms server delay at ~1.3 s, so the placeholder hides the whole request).
 - Search inputs: debounce with TanStack Pacer (300 ms) plus `keepPreviousData`.
 - Connectivity: `initOnlineManager` (expo-network); focus: `useAppStateFocus`; gate screen polling with `subscribed: useIsFocused()` when needed.
-- Every data screen renders loading, empty, error and paused states (`components/states`; paused uses `EmptyState`; the bench screen is exempt); a failed refresh keeps showing cached data with a banner.
+- Every data screen renders loading, empty, error and paused states (`components/states`; paused uses `OfflineState`, built on `EmptyState`; the bench screen is exempt); a failed refresh keeps showing cached data with a banner.
 - Long lists (a few hundred rows or more): FlashList v2. At ~100 rows no difference was measurable, so FlatList is acceptable there. (Measured on the x86_64 emulator, n=5 per cell, ~420 frames each, text-only rows: janky frames ~1% vs ~5% at 500/1000, FlatList +40 MB PSS at 500/1000, +7 MB at 100; frame percentiles equal. Re-measure with image rows on a device.)
 - Images in recycled lists: `expo-image` with `recyclingKey`.
 

@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
 import { withUniwind } from 'uniwind';
 
-import { EmptyState } from '@/components/states/empty-state';
 import { ErrorState } from '@/components/states/error-state';
 import { LoadingState } from '@/components/states/loading-state';
+import { OfflineState } from '@/components/states/offline-state';
 import { productQueryOptions } from '@/features/lab/queries';
 
 const StyledImage = withUniwind(Image);
@@ -24,14 +24,7 @@ export function ProductDetailScreen({ id }: { id: string }) {
   if (!valid) return <ErrorState error={new Error(t('lab.detail.invalidId'))} />;
   if (data === undefined) {
     if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
-    if (fetchStatus === 'paused') {
-      return (
-        <EmptyState
-          title={t('lab.products.pausedTitle')}
-          description={t('lab.products.pausedDescription')}
-        />
-      );
-    }
+    if (fetchStatus === 'paused') return <OfflineState />;
     return <LoadingState label={t('lab.detail.loading')} />;
   }
 

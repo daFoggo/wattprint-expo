@@ -8,6 +8,7 @@ import { Text, View } from 'react-native';
 import { EmptyState } from '@/components/states/empty-state';
 import { ErrorState } from '@/components/states/error-state';
 import { LoadingState } from '@/components/states/loading-state';
+import { OfflineState } from '@/components/states/offline-state';
 import { Button, ButtonText } from '@/components/ui/button';
 import { RenderCount, logRenderCounts } from '@/features/lab/bench/render-count';
 import { ProductRow } from '@/features/lab/components/product-row';
@@ -50,14 +51,7 @@ export function ProductsScreen() {
   function renderBody() {
     if (data === undefined) {
       if (isError) return <ErrorState error={error} onRetry={() => void refetch()} />;
-      if (paused) {
-        return (
-          <EmptyState
-            title={t('lab.products.pausedTitle')}
-            description={t('lab.products.pausedDescription')}
-          />
-        );
-      }
+      if (paused) return <OfflineState />;
       return <LoadingState label={t('lab.products.loading')} />;
     }
     if (data.products.length === 0) {

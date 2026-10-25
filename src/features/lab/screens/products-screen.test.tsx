@@ -86,7 +86,7 @@ describe('ProductsScreen', () => {
     onlineManager.setOnline(false);
     (api.fetchProducts as jest.Mock).mockResolvedValue({ products: [] });
     await renderScreen();
-    expect(await screen.findByText(en.lab.products.pausedTitle)).toBeTruthy();
+    expect(await screen.findByText(en.states.pausedTitle)).toBeTruthy();
     expect(api.fetchProducts).not.toHaveBeenCalled();
   });
 

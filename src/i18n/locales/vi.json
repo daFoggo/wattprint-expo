@@ -40,7 +40,9 @@
   },
   "states": {
     "loading": "Đang tải",
-    "emptyTitle": "Chưa có gì ở đây"
+    "emptyTitle": "Chưa có gì ở đây",
+    "pausedTitle": "Bạn đang ngoại tuyến",
+    "pausedDescription": "Nội dung sẽ tải khi có kết nối trở lại."
   },
   "lab": {
     "products": {
@@ -49,8 +51,6 @@
       "searchPlaceholder": "Tìm sản phẩm",
       "emptyTitle": "Không tìm thấy sản phẩm",
       "emptyDescription": "Không có kết quả cho \"{{q}}\".",
-      "pausedTitle": "Bạn đang ngoại tuyến",
-      "pausedDescription": "Sản phẩm sẽ tải khi có kết nối trở lại.",
       "offlineBanner": "Ngoại tuyến. Đang hiển thị kết quả đã lưu.",
       "refreshFailed": "Không thể làm mới. Đang hiển thị kết quả đã lưu.",
       "openBench": "Mở thử nghiệm danh sách",

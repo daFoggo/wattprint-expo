@@ -69,7 +69,7 @@ describe('ProductDetailScreen', () => {
   it('shows the paused state when offline with nothing cached', async () => {
     onlineManager.setOnline(false);
     await renderScreen('3');
-    expect(await screen.findByText(en.lab.products.pausedTitle)).toBeTruthy();
+    expect(await screen.findByText(en.states.pausedTitle)).toBeTruthy();
     expect(api.fetchProduct).not.toHaveBeenCalled();
   });
 
