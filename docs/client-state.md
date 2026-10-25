@@ -99,7 +99,7 @@ Outside React (a module that runs before render), use `useXStore.getState()`, as
 
 ## 4. Persistence
 
-`persist` options, as typed in the installed Zustand 5.0.16 (verified: `middleware/persist.d.ts`):
+`persist` options, as typed in the installed Zustand 5.0.16 (verified: `zustand/middleware/persist.d.ts`):
 
 | Option                 | Meaning in the installed source                                                                 |
 | ---------------------- | ----------------------------------------------------------------------------------------------- |
@@ -243,7 +243,7 @@ it('persists theme to MMKV', () => {
 - Our code: `src/stores/preferences-store.ts`, `src/lib/storage.ts`, `src/app/_layout.tsx`, `src/hooks/use-nav-theme.ts`,
   `jest.setup.ts`.
 - Zustand persist reference: <https://zustand.docs.pmnd.rs/reference/middlewares/persist>; installed source
-  `node_modules/zustand/esm/middleware.mjs` and `middleware/persist.d.ts`.
+  `node_modules/zustand/esm/middleware.mjs` and `zustand/middleware/persist.d.ts`.
 - React Navigation lifecycle: <https://reactnavigation.org/docs/navigation-lifecycle/>.
 - SecureStore: <https://docs.expo.dev/versions/latest/sdk/securestore/>.
 - Design for the session store: `docs/superpowers/specs/2026-10-25-data-architecture-design.md`.

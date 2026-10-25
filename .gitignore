@@ -47,5 +47,6 @@ yarn-error.*
 # personal Claude config (kept locally, not tracked)
 claude-config-summary.md
 
-# Claude Code local state and agent worktrees (other sessions may have live checkouts here)
-.claude/
+# Claude Code agent worktrees and personal settings (the project skill in .claude/skills is tracked)
+.claude/worktrees/
+.claude/settings.local.json
