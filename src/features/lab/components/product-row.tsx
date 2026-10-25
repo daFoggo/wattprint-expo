@@ -1,11 +1,8 @@
-import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import { withUniwind } from 'uniwind';
 
+import { StyledImage } from '@/features/lab/components/styled-image';
 import type { Product } from '@/features/lab/schemas';
-
-const StyledImage = withUniwind(Image);
 
 type ProductRowProps = {
   product: Product;

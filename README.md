@@ -162,8 +162,8 @@ Expect API changes.
 `android/` exists (it then classifies the app as a library) and installs alpha `core`/`utils`, downgrades
 uniwind, tailwindcss and safe-area-context, and rewrites Metro/Babel config. All of that was reverted. The
 components (provider, icon, button, input, modal) were hand-copied from the CLI's cached Uniwind template with
-stable `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6; web variants were not copied. One edit:
-`opacity: 0` removed from the modal `ZoomIn` `withInitialValues`: Reanimated builds ZoomIn's initial values from transform keys only, so the `opacity` key was ignored (and `tsc` rejected the type); removing it is a runtime no-op. Do not run
+stable `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6; web variants were not copied. Two edits: every `Button` size has at least `min-h-12` (48 dp Android touch target; upstream uses `min-h-8`/`min-h-9`/`min-h-10`/none, see the
+comment in `src/components/ui/button/index.tsx`); and `opacity: 0` removed from the modal `ZoomIn` `withInitialValues`: Reanimated builds ZoomIn's initial values from transform keys only, so the `opacity` key was ignored (and `tsc` rejected the type); removing it is a runtime no-op. Do not run
 `gluestack-ui add` or `init` blindly, and use no alpha components (Tabs, Table, BottomSheet, Calendar,
 DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer).
 

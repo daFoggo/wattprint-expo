@@ -1,15 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text } from 'react-native';
-import { withUniwind } from 'uniwind';
 
 import { ErrorState } from '@/components/states/error-state';
 import { LoadingState } from '@/components/states/loading-state';
 import { OfflineState } from '@/components/states/offline-state';
+import { StyledImage } from '@/features/lab/components/styled-image';
 import { productQueryOptions } from '@/features/lab/queries';
-
-const StyledImage = withUniwind(Image);
 
 export function ProductDetailScreen({ id }: { id: string }) {
   const { t } = useTranslation();
