@@ -45,11 +45,14 @@ Rules:
 
 - Use only these token class names for colour: `bg-*`, `text-*`, `border-*`, `accent-*` (non-style colour props such as
   `ActivityIndicator`, see `README.md` "Uniwind native rules"). No hex, `rgb()`, `hsl()` or palette classes
-  (`bg-red-500`). Enforced for hex, colour functions and `dark:` colour pairs by `scripts/design-guard.test.ts`;
+  (`bg-red-500`). Enforced by `scripts/design-guard.test.ts` for hex colours in a colour position, colour functions (`rgb()`, `hsl()`, `color-mix()`, ...), literal values of `*Color` style props (`color: 'white'`) and `dark:` colour pairs;
   palette classes are not guarded (opinion: add if they appear).
-- No `dark:` colour pairs outside `src/components/ui` (the tokens already switch). The guard allows the upstream pairs
-  in `button` and `input` only; one `rgb(` template is allow-listed in `src/lib/nav-theme.ts`
-  (it turns a token triple into the CSS colour React Navigation needs).
+- No `dark:` colour pairs outside `src/components/ui` (the tokens already switch). The guard allows `dark:` pairs anywhere
+  under `src/components/ui/` (vendored upstream code); today only `button` and `input` have them. One `rgb(` template is
+  allow-listed in `src/lib/nav-theme.ts`: the exact literal `rgb(${parts.join(', ')})`, which turns a token triple into the CSS
+  colour React Navigation needs.
+- Never put `text-destructive-foreground` on a solid `bg-destructive` in dark: that pair is 2.77:1 (section 2). The Button
+  avoids it with `dark:bg-destructive/60`.
 - To change a colour, edit the triple in both blocks in `src/global.css` and re-run
   `node scripts/contrast-report.js` (section 2); do not add a token for one screen (opinion).
 - The navigation theme reads `--background`, `--foreground`, `--primary`, `--card`, `--border` through `useCSSVariable`
@@ -73,25 +76,35 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `primary-foreground` on `primary`     | text | 17.18 pass  | 16.76 pass  |
 | `secondary-foreground` on `secondary` | text | 16.44 pass  | 14.50 pass  |
 | `accent-foreground` on `accent`       | text | 11.62 pass  | 14.50 pass  |
-| `destructive-foreground` on `destructive` | text | 4.57 pass | **2.77 fail** |
+| `destructive-foreground` on solid `destructive` | text | 4.57 pass | **2.77 fail** (pair unused in dark) |
 | `muted-foreground` on `background`    | text | 4.74 pass   | 7.66 pass   |
 | `muted-foreground` on `muted`         | text | **4.35 fail** | 5.86 pass |
 | `destructive` on `background`         | text | 4.77 pass   | 6.85 pass   |
+| `destructive-foreground` on `destructive/60` over `background` (dark Button) | text | n/a | 6.20 pass |
+| `destructive-foreground` on `destructive/60` over `card` | text | n/a | 5.77 pass |
+| `destructive-foreground` on `destructive/50` over `background` (dark Button pressed) | text | n/a | 7.76 pass |
+| `muted-foreground` on `input/30` over `background` (dark Input fill and placeholder) | text | n/a | 7.08 pass |
 | `primary` on `background`             | ui   | 17.93 pass  | 18.51 pass  |
 | `border` on `background`              | ui   | **1.26 fail** | **1.46 fail** |
 | `input` on `background`               | ui   | **1.26 fail** | **1.46 fail** |
 | `ring` on `background`                | ui   | **2.52 fail** | 4.18 pass   |
+| `destructive/40` over `background` (invalid Input border) | ui | **2.11 fail** | **1.95 fail** |
 
-What this means (the table is measured; the reading is opinion):
+The script (`node scripts/contrast-report.js`) also composites alpha classes over their parent token, which is how
+`bg-destructive/60` renders; rows with "over" use that. It models only the pairs listed in `PAIRS`. The table is measured;
+the reading below is opinion.
 
-- Dark `destructive-foreground` on `destructive` fails, but the destructive Button in dark uses
-  `dark:bg-destructive/60` (alpha over the background), so the real pair differs and was **not computed**.
-- `muted-foreground` text must sit on `background` or `card`, not on `muted` (light fails by 0.15).
-- `border` is for dividers. An input whose only boundary is `border-border` (1.26:1 light) is below 3:1 for a control
-  boundary; the focused `ring` is 2.52:1 in light. These are template colours, recorded in
-  `docs/superpowers/backlog/2026-10-25-design-system-findings.md`; they are not fixed in this documentation change.
-- `README.md` records a low-contrast dark input placeholder (known limitation); the script does not model the translucent
-  input fill (`dark:bg-input/30`), so that case is not in this table.
+- Dark `destructive-foreground` on **solid** `destructive` fails (2.77:1) but nothing renders that pair: the dark destructive
+  Button is `bg-destructive/60` (6.20:1 over `background`, 5.77:1 over `card`, 7.76:1 pressed at `/50`). Rule: never put
+  `text-destructive-foreground` on a solid `bg-destructive` in dark.
+- `muted-foreground` text must sit on `background` or `card`, not on `muted` (light 4.35:1; only the pressed row
+  `active:bg-muted` uses that, low priority).
+- `border` is for dividers, where 1.26:1 is decorative. `Input` also uses `border-border`, and `--input` equals `--border`,
+  so the control boundary is 1.26:1 light / 1.46:1 dark, below 3:1. The focused `ring` is 2.52:1 in light. The invalid
+  border (`/40`) is 2.11:1 / 1.95:1; the error text below the field compensates. Recorded with fixes in
+  `docs/superpowers/backlog/2026-10-25-design-system-findings.md`; not fixed in this documentation change.
+- `README.md` says the dark input placeholder has low contrast; the script computes 7.08:1 for `muted-foreground` on the dark
+  input fill, so that note looks stale (unverified on a device).
 
 ## 3. Type
 
@@ -99,8 +112,15 @@ Uniwind resolves Tailwind's `text-*` sizes; Tailwind v4 defines `text-xs` 12px, 
 `text-lg` 18px, `text-xl` 20px, `text-2xl` 24px, `text-3xl` 30px with line heights 16, 20, 24, 28, 28, 32, 36 px
 (verified: <https://tailwindcss.com/docs/font-size>; React Native treats these as scalable units, see section 6).
 No custom font or `--text-*` token is defined (verified: `src/global.css`). Sizes in use outside `src/components/ui`,
-counted from `className` strings by script on 2026-10-25: `text-sm` 13, `text-base` 5, `text-lg` 4, `text-2xl` 2, `text-3xl` 1;
-weights `font-semibold` 6, `font-bold` 3, `font-medium` 1. `text-xs` appears only inside Button `sm`/text variants.
+counted on 2026-10-25 with the command below: `text-sm` 12, `text-base` 5, `text-lg` 4, `text-2xl` 2, `text-3xl` 1; weights
+`font-semibold` 6, `font-bold` 3, `font-medium` 1. `text-xs` has no use outside `src/components/ui` (it appears in Button `sm`).
+
+```sh
+grep -rhoE '(^|[ "'"'"'`])text-(xs|sm|base|lg|xl|[2-9]xl)([ "'"'"'`]|$)' src --include=*.ts --include=*.tsx \
+  --exclude-dir=ui --exclude='*.test.ts' --exclude='*.test.tsx' | sort | uniq -c
+```
+
+Swap the pattern for `font-(medium|semibold|bold)`, `gap-[0-9]+`, `(p|px|py)-[0-9]+` or `rounded(-[a-z]+)?` for the other counts.
 
 | Role                  | Classes in use                                               | Seen in                                        |
 | --------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
@@ -117,8 +137,8 @@ Use these roles; add a new one only after a second screen needs it (opinion).
 ## 4. Spacing, radius, size
 
 No spacing token exists beyond Tailwind's scale (4 px steps). Tiers in use outside `src/components/ui`
-(script count, 2026-10-25): gap `gap-1` 3, `gap-2` 6, `gap-3` 2, `gap-4` 2; padding `px-4` 4, `py-3` 4, `px-6` 2, `p-6` 1,
-`p-4` 1, `py-12` 1; radius `rounded-md` 4, `rounded-lg` 1. Used as:
+(same grep, 2026-10-25): gap `gap-1` 3, `gap-2` 3, `gap-3` 3, `gap-4` 2; padding `px-4` 4, `py-3` 4, `px-6` 2, `p-6` 1,
+`p-4` 1, `p-2` 1, `py-12` 1; radius `rounded-md` 1, `rounded-lg` 1. Used as:
 
 | Tier | Class        | Use                                                    |
 | ---- | ------------ | ------------------------------------------------------ |
