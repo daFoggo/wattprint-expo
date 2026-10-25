@@ -5,19 +5,19 @@ Use before installing a package, touching gluestack, reading env vars, verifying
 
 ## Decision matrix
 
-| Need                            | Pattern                                                                                                                                                  |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Add a dependency                | `npx expo install <pkg>`; never type a version from memory                                                                                               |
-| Add a dev dependency on Windows | `pnpm add -D <pkg>` (`npx expo install ... -- --dev` misplaces it)                                                                                       |
-| `@gluestack-ui/core`, `utils`   | Keep exact pins 5.0.15 and 5.0.6 (alpha dist-tags); install with `pnpm add`; never upgrade blindly                                                       |
-| A new gluestack component       | Hand-copy from the Uniwind template with stable packages; never `gluestack-ui add` or `init` (forces NativeWind when `android/` exists, installs alphas) |
-| Alpha components                | None: Tabs, Table, BottomSheet, Calendar, DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer                                                     |
-| Edit a vendored file            | Record the deviation in `README.md` (the 48 dp `Button` sizes and the modal `ZoomIn` edit are there)                                                     |
-| `react-native-web`, `react-dom` | Required peers only; never import under `src/` (`scripts/config-guard.test.ts`)                                                                          |
-| Env value                       | Static `process.env.EXPO_PUBLIC_X` in `src/env.ts`; destructuring is not inlined; never a secret                                                         |
-| UI strings                      | i18n keys, same keys in `en` and `vi`; error text `selectable`                                                                                           |
-| Commit                          | Conventional (commitlint, 100 chars); hooks run; never bypass                                                                                            |
-| EAS                             | Never `eas build` or create credentials unless the user asks                                                                                             |
+| Need                            | Pattern                                                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Add a dependency                | `npx expo install <pkg>`; never type a version from memory                                                                                                   |
+| Add a dev dependency on Windows | `pnpm add -D <pkg>` (`npx expo install ... -- --dev` misplaces it)                                                                                           |
+| `@gluestack-ui/core`, `utils`   | Keep exact pins 5.0.15 and 5.0.6 (alpha dist-tags); install with `pnpm add`; never upgrade blindly                                                           |
+| A new gluestack component       | Hand-copy from the Uniwind template with stable packages; never `gluestack-ui add` or `init` (forces NativeWind when `android/` exists, installs alphas)     |
+| Alpha components                | None: Tabs, Table, BottomSheet, Calendar, DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer                                                         |
+| Edit a vendored file            | Record the deviation in `README.md` (three edits are there: `Input` `min-h-12` plus `border-input`, `Button` `min-h-12` sizes, the modal `ZoomIn` `opacity`) |
+| `react-native-web`, `react-dom` | Required peers only; never import under `src/` (`scripts/config-guard.test.ts`)                                                                              |
+| Env value                       | Static `process.env.EXPO_PUBLIC_X` in `src/env.ts`; destructuring is not inlined; never a secret                                                             |
+| UI strings                      | i18n keys, same keys in `en` and `vi`; error text `selectable`                                                                                               |
+| Commit                          | Conventional (commitlint, 100 chars); hooks run; never bypass                                                                                                |
+| EAS                             | Never `eas build` or create credentials unless the user asks                                                                                                 |
 
 ## Gates before "done"
 

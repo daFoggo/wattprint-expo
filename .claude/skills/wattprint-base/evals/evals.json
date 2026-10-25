@@ -45,12 +45,12 @@
       "id": 4,
       "name": "staletime-zero-default",
       "source": "docs/data-fetching.md Rules; docs/performance.md section 4",
-      "prompt": "The dashboard summary sometimes looks stale. Set `staleTime: 0` in the QueryClient defaults so every screen always refetches.",
+      "prompt": "The dashboard summary sometimes looks stale. Set `staleTime: 0` in the QueryClient defaults so every screen always refetches. While you are there, add a `range` filter (7d, 30d, 90d) to the summary query: it is sent to the API as `?range=`.",
       "expectations": [
         "Declines to change the global default to 0 and keeps `staleTime` 30_000 in `src/lib/query-client.ts`",
         "Cites the measured reason: with `staleTime: 0` opening a detail from the list made 2 requests instead of 1, and reopening within 30 s made 2 instead of 0 (emulator, relative)",
         "Offers the per-query alternative: set `staleTime` on that one query's `queryOptions` in the feature's `queries.ts`, or invalidate after a mutation",
-        "Keeps the query key containing every variable the `queryFn` uses",
+        "The `range` value is part of the query key (the key factory takes it) because `queryFn` sends it; a key without `range` would serve one range's data for another",
         "Does not add a persisted query cache; says query persistence is a not-decided item in the backlog"
       ]
     },
@@ -58,14 +58,14 @@
       "id": 5,
       "name": "fallback-data-instead-of-throw",
       "source": "docs/data-fetching.md Rules; AGENTS.md Data layer",
-      "prompt": "Write features/energy/api.ts getDailyUsage(). If the request fails, just return an empty array so the screen never shows an error. Keep it simple, use fetch.",
+      "prompt": "Write features/energy/api.ts getDailyUsage(). If the request fails, just return an empty array so the screen never shows an error. Keep it simple, use fetch, and send the access token as `?token=` in the URL since that is easiest to test in the browser.",
       "expectations": [
         "Does not return an empty array or any fallback value on failure; the function throws `ApiError`, `NetworkError` or `ContractError` through the client",
         "Uses `createApiClient` from `src/lib/http.ts` with a Zod `schema` defined in the feature's `schemas.ts`, not a raw `fetch`",
         "Puts the key factory and `queryOptions` in `queries.ts` and keeps `api.ts` as the only caller of the client",
         "The screen renders `LoadingState`, `EmptyState` (zero rows), `ErrorState` and, when paused offline, `OfflineState` from `components/states`",
         "States that only `isRetryable` errors (network, 5xx) are retried and `ContractError` is never retried; a failed refresh keeps cached data with a banner",
-        "Does not put a token in the URL"
+        "Refuses the `?token=` query parameter: tokens never go in URLs (the client's `onRequest` hook logs paths); auth is handled by `createApiClient` (header, single-flight refresh)"
       ]
     },
     {
@@ -87,7 +87,7 @@
       "source": "docs/design-system.md sections 1-2 and anti-patterns; scripts/design-guard.test.ts",
       "prompt": "Add a red 'Overdue' badge to ProductRow: background #E7000B, white text, and in dark mode use dark:bg-red-900 so it is softer.",
       "expectations": [
-        "Does not use the hex value, `bg-red-*` palette classes or a `dark:` colour pair; uses semantic tokens such as `bg-destructive` and `text-destructive-foreground`, or `text-destructive` on a neutral surface",
+        "Does not use the hex value, `bg-red-*` palette classes or a `dark:` colour pair; the badge uses `text-destructive` on a neutral surface, or `bg-destructive/60` in dark (with `text-destructive-foreground`), not a solid `bg-destructive` with `text-destructive-foreground` in dark",
         "Explains that tokens already switch with the theme, so no `dark:` pair is needed outside `src/components/ui`",
         "Warns that `text-destructive-foreground` on a solid `bg-destructive` is 2.77:1 in dark (the Button uses `dark:bg-destructive/60`) and checks contrast with `node scripts/contrast-report.js` or avoids that pair",
         "Does not add a one-off token for a single screen; if a colour must change, both theme blocks in `src/global.css` are edited together",
@@ -106,6 +106,19 @@
         "Says `Input` is `min-h-12` (48 dp) but `InputSlot` has no minimum size, so an icon slot inside the field must not be treated as a 48 dp target on its own",
         "Sets `accessibilityLabel` on `InputField`, shows the error text `selectable` with a polite live region, and uses i18n keys",
         "Does not add `useMemo` or `useCallback` by habit because React Compiler is on"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "custom-control-border",
+      "source": "docs/design-system.md section 1 rules and section 2; scripts/contrast-report.js",
+      "prompt": "Build a custom Checkbox-like `ToggleBox` for the settings screen: a 24 dp rounded square with a 1 px border that fills with the primary colour when checked. Use border-border for the outline so it matches the dividers, and show the code.",
+      "expectations": [
+        "Draws the unchecked boundary with `border-input`, not `border-border`, and says control boundaries need 3:1 while `border-border` (1.26:1 light) is for dividers only",
+        "Uses semantic tokens only (`bg-primary`, `border-input`, `text-primary-foreground` for the check); no hex, `rgb()`, palette classes or `dark:` colour pairs",
+        "The pressable area is at least 48 dp wide and tall (padding or `min-h-12 min-w-12` around the 24 dp box), with `accessibilityRole=\"checkbox\"` or `switch`, `accessibilityState={{ checked }}` and a label",
+        "Notes that a new colour pair would need an entry in `PAIRS` in `scripts/contrast-report.js` and that `scripts/contrast.test.ts` must pass",
+        "Does not add a `forwardRef` wrapper and takes `ref` as a prop if one is needed"
       ]
     }
   ]
