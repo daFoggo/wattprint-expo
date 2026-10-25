@@ -1,7 +1,8 @@
 # Design-system findings
 
-Opened: 2026-10-25. Source: `docs/design-system.md` sections 2 and 5, found while writing it and in review. The Input and token items were fixed in
-`fix/a11y-contrast-input` (see Done); the rest is under Remaining.
+Opened: 2026-10-25. Source: `docs/design-system.md` sections 2 and 5, found while writing it and in review. The Input
+and token items were fixed in `fix/a11y-contrast-input` and `docs/wave-c-fixes` (see Done and
+[the wave C report](../reports/2026-10-25-wave-c.md)); the rest is under Remaining.
 
 ## Why it matters
 
@@ -16,8 +17,9 @@ Ratios from `node scripts/contrast-report.js`; Jest guards them in `scripts/cont
   3.03:1 on `card` (was 1.26 / 1.46). `--border` is unchanged (dividers). Other users of `--input`: the dark Input fill
   (`dark:bg-input/30`, placeholder 5.93:1, text 14.69:1) and the outline Button fill (`dark:bg-input/[0.045]` and `/[0.075]`,
   label 18.49:1 / 18.13:1); all pass.
-- Light `--ring` is 115 (was 163): 4.74:1 on `background` (was 2.52); dark ring unchanged (4.18:1). A ring of exactly 3:1 (grey
-  148) would equal the new light `--input` and give no focus change, so it was darkened further.
+- `--ring` is 64 light / 212 dark (was 163 / 115, then 115 / 115): 10.37:1 / 13.36:1 on `background`, and 3.42:1 / 3.99:1
+  against the unfocused `input` border (pair `ring` on `input` in `PAIRS`), so focus is a clear step in both themes
+  (wave C, `docs/wave-c-fixes`; emulator evidence in the report).
 - The stale-note check: dark placeholder is 5.93:1 now (was 7.08:1 before `--input` darkened); `README.md` still lists it as a
   low-contrast limitation, see Remaining.
 
@@ -28,7 +30,6 @@ Ratios from `node scripts/contrast-report.js`; Jest guards them in `scripts/cont
   `KNOWN_FAILURES`.
 - Light `muted-foreground` on `muted` is 4.35:1; only the pressed row (`active:bg-muted`) renders it. Low priority. Labelled in
   `KNOWN_FAILURES`.
-- Dark `ring` (115) vs dark `input` (100) differ by little, so the focus step in dark is subtle (opinion; check on a device).
 - `InputSlot` has no minimum size (no screen uses a slot).
 - `README.md` "low-contrast dark input placeholder" known limitation: computed ratio passes, device check recorded in the
   fix branch report; confirm or remove.

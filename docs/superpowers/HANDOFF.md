@@ -38,8 +38,8 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
 ## Gates (implementer brief)
 
 You are the implementer. A task is done only when every gate below ran and you report the real result, including failures.
-Run from the repo root on a clean working tree. `.claude/worktrees/` is ignored by git, lint, Jest and Prettier (`.claude/skills/` is tracked and checked); do not delete
-other sessions' worktrees.
+Run from the repo root on a clean working tree. `.claude/worktrees/` is ignored by git, lint, Jest and Prettier
+(`.claude/skills/` is tracked and checked); do not delete other sessions' worktrees.
 
 | #   | Gate                  | Command                                                  | Pass condition                                                  |
 | --- | --------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |

@@ -38,7 +38,7 @@ and `bg-overlay/50` all exist (verified: `src/global.css`). `Uniwind.setTheme` s
 | `destructive-foreground` | 250 250 250     | 250 250 250     | Text on a destructive Button                                                   |
 | `border`                 | 229 229 229     | 46 46 46        | Dividers and outline Button border (`border-border`); decorative, not 3:1      |
 | `input`                  | 148 148 148     | 100 100 100     | Input border (`border-input`), dark Input fill tint (`dark:bg-input/30`), outline Button dark fill |
-| `ring`                   | 115 115 115     | 115 115 115     | Focused input border (`data-[focus=true]:border-ring`)                         |
+| `ring`                   | 64 64 64        | 212 212 212     | Focused input border (`data-[focus=true]:border-ring`)                         |
 | `overlay`                | 0 0 0           | 0 0 0           | Modal backdrop (`bg-overlay/50`)                                               |
 
 Rules:
@@ -53,8 +53,11 @@ Rules:
   colour React Navigation needs.
 - Never put `text-destructive-foreground` on a solid `bg-destructive` in dark: that pair is 2.77:1 (section 2). The Button
   avoids it with `dark:bg-destructive/60`.
-- To change a colour, edit the triple in both blocks in `src/global.css` and re-run
-  `node scripts/contrast-report.js` (section 2); do not add a token for one screen (opinion).
+- Control boundaries (inputs, checkboxes, selects, any custom control drawn with a border) use `border-input` (3:1);
+  `border-border` is for dividers only (1.26:1 light, decorative).
+- To change a colour, edit the triple in both blocks in `src/global.css`, add or update the pair in `PAIRS` in
+  `scripts/contrast-report.js`, and re-run `node scripts/contrast-report.js` (section 2); `scripts/contrast.test.ts` must pass.
+  Do not add a token for one screen (opinion).
 - The navigation theme reads `--background`, `--foreground`, `--primary`, `--card`, `--border` through `useCSSVariable`
   (verified: `src/hooks/use-nav-theme.ts`), so header and tab chrome follow the tokens.
 - The app icon and splash use Expo template colours (`#E6F4FE`, `#208AEF` in `app.json`); they are placeholders, not tokens
@@ -76,7 +79,7 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `primary-foreground` on `primary`     | text | 17.18 pass  | 16.76 pass  |
 | `secondary-foreground` on `secondary` | text | 16.44 pass  | 14.50 pass  |
 | `accent-foreground` on `accent`       | text | 11.62 pass  | 14.50 pass  |
-| `destructive-foreground` on solid `destructive` | text | 4.57 pass | **2.77 fail** (pair unused in dark) |
+| `destructive-foreground` on solid `destructive` | text | 4.57 pass | not used; n/a in script, 2.77 if used |
 | `muted-foreground` on `background`    | text | 4.74 pass   | 7.66 pass   |
 | `muted-foreground` on `muted`         | text | **4.35 fail** | 5.86 pass |
 | `destructive` on `background`         | text | 4.77 pass   | 6.85 pass   |
@@ -89,12 +92,14 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `primary` on `background`             | ui   | 17.93 pass  | 18.51 pass  |
 | `input` on `background` (Input border) | ui   | 3.03 pass   | 3.35 pass   |
 | `input` on `card`                     | ui   | 3.03 pass   | 3.03 pass   |
-| `ring` on `background` (focused Input border) | ui | 4.74 pass | 4.18 pass |
-| `ring` on `card`                      | ui   | 4.74 pass   | 3.78 pass   |
+| `ring` on `background` (focused Input border) | ui | 10.37 pass | 13.36 pass |
+| `ring` on `card`                      | ui   | 10.37 pass  | 12.09 pass  |
+| `ring` on `input` (focus step from the unfocused border) | ui | 3.42 pass | 3.99 pass |
 | `destructive/40` over `background` (invalid Input border) | ui | **2.11 fail** | **1.95 fail** |
 
 Before the fix (same script): `input` on `background` was 1.26 light / 1.46 dark (the Input used `border-border`, and `--input`
-equalled `--border`); light `ring` was 2.52. `border` on `background` is still 1.26 light / 1.46 dark: it is for dividers and
+equalled `--border`); light `ring` was 2.52. The first fix left dark `ring` (115) barely above dark `input` (100); `ring` is
+now 64 light / 212 dark. `border` on `background` is still 1.26 light / 1.46 dark: it is for dividers and
 is deliberately not a checked pair.
 
 The script (`node scripts/contrast-report.js`) also composites alpha classes over their parent token, which is how
@@ -107,14 +112,15 @@ the reading below is opinion.
 - `muted-foreground` text must sit on `background` or `card`, not on `muted` (light 4.35:1; only the pressed row
   `active:bg-muted` uses that, low priority).
 - `border` is for dividers, where 1.26:1 is decorative (unchanged). `Input` draws its boundary with `border-input`
-  (148 light, 100 dark), which clears 3:1 on `background` and `card`; the focused `ring` is 4.74:1 light and 4.18:1 dark. In
-  dark, `input` (100) and `ring` (115) differ by little, so focus feedback there is a small step (opinion; not changed). The
+  (148 light, 100 dark), which clears 3:1 on `background` and `card`; the focused `ring` (64 light, 212 dark) is 10.37:1 / 13.36:1
+  on `background` and 3.42:1 / 3.99:1 against the unfocused `input` border, so focus is a clear step. The pair
+  `ring` on `input` is in `PAIRS`, so `scripts/contrast.test.ts` fails if that step shrinks. The
   invalid border (`/40`) is still 2.11:1 / 1.95:1; the error text below the field compensates. It is the only boundary
   failure left and is labelled in `KNOWN_FAILURES` in the script, with light `muted-foreground` on `muted`; the backlog file
   records both.
 - `scripts/contrast.test.ts` runs the script's pairs in Jest: any pair below its threshold fails, except the labelled
   known failures, and a known failure that starts passing fails too (stale entry).
-- `README.md` says the dark input placeholder has low contrast; the script computes 7.08:1 for `muted-foreground` on the dark
+- `README.md` says the dark input placeholder has low contrast; the script computes 5.93:1 for `muted-foreground` on the dark
   input fill, so that note looks stale (unverified on a device).
 
 ## 3. Type
@@ -276,7 +282,9 @@ Full screen by default; pass `className="flex-none p-2"` to embed (verified: `st
 ## Checklist
 
 - [ ] Only token classes for colour; `scripts/design-guard.test.ts` passes (via `pnpm check`).
-- [ ] New or changed token: both theme blocks edited and `node scripts/contrast-report.js` re-run; table in section 2 updated.
+- [ ] New or changed token: both theme blocks edited, the pair added to `PAIRS`, `node scripts/contrast-report.js` re-run and
+      `scripts/contrast.test.ts` green; table in section 2 updated.
+- [ ] A control's boundary uses `border-input`, never `border-border`.
 - [ ] Every pressable is at least 48 dp tall and wide, including inputs and icon buttons (or the gap is recorded).
 - [ ] Titles have `accessibilityRole="header"`; icon-only controls have a label; status text has a live region.
 - [ ] Text uses a type role from section 3; no fixed heights on text containers.

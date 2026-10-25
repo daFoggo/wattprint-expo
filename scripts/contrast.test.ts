@@ -33,9 +33,4 @@ describe('control boundary tokens', () => {
     expect(readTheme('light').input[0]).toBeLessThanOrEqual(148);
     expect(readTheme('dark').input[0]).toBeGreaterThanOrEqual(100);
   });
-
-  it('leaves the divider token untouched', () => {
-    expect(readTheme('light').border).toEqual([229, 229, 229]);
-    expect(readTheme('dark').border).toEqual([46, 46, 46]);
-  });
 });

@@ -66,6 +66,8 @@ const PAIRS = [
   ['input', 'card', 'ui'],
   ['ring', 'background', 'ui'],
   ['ring', 'card', 'ui'],
+  // Focus must be a visible step from the unfocused Input boundary (`border-input`).
+  ['ring', 'input', 'ui'],
   // Invalid Input border (`data-[invalid=true]:border-destructive/40`).
   ['destructive/40@background', 'background', 'ui'],
 ];
