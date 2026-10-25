@@ -17,7 +17,7 @@ const UIInput = createInput({
 });
 
 const inputStyle = tva({
-  base: 'min-h-9 w-full flex-row items-center rounded-md border border-border dark:bg-input/30 bg-transparent overflow-hidden data-[focus=true]:border-ring data-[invalid=true]:border-destructive/40 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 px-3 gap-2',
+  base: 'min-h-12 w-full flex-row items-center rounded-md border border-input dark:bg-input/30 bg-transparent overflow-hidden data-[focus=true]:border-ring data-[invalid=true]:border-destructive/40 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 px-3 gap-2',
 });
 
 const inputIconStyle = tva({

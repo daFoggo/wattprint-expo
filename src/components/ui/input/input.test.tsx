@@ -30,6 +30,21 @@ test('callers can override the default bindings', async () => {
   );
 });
 
+// 48 dp Android touch target (same rule as Button) and the 3:1 control boundary token (see docs/design-system.md).
+test('Input meets 48 dp and draws its boundary with the input token', async () => {
+  await render(
+    <Input testID="root">
+      <InputField />
+    </Input>,
+  );
+  const className = screen.getByTestId('root').props.className as string;
+  expect(className).toMatch(/(^| )min-h-12( |$)/);
+  expect(className).not.toMatch(/min-h-9/);
+  expect(className).toMatch(/(^| )border-input( |$)/);
+  expect(className).not.toMatch(/border-border/);
+  expect(className).toMatch(/data-\[focus=true\]:border-ring/);
+});
+
 test('Input isInvalid reaches the field', async () => {
   await render(
     <Input isInvalid>
