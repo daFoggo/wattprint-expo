@@ -51,12 +51,19 @@ Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch t
 .husky/                         pre-commit (lint-staged), commit-msg (commitlint)
 docs/architecture.md            feature-slice architecture and import rules
 docs/data-fetching.md           data layer rules, measured choices, open decisions
+docs/components.md              composition rules, variants, vendored UI exceptions
+docs/design-system.md           tokens, contrast, type, spacing, Android and accessibility rules
+docs/client-state.md            homes of state, Zustand + MMKV stores, persist, logout, tests
+docs/performance.md             lists, images, startup, Hermes/React Compiler, bundle, measuring
 docs/benchmarks/                emulator benchmark baseline and raw data
 scripts/bench/                  benchmark scripts (adb, stats.js)
-docs/superpowers/               specs and plans (base, data layer) and HANDOFF.md
+docs/superpowers/               HANDOFF.md (gates, standing rules), specs/, plans/, reports/, backlog/
 plugins/with-android-cmake-dir.js   config plugin, see Windows long-path workaround
 scripts/boundaries.test.ts       proves the import-boundary lint (eslint.boundaries.js)
 scripts/uniwind-guard.test.ts   guards Uniwind native pitfalls
+scripts/design-guard.test.ts    guards hard-coded colours and dark: colour pairs
+scripts/guard-utils.ts          file walker and source scanner shared by the guard tests
+scripts/contrast-report.js      prints WCAG contrast ratios for the tokens in src/global.css
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
 src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), lab, (settings)
@@ -222,16 +229,18 @@ wrote `owner` (`dafoggo`, matches `eas whoami`) to `app.json`. `eas config --pla
 resolves for all three profiles. The display name changes the native app label on prebuild.
 `vi` is the second locale (`supportedLocales: en, vi`).
 
-**CI.** `.github/workflows/ci.yml` (checkout@v7, setup-node@v7, pnpm/action-setup@v6) was validated locally
-with action-validator and a clean clone; it has not run on GitHub yet.
+**CI.** `.github/workflows/ci.yml` (checkout@v7, setup-node@v7, pnpm/action-setup@v6) runs `pnpm format:check`, `pnpm check` and
+`npx expo-doctor` on push and pull request. The latest runs on `main` succeeded (`gh run list --repo daFoggo/wattprint-expo`, checked 2026-10-25).
 
 ## Open items
 
-1. CI has not run on GitHub: the first push must confirm `pnpm/action-setup@v6` works with the pnpm 12 lockfile.
-2. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
+1. App icon and splash are Expo template placeholders (`assets/expo.icon`, `assets/images/icon.png`,
    `splash-icon.png`, `android-icon-foreground.png`, `android-icon-background.png`, `android-icon-monochrome.png`,
    colours `#E6F4FE` / `#208AEF`). Replace before the first store or preview distribution; they do not block
    `eas build` development builds.
+
+Further open items (persistence spike, auth, chat streaming, per-tab ErrorBoundary, production-env build check, device
+performance, design-system findings) are listed in `docs/superpowers/backlog/`.
 
 Accepted without action (owner decision): `vi` stays as the second locale; pnpm 12.14.0 support on EAS build images stays
 unverified until the first `eas build`.
