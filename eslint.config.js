@@ -23,7 +23,7 @@ module.exports = defineConfig([
       'android/*',
       'ios/*',
       '.expo/*',
-      '.claude/**',
+      '.claude/worktrees/**',
       'expo-env.d.ts',
       'src/uniwind-types.d.ts',
     ],

@@ -6,4 +6,4 @@ docs
 claude-config-summary.md
 src/uniwind-types.d.ts
 .superpowers
-.claude
+.claude/worktrees

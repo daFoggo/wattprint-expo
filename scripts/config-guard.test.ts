@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,7 +14,12 @@ const globFiles = (name: string, ignore: string[]): string[] => {
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
       const rel = dir ? `${dir}/${entry.name}` : entry.name;
-      if (ignored.includes(rel) || rel === '.git' || rel === '.superpowers' || rel === '.claude')
+      if (
+        ignored.includes(rel) ||
+        rel === '.git' ||
+        rel === '.superpowers' ||
+        rel === '.claude/worktrees'
+      )
         continue;
       if (entry.isDirectory()) walk(rel);
       else if (entry.name === name.replace('**/', '')) found.push(rel);
@@ -108,3 +114,24 @@ test.each([
 ])('no alpha component %s', (c) =>
   expect(fs.existsSync(path.join(root, `src/components/ui/${c}`))).toBe(false),
 );
+
+// The project skill (.claude/skills) is tracked; only agent worktrees and personal settings stay local.
+const gitIgnored = (rel: string) =>
+  spawnSync('git', ['check-ignore', '-q', rel], { cwd: root }).status === 0;
+
+test('.claude/skills is not git-ignored; worktrees and local settings are', () => {
+  expect(gitIgnored('.claude/skills/wattprint-base/SKILL.md')).toBe(false);
+  expect(gitIgnored('.claude/skills/wattprint-base/evals/evals.json')).toBe(false);
+  expect(gitIgnored('.claude/worktrees/agent-x/package.json')).toBe(true);
+  expect(gitIgnored('.claude/settings.local.json')).toBe(true);
+});
+
+test('lint, format and jest ignore only .claude/worktrees, not .claude', () => {
+  expect(read('eslint.config.js')).toMatch(/'\.claude\/worktrees\/\*\*'/);
+  expect(read('eslint.config.js')).not.toMatch(/'\.claude\/\*\*'/);
+  const prettierIgnored = read('.prettierignore').split(/\r?\n/);
+  expect(prettierIgnored).toContain('.claude/worktrees');
+  expect(prettierIgnored).not.toContain('.claude');
+  expect(JSON.stringify(pkg.jest.testPathIgnorePatterns)).toContain('<rootDir>/.claude/worktrees/');
+  expect(pkg.jest.modulePathIgnorePatterns).toEqual(['<rootDir>/.claude/worktrees/']);
+});
