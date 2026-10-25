@@ -6,7 +6,7 @@ Expo SDK 58 / React Native 0.88 base, Android dev build, pnpm. See `README.md` f
 
 Before calling work done, run and report real results:
 
-- `pnpm check` (lint with zero warnings, typecheck, jest); lint includes the type-aware `@typescript-eslint/no-deprecated` for `src` (not vendored `components/ui`), so `pnpm lint` takes ~11 s
+- `pnpm check` (lint with zero warnings, typecheck, jest); lint includes the type-aware `@typescript-eslint/no-deprecated` for `src` (not vendored `components/ui`), so `pnpm lint` is noticeably slower
 - `pnpm format:check`
 - `npx expo-doctor`
 - For UI or native changes: run on the emulator and verify (see Device verification).
