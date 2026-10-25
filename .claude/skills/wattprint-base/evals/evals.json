@@ -1,0 +1,112 @@
+{
+  "skill_name": "wattprint-base",
+  "evals": [
+    {
+      "id": 1,
+      "name": "uniwind-placeholder-variant",
+      "source": "README.md Uniwind native rules; docs/design-system.md anti-patterns",
+      "prompt": "In the Lab products screen, add a search field whose placeholder text is muted grey and a Clear button that highlights on hover. Use Tailwind classes like placeholder:text-muted-foreground and hover:bg-accent. Show the code.",
+      "expectations": [
+        "Does not ship `placeholder:` or `hover:` classes as if they worked; says Uniwind silently ignores unsupported variants on native (no warning)",
+        "Uses the existing gluestack `Input` + `InputField` and states that placeholder, cursor and selection colours are already bound inside `InputField` (no `placeholderTextColor` prop passed)",
+        "If a colour for a non-style prop is needed, uses a `*ClassName=\"accent-...\"` binding (for example `placeholderTextColorClassName=\"accent-muted-foreground\"`), not `text-*` in className",
+        "Expresses the pressed highlight with a supported state (`active:` or `data-[active=true]:`) on a token colour such as `bg-accent` or `bg-muted`, not `hover:`",
+        "Sets an `accessibilityLabel` on `InputField` and a label on an icon-only Clear control",
+        "Mentions that `scripts/uniwind-guard.test.ts` guards unsupported classes and missing colour bindings, and that `pnpm check` must pass"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "dev-dependency-on-windows",
+      "source": "AGENTS.md Code rules; README.md Other kept or added items; HANDOFF environment pitfalls",
+      "prompt": "I need a new dev dependency for tests, `jest-extended`. Give me the exact install command for this repo on Windows and the version it will pin, and then wire it into jest.setup.ts.",
+      "expectations": [
+        "Uses `pnpm add -D jest-extended` for the dev dependency and explains that `npx expo install ... -- --dev` misplaces dev packages on Windows",
+        "Does not type a version number from memory; the version is whatever the install resolves, read afterwards from package.json or the lockfile",
+        "States the general rule that runtime packages are installed with `npx expo install <pkg>` so versions come from the SDK",
+        "Keeps the edit to `jest.setup.ts` minimal and does not touch `transformIgnorePatterns` unless a real ESM error occurs",
+        "Ends by running `pnpm check`, `pnpm format:check` and `npx expo-doctor` and reports real output, or says plainly that they were not run"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "gluestack-cli-bottomsheet",
+      "source": "AGENTS.md Code rules; README.md gluestack-ui decision",
+      "prompt": "We need a bottom sheet for the filter panel. Run `npx gluestack-ui add bottomsheet` to add it, then use it on the dashboard.",
+      "expectations": [
+        "Refuses to run `gluestack-ui add` (or `init`) and explains why: the CLI forces NativeWind when `android/` exists and installs alpha packages",
+        "Says BottomSheet is one of the alpha components that are not allowed in this repo (list: Tabs, Table, BottomSheet, Calendar, DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer)",
+        "Proposes a project-compatible alternative, for example the existing `Modal` for a short interaction or a full route for a full-screen task",
+        "If a new gluestack part is ever needed, says to hand-copy it from the Uniwind template with the stable pins `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6 and to record the deviation in README.md",
+        "Does not install or upgrade `@gluestack-ui/core` or `@gluestack-ui/utils`"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "staletime-zero-default",
+      "source": "docs/data-fetching.md Rules; docs/performance.md section 4",
+      "prompt": "The dashboard summary sometimes looks stale. Set `staleTime: 0` in the QueryClient defaults so every screen always refetches.",
+      "expectations": [
+        "Declines to change the global default to 0 and keeps `staleTime` 30_000 in `src/lib/query-client.ts`",
+        "Cites the measured reason: with `staleTime: 0` opening a detail from the list made 2 requests instead of 1, and reopening within 30 s made 2 instead of 0 (emulator, relative)",
+        "Offers the per-query alternative: set `staleTime` on that one query's `queryOptions` in the feature's `queries.ts`, or invalidate after a mutation",
+        "Keeps the query key containing every variable the `queryFn` uses",
+        "Does not add a persisted query cache; says query persistence is a not-decided item in the backlog"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "fallback-data-instead-of-throw",
+      "source": "docs/data-fetching.md Rules; AGENTS.md Data layer",
+      "prompt": "Write features/energy/api.ts getDailyUsage(). If the request fails, just return an empty array so the screen never shows an error. Keep it simple, use fetch.",
+      "expectations": [
+        "Does not return an empty array or any fallback value on failure; the function throws `ApiError`, `NetworkError` or `ContractError` through the client",
+        "Uses `createApiClient` from `src/lib/http.ts` with a Zod `schema` defined in the feature's `schemas.ts`, not a raw `fetch`",
+        "Puts the key factory and `queryOptions` in `queries.ts` and keeps `api.ts` as the only caller of the client",
+        "The screen renders `LoadingState`, `EmptyState` (zero rows), `ErrorState` and, when paused offline, `OfflineState` from `components/states`",
+        "States that only `isRetryable` errors (network, 5xx) are retried and `ContractError` is never retried; a failed refresh keeps cached data with a banner",
+        "Does not put a token in the URL"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "feature-imports-feature",
+      "source": "docs/architecture.md Rules; AGENTS.md Import boundaries",
+      "prompt": "In src/features/dashboard I want to show the lab product list. Just `import { ProductRow } from '../lab/components/product-row'` and reuse it.",
+      "expectations": [
+        "Refuses the import: a feature never imports another feature, and never uses `../` (use `./` or `@/features/<self>/...`); `eslint.boundaries.js` fails the lint",
+        "Says cross-feature composition happens in `src/screens` or in a route, never inside a feature",
+        "Applies the extraction rule: move to `src/components` only when a second feature needs it, it has a nameable role and its API is smaller than its implementation; otherwise duplicate",
+        "Notes `components` may not import `features`, so a shared row cannot depend on lab types",
+        "Mentions `scripts/boundaries.test.ts` proves the lint and that no barrel file should be added"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "hard-coded-colours",
+      "source": "docs/design-system.md sections 1-2 and anti-patterns; scripts/design-guard.test.ts",
+      "prompt": "Add a red 'Overdue' badge to ProductRow: background #E7000B, white text, and in dark mode use dark:bg-red-900 so it is softer.",
+      "expectations": [
+        "Does not use the hex value, `bg-red-*` palette classes or a `dark:` colour pair; uses semantic tokens such as `bg-destructive` and `text-destructive-foreground`, or `text-destructive` on a neutral surface",
+        "Explains that tokens already switch with the theme, so no `dark:` pair is needed outside `src/components/ui`",
+        "Warns that `text-destructive-foreground` on a solid `bg-destructive` is 2.77:1 in dark (the Button uses `dark:bg-destructive/60`) and checks contrast with `node scripts/contrast-report.js` or avoids that pair",
+        "Does not add a one-off token for a single screen; if a colour must change, both theme blocks in `src/global.css` are edited together",
+        "Mentions `scripts/design-guard.test.ts` fails on hex, `rgb()`, `hsl()` and `dark:` colour pairs, and that the badge text is an i18n key"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "ref-prop-and-touch-targets",
+      "source": "docs/components.md section 7; docs/design-system.md section 5",
+      "prompt": "Create an AmountField component that wraps InputField so a parent can focus it via a ref (use forwardRef), and add a 32x32 icon-only clear button inside it with className=\"h-8 w-8\".",
+      "expectations": [
+        "Does not use `forwardRef` in this own component; `ref` is a regular prop typed `React.Ref<TextInput>`, and the answer notes `forwardRef` is allowed only in vendored `src/components/ui/**`",
+        "The clear control is at least 48 dp wide and tall (`size=\"icon\"` gives `min-h-12 min-w-12`); no `h-8 w-8` override at the call site",
+        "The icon is a `ButtonIcon` (or `Icon`) child of a `Button`, not an `icon` prop, and the button has an `accessibilityLabel`",
+        "Says `Input` is `min-h-9` (36 dp) and `InputSlot` has no minimum, a known gap recorded in the backlog; does not claim the field already meets 48 dp",
+        "Sets `accessibilityLabel` on `InputField`, shows the error text `selectable` with a polite live region, and uses i18n keys",
+        "Does not add `useMemo` or `useCallback` by habit because React Compiler is on"
+      ]
+    }
+  ]
+}
