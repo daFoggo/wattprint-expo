@@ -87,7 +87,10 @@ export function Home() {
             <Text accessibilityRole="header" className="text-foreground text-lg font-semibold">
               {t('home.modalTitle')}
             </Text>
-            <ModalCloseButton accessibilityLabel={t('common.close')} hitSlop={12} className="p-2">
+            <ModalCloseButton
+              accessibilityLabel={t('common.close')}
+              className="min-h-12 min-w-12 items-center justify-center"
+            >
               <Icon as={CloseIcon} size="md" />
             </ModalCloseButton>
           </ModalHeader>
