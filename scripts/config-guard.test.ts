@@ -135,3 +135,10 @@ test('lint, format and jest ignore only .claude/worktrees, not .claude', () => {
   expect(JSON.stringify(pkg.jest.testPathIgnorePatterns)).toContain('<rootDir>/.claude/worktrees/');
   expect(pkg.jest.modulePathIgnorePatterns).toEqual(['<rootDir>/.claude/worktrees/']);
 });
+
+test('metro does not watch or resolve other sessions worktrees (.claude/worktrees)', () => {
+  const metro = read('metro.config.js');
+  expect(metro).toMatch(/resolver\.blockList/);
+  expect(metro).toMatch(/\.claude/);
+  expect(metro).toMatch(/worktrees/);
+});

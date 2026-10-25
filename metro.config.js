@@ -5,6 +5,12 @@ const { withUniwindConfig } = require('uniwind/metro');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Other Claude Code sessions keep full checkouts under .claude/worktrees; Metro must not crawl or resolve them.
+config.resolver.blockList = [].concat(
+  config.resolver.blockList ?? [],
+  /[\\/]\.claude[\\/]worktrees[\\/].*/,
+);
+
 module.exports = withUniwindConfig(config, {
   cssEntryFile: './src/global.css',
   dtsFile: './src/uniwind-types.d.ts',
