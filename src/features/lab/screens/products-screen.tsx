@@ -15,6 +15,7 @@ import { ProductRow } from '@/features/lab/components/product-row';
 import { SearchField } from '@/features/lab/components/search-field';
 import { useProductSearch } from '@/features/lab/hooks/use-product-search';
 import { prefetchQuotes } from '@/features/lab/queries';
+import { staleBanner } from '@/features/lab/stale-banner';
 import { benchLog } from '@/lib/bench-log';
 
 const BENCH_HREF = '/lab/bench?impl=flash&n=500' as Href;
@@ -81,17 +82,7 @@ export function ProductsScreen() {
     );
   }
 
-  // Rows from a previous query, a failed refresh or a paused refresh stay visible; say which.
-  const banner =
-    data === undefined
-      ? null
-      : isPlaceholderData
-        ? t('lab.products.updating')
-        : isError
-          ? t('lab.products.refreshFailed')
-          : paused
-            ? t('lab.products.offlineBanner')
-            : null;
+  const bannerKey = staleBanner(query);
 
   return (
     <View className="bg-background flex-1">
@@ -120,12 +111,12 @@ export function ProductsScreen() {
             <ButtonText>{t('lab.products.openBench')}</ButtonText>
           </Button>
         </View>
-        {banner !== null && (
+        {bannerKey !== null && (
           <Text
             accessibilityLiveRegion="polite"
             className="text-muted-foreground text-center text-sm"
           >
-            {banner}
+            {t(bannerKey)}
           </Text>
         )}
       </View>
