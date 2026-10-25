@@ -5,9 +5,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const css = fs.readFileSync(path.join(__dirname, '..', 'src', 'global.css'), 'utf8');
+const readCss = () => fs.readFileSync(path.join(__dirname, '..', 'src', 'global.css'), 'utf8');
 
-function readTheme(name) {
+function readTheme(name, css = readCss()) {
   const open = css.indexOf(`:where(.${name}, .${name} *) {`);
   if (open === -1) throw new Error(`theme block .${name} not found in src/global.css`);
   const block = css.slice(open, css.indexOf('}', open));
@@ -31,7 +31,7 @@ const ratio = (a, b) => {
 // A colour is a token ("card") or an alpha composite over a parent token ("destructive/60@background"), which is how
 // classes such as `bg-destructive/60` render: the token at 60% opacity over what is behind it.
 const resolve = (theme, spec) => {
-  const m = spec.match(/^([a-z-]+)\/(\d+)@([a-z-]+)$/);
+  const m = spec.match(/^([a-z-]+)\/(\d+(?:\.\d+)?)@([a-z-]+)$/);
   if (!m) return theme[spec];
   const alpha = Number(m[2]) / 100;
   return theme[m[1]].map((v, i) => alpha * v + (1 - alpha) * theme[m[3]][i]);
@@ -46,7 +46,8 @@ const PAIRS = [
   ['primary-foreground', 'primary', 'text'],
   ['secondary-foreground', 'secondary', 'text'],
   ['accent-foreground', 'accent', 'text'],
-  ['destructive-foreground', 'destructive', 'text'],
+  // Solid destructive is never rendered in dark (the Button uses `dark:bg-destructive/60`), so only light is checked.
+  ['destructive-foreground', 'destructive', 'text', 'light'],
   ['muted-foreground', 'background', 'text'],
   ['muted-foreground', 'muted', 'text'],
   ['destructive', 'background', 'text'],
@@ -55,22 +56,76 @@ const PAIRS = [
   ['destructive-foreground', 'destructive/60@card', 'text', 'dark'],
   ['destructive-foreground', 'destructive/50@background', 'text', 'dark'],
   ['muted-foreground', 'input/30@background', 'text', 'dark'],
+  ['foreground', 'input/30@background', 'text', 'dark'],
+  // Dark outline Button fill (`dark:bg-input/[0.045]`, pressed `/[0.075]`) under its label.
+  ['foreground', 'input/4.5@background', 'text', 'dark'],
+  ['foreground', 'input/7.5@background', 'text', 'dark'],
   ['primary', 'background', 'ui'],
-  ['border', 'background', 'ui'],
+  // `border` is for dividers: decorative, so it is not a pair. The Input boundary is `border-input`.
   ['input', 'background', 'ui'],
+  ['input', 'card', 'ui'],
   ['ring', 'background', 'ui'],
+  ['ring', 'card', 'ui'],
   // Invalid Input border (`data-[invalid=true]:border-destructive/40`).
   ['destructive/40@background', 'background', 'ui'],
 ];
 
-const themes = { light: readTheme('light'), dark: readTheme('dark') };
-console.log('| pair (fg on bg) | kind | light | dark |');
-for (const [fg, bg, kind, only] of PAIRS) {
-  const cells = Object.entries(themes).map(([name, t]) => {
-    if (only && only !== name) return 'n/a';
-    const value = ratio(resolve(t, fg), resolve(t, bg));
-    const min = kind === 'text' ? 4.5 : 3;
-    return `${value.toFixed(2)} ${value >= min ? 'pass' : 'FAIL'}`;
-  });
-  console.log(`| ${fg} on ${bg} | ${kind} | ${cells.join(' | ')} |`);
+// Pairs that fail on purpose, as "theme:fg on bg". A test fails if one of these starts passing (stale entry).
+const KNOWN_FAILURES = [
+  'light:muted-foreground on muted', // pressed row only (`active:bg-muted`), low priority
+  'light:destructive/40@background on background', // invalid border; the error text below the field is the cue
+  'dark:destructive/40@background on background',
+];
+
+const MIN = { text: 4.5, ui: 3 };
+
+// One row per pair and theme: { id, theme, fg, bg, kind, value, min, pass, known }.
+function evaluate(themes = { light: readTheme('light'), dark: readTheme('dark') }) {
+  const rows = [];
+  for (const [fg, bg, kind, only] of PAIRS) {
+    for (const [theme, t] of Object.entries(themes)) {
+      if (only && only !== theme) continue;
+      const value = ratio(resolve(t, fg), resolve(t, bg));
+      const id = `${theme}:${fg} on ${bg}`;
+      rows.push({
+        id,
+        theme,
+        fg,
+        bg,
+        kind,
+        value,
+        min: MIN[kind],
+        pass: value >= MIN[kind],
+        known: KNOWN_FAILURES.includes(id),
+      });
+    }
+  }
+  return rows;
 }
+
+function report() {
+  const rows = evaluate();
+  console.log('| pair (fg on bg) | kind | light | dark |');
+  for (const [fg, bg, kind, only] of PAIRS) {
+    const cells = ['light', 'dark'].map((theme) => {
+      if (only && only !== theme) return 'n/a';
+      const r = rows.find((x) => x.id === `${theme}:${fg} on ${bg}`);
+      return `${r.value.toFixed(2)} ${r.pass ? 'pass' : 'FAIL'}`;
+    });
+    console.log(`| ${fg} on ${bg} | ${kind} | ${cells.join(' | ')} |`);
+  }
+}
+
+if (require.main === module) report();
+
+module.exports = {
+  readTheme,
+  channel,
+  luminance,
+  ratio,
+  resolve,
+  PAIRS,
+  KNOWN_FAILURES,
+  MIN,
+  evaluate,
+};
