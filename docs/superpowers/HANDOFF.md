@@ -38,8 +38,8 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
 ## Gates (implementer brief)
 
 You are the implementer. A task is done only when every gate below ran and you report the real result, including failures.
-Run from the repo root on a clean working tree. Remove stray `.claude/worktrees/*` checkouts first: ESLint and Jest scan them (a
-second `src/global.css` fails `scripts/config-guard.test.ts`).
+Run from the repo root on a clean working tree. `.claude/` is ignored by lint, Jest and Prettier; do not delete other sessions'
+worktrees.
 
 | #   | Gate                  | Command                                                  | Pass condition                                                  |
 | --- | --------------------- | -------------------------------------------------------- | --------------------------------------------------------------- |

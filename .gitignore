@@ -46,3 +46,6 @@ yarn-error.*
 
 # personal Claude config (kept locally, not tracked)
 claude-config-summary.md
+
+# Claude Code local state and agent worktrees (other sessions may have live checkouts here)
+.claude/

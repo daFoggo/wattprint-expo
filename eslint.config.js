@@ -18,6 +18,14 @@ module.exports = defineConfig([
     rules: { '@typescript-eslint/no-deprecated': 'error' },
   },
   {
-    ignores: ['dist/*', 'android/*', 'ios/*', '.expo/*', 'expo-env.d.ts', 'src/uniwind-types.d.ts'],
+    ignores: [
+      'dist/*',
+      'android/*',
+      'ios/*',
+      '.expo/*',
+      '.claude/**',
+      'expo-env.d.ts',
+      'src/uniwind-types.d.ts',
+    ],
   },
 ]);

@@ -13,7 +13,8 @@ const globFiles = (name: string, ignore: string[]): string[] => {
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
       const rel = dir ? `${dir}/${entry.name}` : entry.name;
-      if (ignored.includes(rel) || rel === '.git' || rel === '.superpowers') continue;
+      if (ignored.includes(rel) || rel === '.git' || rel === '.superpowers' || rel === '.claude')
+        continue;
       if (entry.isDirectory()) walk(rel);
       else if (entry.name === name.replace('**/', '')) found.push(rel);
     }
