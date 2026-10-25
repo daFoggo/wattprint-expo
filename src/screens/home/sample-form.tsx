@@ -1,4 +1,4 @@
-import { useForm, useStore } from '@tanstack/react-form';
+import { useForm, useSelector } from '@tanstack/react-form';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -14,7 +14,7 @@ export function SampleForm({ onSubmit }: { onSubmit: (v: { email: string }) => v
     validators: { onChange: z.object({ email: z.email(t('form.emailInvalid')) }) },
     onSubmit: ({ value }) => onSubmit(value),
   });
-  const emailValue = useStore(form.store, (state) => state.values.email);
+  const emailValue = useSelector(form.store, (state) => state.values.email);
   const [debounced] = useDebouncedValue(emailValue, { wait: 300 });
 
   return (
