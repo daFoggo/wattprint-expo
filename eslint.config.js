@@ -9,6 +9,14 @@ module.exports = defineConfig([
   eslintPluginPrettierRecommended,
   ...boundaryConfigs(listFeatures()),
   {
+    // Type-aware rule: fails on use of anything marked @deprecated in the installed typings.
+    files: ['src/**/*.{ts,tsx}'],
+    // Vendored gluestack code keeps its upstream API (forwardRef, ElementRef, ...).
+    ignores: ['src/components/ui/**'],
+    languageOptions: { parserOptions: { projectService: true } },
+    rules: { '@typescript-eslint/no-deprecated': 'error' },
+  },
+  {
     ignores: ['dist/*', 'android/*', 'ios/*', '.expo/*', 'expo-env.d.ts', 'src/uniwind-types.d.ts'],
   },
 ]);

@@ -123,7 +123,8 @@ test('the real eslint.config.js enforces the boundaries', async () => {
     overrideConfig: realConfig as never,
   });
   const [result] = await eslint.lintText(imp('@/components/ui/button'), {
-    filePath: 'src/lib/x.ts',
+    // Type-aware rules need a file the TS project knows, so use a real one.
+    filePath: 'src/lib/errors.ts',
   });
   const messages = result.messages.filter((m) => m.ruleId === 'no-restricted-imports');
   expect(messages).toHaveLength(1);
