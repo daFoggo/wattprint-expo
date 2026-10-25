@@ -32,11 +32,12 @@ const buttonStyle = tva({
       link: 'text-primary underline-offset-4 data-[active=true]:underline',
     },
     // Deviation from upstream gluestack: every size is at least 48dp (min-h-12) tall, the Android
-    // touch target minimum. Upstream uses min-h-8 (sm), min-h-10 (lg), min-h-9 (icon), none (default).
+    // touch target minimum; lg is min-h-14 so it stays larger than default. Upstream uses min-h-8
+    // (sm), min-h-10 (lg), min-h-9 (icon), none (default).
     size: {
       default: 'min-h-12 px-4 py-2',
       sm: 'min-h-12 rounded-md px-3 text-xs',
-      lg: 'min-h-12 rounded-md px-8',
+      lg: 'min-h-14 rounded-md px-8',
       icon: 'min-h-12 min-w-12',
     },
   },

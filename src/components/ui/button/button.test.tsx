@@ -21,23 +21,23 @@ test('destructive spinner uses the destructive foreground token', async () => {
   expect(screen.getByTestId('spinner').props.colorClassName).toBe('accent-destructive-foreground');
 });
 
-// Android guideline: touch targets are at least 48dp (Tailwind `min-h-12`). Jest cannot resolve the
-// class to a number, so assert the class on the host Pressable.
+// Android guideline: touch targets are at least 48dp (Tailwind `min-h-12`; `lg` stays larger at
+// `min-h-14`). Jest cannot resolve the class to a number, so assert whole class tokens on the host.
+const classTokens = () => (screen.getByTestId('button').props.className as string).split(' ');
+
 describe('Button touch target', () => {
-  test.each(['default', 'sm', 'lg', 'icon'] as const)(
-    'size %s is at least 48dp tall',
-    async (size) => {
-      await render(
-        <Button testID="button" size={size}>
-          <ButtonSpinner />
-        </Button>,
-      );
-      expect(screen.getByTestId('button').props.className).toContain('min-h-12');
-    },
-  );
+  test.each([
+    ['default', 'min-h-12'],
+    ['sm', 'min-h-12'],
+    ['lg', 'min-h-14'],
+    ['icon', 'min-h-12'],
+  ] as const)('size %s has %s', async (size, minHeight) => {
+    await render(<Button testID="button" size={size} />);
+    expect(classTokens()).toContain(minHeight);
+  });
 
   test('icon buttons are at least 48dp wide', async () => {
     await render(<Button testID="button" size="icon" />);
-    expect(screen.getByTestId('button').props.className).toContain('min-w-12');
+    expect(classTokens()).toContain('min-w-12');
   });
 });
