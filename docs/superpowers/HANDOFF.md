@@ -73,7 +73,7 @@ item), Next. Reference report: `reports/2026-10-25-base-and-data-layer.md`.
 
 - **G1 to G5 done and merged to `main`** (Uniwind native compatibility, data-fetching research, validation with the Expo skills,
   benchmarks, architecture). Details: `reports/2026-10-25-base-and-data-layer.md`.
-- **Documentation pass** (branch docs/base-documentation): `docs/components.md`, `design-system.md`, `client-state.md`,
+- **Documentation pass** (branch `docs/base-documentation`): `docs/components.md`, `design-system.md`, `client-state.md`,
   `performance.md`, the routing table in `AGENTS.md`, `scripts/design-guard.test.ts`, reports and backlog folders.
 - **Open items** (each a file in `backlog/`): query persistence spike, auth and session store, chat streaming, per-tab
   ErrorBoundary, production-env build check, image-row list performance on a device, first-frame theme flash in a release

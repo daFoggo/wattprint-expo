@@ -3,18 +3,21 @@ import path from 'path';
 
 import { root, walk } from './guard-utils';
 
-// Docs link guard: every relative markdown link and every backticked repo path in the docs resolves to
-// an existing file or directory, and every skill named in the AGENTS.md routing table exists.
+// Docs link guard: every relative markdown link (inline or reference style, with its #anchor) and every
+// backticked repo path in the docs resolves, and every skill named in the AGENTS.md routing table exists.
 //
-// Checked files: AGENTS.md, README.md, CLAUDE.md, docs/**/*.md, .claude/skills/wattprint-base/**/*.md.
-// Ignored on purpose: fenced code blocks (they show hypothetical paths and command output), URLs and
-// anchors, globs and placeholders (`*`, `<name>`, `{a,b}`, `$VAR`, `YYYY`), absolute and home paths,
-// anything with a space, and the generated or git-ignored paths listed in GENERATED below.
+// Checked files: AGENTS.md, README.md, CLAUDE.md, docs/**/*.md, and everything under .claude/skills
+// (markdown, plus the backticked paths inside evals.json strings).
+// Ignored on purpose: fenced and indented code blocks (they show hypothetical paths and command output),
+// URLs, globs and placeholders (`*`, `<name>`, `{a,b}`, `$VAR`, `YYYY`), absolute and home paths, anything
+// with a space, a span right after the word "branch", and the lists below (GENERATED, ABSENT_ON_PURPOSE,
+// NOT_PATHS), each with its reason.
 //
 // Resolution of a backticked path: when its first segment exists at the repo root (or it starts with
 // the `@/` alias, which means `src/`) it must resolve exactly, relative to the root. Shorthand such as
 // `input/index.tsx` or `state-style.ts` (docs name a file by its tail) must match the tail of some
-// existing path. A renamed or deleted file therefore fails either way.
+// existing path. A renamed or deleted file therefore fails either way. A `#anchor` must match a heading
+// of the target file (GitHub slug rules).
 
 // Paths that are documented but legitimately absent from a fresh checkout.
 export const GENERATED = new Set([
@@ -31,6 +34,11 @@ export const GENERATED = new Set([
 // Files the docs name only to say they must not exist (scripts/config-guard.test.ts enforces it).
 export const ABSENT_ON_PURPOSE = new Set(['babel.config.js']);
 
+// Backticked words that look like paths but are not (or name a file that a record says was removed).
+export const NOT_PATHS = new Set([
+  'src/lib/bench-flags.ts', // removed after the benchmark run; docs/benchmarks records it
+]);
+
 // Skills that are installed globally (~/.claude/skills), not in this repo. Anything else named in the
 // AGENTS.md routing table must be a directory under .claude/skills.
 export const GLOBAL_SKILLS = new Set([
@@ -45,9 +53,14 @@ export const GLOBAL_SKILLS = new Set([
   'expo-dev-client',
 ]);
 
+// Point-in-time records that name files since removed or only planned (`scripts/reset-project.js`,
+// `src/app/explore.tsx`): the original implementation plan. Specs, reports and the backlog are checked.
+const HISTORICAL = ['docs/superpowers/plans/'];
+export const isHistorical = (file: string) => HISTORICAL.some((h) => file.startsWith(h));
+
 const DOC_FILES = ['AGENTS.md', 'README.md', 'CLAUDE.md'];
 const SKIP_DIRS = new Set(['node_modules', '.git', 'android', 'ios', '.expo']);
-const EXT = /\.(md|ts|tsx|js|jsx|json|css|yml|yaml|sh|lock)$/;
+const EXT = /\.(md|ts|tsx|js|jsx|mjs|cjs|json|css|yml|yaml|sh|lock|patch|csv)$/;
 
 const rel = (file: string) => path.relative(root, file).split(path.sep).join('/');
 
@@ -67,21 +80,38 @@ const listAll = (): string[] => {
   return out;
 };
 
+// Blanks fenced code blocks (closing fence: same character, at least as long as the opening one) and indented
+// code blocks (4+ spaces or a tab after a blank line, unless the text above is a list item).
 export const stripFences = (md: string): string => {
-  let fence: string | null = null;
+  let fence: { ch: string; len: number } | null = null;
+  let prevBlank = true;
+  let inList = false;
   return md
     .split(/\r?\n/)
     .map((line) => {
       const m = /^\s*(`{3,}|~{3,})/.exec(line);
-      if (fence === null) {
-        if (m) {
-          fence = m[1][0];
-          return '';
-        }
-        return line;
+      if (fence !== null) {
+        if (
+          m &&
+          m[1][0] === fence.ch &&
+          m[1].length >= fence.len &&
+          !/\S/.test(line.slice(m[0].length))
+        )
+          fence = null;
+        return '';
       }
-      if (m && m[1][0] === fence) fence = null;
-      return '';
+      if (m) {
+        fence = { ch: m[1][0], len: m[1].length };
+        return '';
+      }
+      const blank = line.trim() === '';
+      const indentedCode = !blank && prevBlank && !inList && /^( {4}|\t)/.test(line);
+      if (!blank && !indentedCode) {
+        if (/^\s*([-*+]|\d+[.)])\s/.test(line)) inList = true;
+        else if (!/^\s/.test(line)) inList = false;
+      }
+      prevBlank = blank;
+      return indentedCode ? '' : line;
     })
     .join('\n');
 };
@@ -93,16 +123,22 @@ export const extractLinks = (md: string): string[] => {
   const targets: string[] = [];
   for (const m of text.matchAll(/!?\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g))
     targets.push(m[1]);
+  // Reference definitions: `[label]: target "title"`.
+  for (const m of text.matchAll(/^ {0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?(?:\s+["'(].*)?$/gm))
+    targets.push(m[1]);
   return targets;
 };
 
 export const extractCodePaths = (md: string): string[] => {
   const found: string[] = [];
-  for (const m of stripFences(md).matchAll(/`([^`\n]+)`/g)) {
+  const text = stripFences(md);
+  for (const m of text.matchAll(/`([^`\n]+)`/g)) {
     const span = m[1].trim();
     if (/[\s*<>{}$|()[\]=,;!?"'~\\]/.test(span) || span.includes('...')) continue;
     if (/^[a-z][a-z0-9+.-]*:/i.test(span) || span.startsWith('/') || span.startsWith('#')) continue;
-    if (/YYYY|\.\.\./.test(span)) continue;
+    if (/YYYY/.test(span)) continue;
+    // A branch name such as "branch `docs/base-documentation`" is not a path.
+    if (/\bbranch(?:es)?\s*$/i.test(text.slice(Math.max(0, m.index - 12), m.index))) continue;
     const clean = span.replace(/#.*$/, '').replace(/:\d+(?:[-:]\d+)?$/, '');
     // `process.env.X`, `Uniwind.setTheme` and friends have dots but no known extension and no slash.
     if (clean.includes('/') || EXT.test(clean)) found.push(clean.replace(/\/+$/, ''));
@@ -112,12 +148,43 @@ export const extractCodePaths = (md: string): string[] => {
 
 const exists = (p: string) => fs.existsSync(path.join(root, p));
 
-export const resolvesLink = (fromFile: string, target: string): boolean => {
-  if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#')) return true;
-  const clean = decodeURIComponent(target.replace(/[#?].*$/, ''));
-  if (clean === '' || /[*<>{}$]/.test(clean)) return true;
-  const base = clean.startsWith('/') ? root : path.dirname(path.join(root, fromFile));
-  return fs.existsSync(path.join(base, clean));
+// GitHub heading slugs, with -1, -2 suffixes for duplicates.
+export const headingSlugs = (md: string): Set<string> => {
+  const seen = new Map<string, number>();
+  const slugs = new Set<string>();
+  for (const m of stripFences(md).matchAll(/^#{1,6}\s+(.*?)\s*#*\s*$/gm)) {
+    const base = m[1]
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[`*]/g, '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}_\- ]/gu, '')
+      .replace(/ /g, '-');
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    slugs.add(n === 0 ? base : `${base}-${n}`);
+  }
+  return slugs;
+};
+
+// Returns an error text, or null when the link is fine.
+export const linkProblem = (fromFile: string, md: string, target: string): string | null => {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) return null;
+  const [pathPart, ...frag] = target.split('#');
+  const anchor = frag.join('#');
+  const clean = decodeURIComponent(pathPart.replace(/\?.*$/, ''));
+  if (/[*<>{}$]/.test(clean) || /[*<>{}$]/.test(anchor)) return null;
+  let targetMd: string | null = null;
+  if (clean === '') targetMd = md;
+  else {
+    const base = clean.startsWith('/') ? root : path.dirname(path.join(root, fromFile));
+    const full = path.join(base, clean);
+    if (!fs.existsSync(full)) return `broken link (${target})`;
+    if (anchor && fs.statSync(full).isFile() && full.endsWith('.md'))
+      targetMd = fs.readFileSync(full, 'utf8');
+  }
+  if (anchor && targetMd !== null && !headingSlugs(targetMd).has(decodeURIComponent(anchor)))
+    return `broken anchor (${target})`;
+  return null;
 };
 
 export const resolvesCodePath = (file: string, candidate: string, all: string[]): boolean => {
@@ -126,11 +193,12 @@ export const resolvesCodePath = (file: string, candidate: string, all: string[])
   if (/^\.\.?\//.test(p)) return fs.existsSync(path.join(fileDir, p));
   if (p.startsWith('@/')) p = `src/${p.slice(2)}`;
   const first = p.split('/')[0];
-  if (GENERATED.has(first) || GENERATED.has(p) || ABSENT_ON_PURPOSE.has(p)) return true;
+  if (NOT_PATHS.has(p) || GENERATED.has(first) || GENERATED.has(p) || ABSENT_ON_PURPOSE.has(p))
+    return true;
   // npm packages (`@tanstack/react-query`, `zustand/react/shallow`, `@gluestack-ui/core@5.0.15`).
   if (exists(`node_modules/${p.replace(/(.)@[\w.-]+$/, '$1')}`)) return true;
   if (exists(first)) return exists(p) || fs.existsSync(path.join(fileDir, p));
-  // Slash-only words that do not start at a repo folder (`expo/fetch`, `bg-overlay/50`, a branch name)
+  // Slash-only words that do not start at a repo folder (`expo/fetch`, `bg-overlay/50`)
   // are not repo paths. A name with an extension is a file, named by its tail.
   if (!EXT.test(p)) return true;
   return all.some((a) => a === p || a.endsWith(`/${p}`));
@@ -138,34 +206,36 @@ export const resolvesCodePath = (file: string, candidate: string, all: string[])
 
 export const checkDoc = (file: string, md: string, all: string[]): string[] => {
   const problems: string[] = [];
-  for (const t of extractLinks(md))
-    if (!resolvesLink(file, t)) problems.push(`${file}: broken link (${t})`);
+  for (const t of extractLinks(md)) {
+    const problem = linkProblem(file, md, t);
+    if (problem) problems.push(`${file}: ${problem}`);
+  }
   for (const c of extractCodePaths(md))
     if (!resolvesCodePath(file, c, all)) problems.push(`${file}: missing path \`${c}\``);
   return problems;
 };
 
-// Point-in-time records that name files since removed or only planned (`scripts/reset-project.js`,
-// `src/app/explore.tsx`): the original implementation plan. Specs, reports and the backlog are checked.
-const HISTORICAL = ['docs/superpowers/plans/'];
-
 const docFiles = (): string[] => {
   const files = DOC_FILES.filter(exists);
-  for (const dir of ['docs', '.claude/skills/wattprint-base']) {
+  const add = (dir: string, ext: RegExp) => {
     const abs = path.join(root, dir);
     if (fs.existsSync(abs))
       files.push(
         ...walk(abs)
-          .filter((f) => f.endsWith('.md'))
+          .filter((f) => ext.test(f))
           .map(rel),
       );
-  }
-  return files.filter((f) => !HISTORICAL.some((h) => f.startsWith(h)));
+  };
+  add('docs', /\.md$/);
+  add('.claude/skills', /\.(md|json)$/);
+  return files.filter((f) => !isHistorical(f));
 };
 
 export const routingSkills = (agentsMd: string): string[] => {
   const lines = stripFences(agentsMd).split('\n');
-  const start = lines.findIndex((l) => /^\|.*\bSkill\b.*\|/.test(l));
+  const start = lines.findIndex((l) =>
+    /^\|\s*Working on\s*\|\s*Read\s*\|\s*Skill\s*\|\s*$/.test(l),
+  );
   if (start === -1) return [];
   const names: string[] = [];
   for (let i = start + 2; i < lines.length && lines[i].trim().startsWith('|'); i++) {
@@ -181,11 +251,18 @@ describe('docs links (repo)', () => {
 
   test('docs exist to check', () => {
     expect(docFiles()).toEqual(
-      expect.arrayContaining(['AGENTS.md', 'README.md', 'docs/architecture.md']),
+      expect.arrayContaining([
+        'AGENTS.md',
+        'README.md',
+        'docs/architecture.md',
+        '.claude/skills/wattprint-base/SKILL.md',
+        '.claude/skills/wattprint-base/evals/evals.json',
+      ]),
     );
+    expect(docFiles().some(isHistorical)).toBe(false);
   });
 
-  test.each(docFiles())('%s: relative links and backticked repo paths resolve', (file) => {
+  test.each(docFiles())('%s: relative links, anchors and backticked repo paths resolve', (file) => {
     const md = fs.readFileSync(path.join(root, file), 'utf8');
     expect(checkDoc(file, md, all)).toEqual([]);
   });
@@ -224,10 +301,30 @@ describe('docs link checker self-tests', () => {
     ]);
   });
 
+  test('fails on a broken reference-style definition', () => {
+    expect(checkDoc('docs/x.md', 'See [it][a].\n\n[a]: nope-missing.md\n', all)).toEqual([
+      'docs/x.md: broken link (nope-missing.md)',
+    ]);
+  });
+
+  test('fails on a broken anchor, in another file and in the same file', () => {
+    expect(checkDoc('docs/x.md', '[a](architecture.md#no-such-heading)', all)).toEqual([
+      'docs/x.md: broken anchor (architecture.md#no-such-heading)',
+    ]);
+    expect(checkDoc('docs/x.md', '# Top\n\n[a](#top) [b](#nope)', all)).toEqual([
+      'docs/x.md: broken anchor (#nope)',
+    ]);
+  });
+
   test('fails on a missing backticked repo path', () => {
     expect(checkDoc('docs/x.md', 'Edit `src/lib/missing-file.ts` now.', all)).toEqual([
       'docs/x.md: missing path `src/lib/missing-file.ts`',
     ]);
+  });
+
+  test('fails on a missing extensionless path whose first folder exists', () => {
+    expect(checkDoc('docs/x.md', '`src/features/ghost-feature`', all)).toHaveLength(1);
+    expect(checkDoc('docs/x.md', '`src/lib`', all)).toEqual([]);
   });
 
   test('passes valid links and paths, with anchors and line suffixes', () => {
@@ -241,9 +338,9 @@ describe('docs link checker self-tests', () => {
     expect(checkDoc('docs/x.md', '`gone/index.tsx`', all)).toHaveLength(1);
   });
 
-  test('ignores URLs, anchors, mailto, globs, placeholders and non-paths', () => {
+  test('ignores URLs, mailto, globs, placeholders and non-paths', () => {
     const md = [
-      '[a](https://example.com/x.md) [b](#top) [c](mailto:a@b.c)',
+      '[a](https://example.com/x.md) [c](mailto:a@b.c)',
       '`src/features/<name>/api.ts` `src/**/*.ts` `components/states/{loading,empty}-state`',
       '`docs/superpowers/reports/YYYY-MM-DD-<topic>.md` `process.env.EXPO_PUBLIC_X` `pnpm check`',
       '`https://example.com/a/b.md` `~/.claude/skills/x/SKILL.md` `/ios` `$ANDROID_HOME/cmake`',
@@ -251,12 +348,30 @@ describe('docs link checker self-tests', () => {
     expect(checkDoc('docs/x.md', md, all)).toEqual([]);
   });
 
-  test('ignores fenced code blocks (hypothetical paths) but not the text around them', () => {
+  test('skips a span right after the word branch, and the NOT_PATHS list', () => {
+    expect(checkDoc('docs/x.md', 'On branch `docs/some-branch` we ran it.', all)).toEqual([]);
+    expect(checkDoc('docs/x.md', 'The `src/lib/bench-flags.ts` file.', all)).toEqual([]);
+    expect(checkDoc('docs/x.md', 'The file `src/some-branch.ts` exists.', all)).toHaveLength(1);
+  });
+
+  test('ignores fenced code blocks by fence length, but not the text around them', () => {
     const md = ['```', 'src/features/ghost/api.ts', '[x](nope.md)', '```', '`src/ghost.ts`'].join(
       '\n',
     );
     expect(checkDoc('docs/x.md', md, all)).toEqual(['docs/x.md: missing path `src/ghost.ts`']);
     expect(stripFences('~~~md\n`src/a.ts`\n~~~\nafter')).toContain('after');
+    // A longer fence is not closed by a shorter one, so the inner ``` stays inside the block.
+    const nested = ['````md', '```', '`src/inner.ts`', '```', '````', '`src/outer.ts`'].join('\n');
+    expect(stripFences(nested)).not.toContain('inner');
+    expect(stripFences(nested)).toContain('outer');
+  });
+
+  test('ignores indented code blocks, but not list continuation lines', () => {
+    const block = 'text\n\n    `src/indented-ghost.ts`\n\nafter `src/real.ts`';
+    expect(stripFences(block)).not.toContain('indented-ghost');
+    expect(stripFences(block)).toContain('real');
+    const list = '- item\n\n    `src/list-continuation.ts`\n';
+    expect(stripFences(list)).toContain('list-continuation');
   });
 
   test('a link inside inline code is not a link', () => {
@@ -267,8 +382,27 @@ describe('docs link checker self-tests', () => {
     expect(checkDoc('README.md', '`android/` `.env` `expo-env.d.ts`', all)).toEqual([]);
   });
 
-  test('routingSkills reads the Skill column of the routing table', () => {
+  test('the historical plans folder is skipped, specs and reports are not', () => {
+    expect(isHistorical('docs/superpowers/plans/2026-10-24-expo-base.md')).toBe(true);
+    expect(isHistorical('docs/superpowers/specs/2026-10-25-data-architecture-design.md')).toBe(
+      false,
+    );
+    expect(isHistorical('docs/superpowers/reports/README.md')).toBe(false);
+  });
+
+  test('headingSlugs follows GitHub rules (punctuation, case, duplicates, code spans)', () => {
+    const slugs = headingSlugs(
+      '# A `b` C.\n## 3. No boolean-prop\n## Same\n## Same\n```\n# fenced\n```',
+    );
+    expect([...slugs]).toEqual(['a-b-c', '3-no-boolean-prop', 'same', 'same-1']);
+  });
+
+  test('routingSkills reads the Skill column of the Working on | Read | Skill table', () => {
     const md = [
+      '| Other | Skill |',
+      '| --- | --- |',
+      '| x | `decoy` |',
+      '',
       '| Working on | Read | Skill |',
       '| --- | --- | --- |',
       '| a | `docs/a.md` | `one`, `two` |',

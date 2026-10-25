@@ -112,7 +112,7 @@ Outside React (a module that runs before render), use `useXStore.getState()`, as
 | `onRehydrateStorage`   | Callback before and after hydration; receives `(state, error)` afterwards                       |
 | `skipHydration`        | Default `false`; if `true`, call `store.persist.rehydrate()` yourself                           |
 
-Behaviour read from `middleware.mjs`:
+Behaviour read from `zustand/esm/middleware.mjs`:
 
 - **Same `version`, different shape:** nothing detects it; the default `merge` shallow-merges the old stored object into the
   new state silently (missing or stale keys, wrong types). This is why a shape change must bump `version`, and why reads
@@ -127,7 +127,7 @@ Behaviour read from `middleware.mjs`:
 - **Hydration is synchronous with a synchronous storage:** `hydrate()` runs the chain through `toThenable`, which only
   becomes async when `getItem` or `migrate` returns a `Promise`. MMKV reads are synchronous, so the persisted theme is
   in the store when the module finishes loading; this is why `_layout.tsx` can call `Uniwind.setTheme` before the first render
-  (verified: `toThenable` and `hydrate` in `middleware.mjs`; behaviour relied on by the root layout).
+  (verified: `toThenable` and `hydrate` in `zustand/esm/middleware.mjs`; behaviour relied on by the root layout).
 
 The official page recommends a custom storage that validates data (for example with Zod) because the default does no
 runtime validation (verified: <https://zustand.docs.pmnd.rs/reference/middlewares/persist>).
