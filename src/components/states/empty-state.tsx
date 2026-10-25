@@ -1,19 +1,21 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, View, type ViewProps } from 'react-native';
 
-import { Button, ButtonText } from '@/components/ui/button';
+import { stateContainerStyle } from './state-style';
 
-type EmptyStateProps = {
+type EmptyStateProps = Omit<ViewProps, 'children' | 'className'> & {
   title?: string;
   description?: string;
-  actionLabel?: string;
-  onAction?: () => void;
+  className?: string;
+  // Action slot, e.g. a `Button`. The state does not know what the action is.
+  children?: ReactNode;
 };
 
-export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ title, description, className, children, ...props }: EmptyStateProps) {
   const { t } = useTranslation();
   return (
-    <View className="bg-background flex-1 items-center justify-center gap-3 p-6">
+    <View {...props} className={stateContainerStyle({ class: className })}>
       <Text
         accessibilityRole="header"
         className="text-foreground text-center text-lg font-semibold"
@@ -23,11 +25,7 @@ export function EmptyState({ title, description, actionLabel, onAction }: EmptyS
       {description !== undefined && (
         <Text className="text-muted-foreground text-center text-sm">{description}</Text>
       )}
-      {actionLabel !== undefined && onAction !== undefined && (
-        <Button onPress={onAction}>
-          <ButtonText>{actionLabel}</ButtonText>
-        </Button>
-      )}
+      {children}
     </View>
   );
 }

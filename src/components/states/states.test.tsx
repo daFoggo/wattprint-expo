@@ -4,6 +4,8 @@ import '@/i18n';
 import { ApiError, NetworkError } from '@/lib/errors';
 import en from '@/i18n/locales/en.json';
 
+import { Button, ButtonText } from '@/components/ui/button';
+
 import { EmptyState } from './empty-state';
 import { ErrorState } from './error-state';
 import { LoadingState } from './loading-state';
@@ -28,17 +30,47 @@ describe('EmptyState', () => {
     expect(screen.getByText('Add a reading')).toBeTruthy();
   });
 
-  it('renders an action button and calls it', async () => {
-    const onAction = jest.fn();
-    await render(<EmptyState title="No data" actionLabel="Add" onAction={onAction} />);
+  it('renders its children as the action slot', async () => {
+    const onPress = jest.fn();
+    await render(
+      <EmptyState title="No data">
+        <Button onPress={onPress}>
+          <ButtonText>Add</ButtonText>
+        </Button>
+      </EmptyState>,
+    );
     expect(screen.getByRole('header')).toHaveTextContent('No data');
     await fireEvent.press(screen.getByText('Add'));
-    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('hides the action when there is no handler', async () => {
-    await render(<EmptyState title="No data" actionLabel="Add" />);
-    expect(screen.queryByText('Add')).toBeNull();
+  it('renders no action slot without children', async () => {
+    await render(<EmptyState testID="empty" title="No data" />);
+    expect(screen.getByTestId('empty').children).toHaveLength(1);
+  });
+});
+
+describe('state layout className', () => {
+  it('merges className over the full-screen base so states can be used inline', async () => {
+    await render(
+      <>
+        <LoadingState testID="l" className="flex-none p-2" />
+        <EmptyState testID="e" className="flex-none p-2" />
+        <ErrorState testID="r" error={new Error('x')} className="flex-none p-2" />
+      </>,
+    );
+    for (const id of ['l', 'e', 'r']) {
+      const className = screen.getByTestId(id).props.className as string;
+      expect(className).toContain('flex-none');
+      expect(className).not.toContain('flex-1');
+      expect(className).toContain('p-2');
+      expect(className).not.toContain('p-6');
+    }
+  });
+
+  it('keeps the full-screen base by default', async () => {
+    await render(<LoadingState testID="l" />);
+    expect(screen.getByTestId('l').props.className).toContain('flex-1');
   });
 });
 

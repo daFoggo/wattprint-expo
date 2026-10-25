@@ -1,10 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, type ViewProps } from 'react-native';
 
-export function LoadingState({ label }: { label?: string }) {
+import { stateContainerStyle } from './state-style';
+
+type LoadingStateProps = Omit<ViewProps, 'children' | 'className'> & {
+  label?: string;
+  className?: string;
+};
+
+export function LoadingState({ label, className, ...props }: LoadingStateProps) {
   const { t } = useTranslation();
   return (
-    <View className="bg-background flex-1 items-center justify-center p-6">
+    <View {...props} className={stateContainerStyle({ class: className })}>
       <ActivityIndicator
         size="large"
         colorClassName="accent-primary"
