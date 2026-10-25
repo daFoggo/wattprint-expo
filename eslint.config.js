@@ -1,4 +1,5 @@
 // https://docs.expo.dev/guides/using-eslint/
+/* global __dirname */
 const { defineConfig } = require('eslint/config');
 const expoConfig = require('eslint-config-expo/flat');
 const eslintPluginPrettierRecommended = require('eslint-plugin-prettier/recommended');
@@ -13,7 +14,7 @@ module.exports = defineConfig([
     files: ['src/**/*.{ts,tsx}'],
     // Vendored gluestack code keeps its upstream API (forwardRef, ElementRef, ...).
     ignores: ['src/components/ui/**'],
-    languageOptions: { parserOptions: { projectService: true } },
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: __dirname } },
     rules: { '@typescript-eslint/no-deprecated': 'error' },
   },
   {
