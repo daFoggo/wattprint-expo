@@ -3,7 +3,7 @@
 # Working guidelines
 
 Favor caution over speed; for trivial edits (typos, renames) use judgment. Adapted from the four principles in
-[andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) (MIT).
+[andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (MIT; repo and licence checked 2026-10-25).
 
 ## 1. Think before coding
 
@@ -30,7 +30,3 @@ Favor caution over speed; for trivial edits (typos, renames) use judgment. Adapt
 - "Done" means the commands in AGENTS.md "Done commands" ran and you report their real output, failures included; UI or
   native changes are also run on the emulator.
 - Say what was and was not verified; never claim a flow works if only its error path was tried.
-
-## Git
-
-- Our rule is conventional commits (commitlint) with Husky hooks that run lint-staged and commitlint; never bypass the hooks.

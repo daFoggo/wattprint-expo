@@ -24,17 +24,17 @@ has none of its own) to consult after the doc; the doc wins when they differ.
 | Styling, tokens, type, touch targets, a11y, motion | `docs/design-system.md`     | `uniwind`, `expo-design-system`                  |
 | Client state, Zustand, MMKV, SecureStore, logout   | `docs/client-state.md`      | none                                             |
 | Performance, lists, images, startup, bundle size   | `docs/performance.md`       | `vercel-react-native-skills`                     |
-| Checking a change on a device                      | "Device verification" below | `run`, `expo-dev-client`                         |
+| Checking a change on a device                      | "Device verification" below | `expo-dev-client`                                |
 
 Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `plans/`, `reports/`, `backlog/`.
 
 ## Doc maintenance
 
 - Change the rule, the doc and the skill in one commit. If a rule here or in a doc changes, update every place that states
-  it (this file, the doc, `README.md`, a repo or global skill you maintain) in that commit.
+  it (this file, the doc, `README.md`) in that commit, and update the global skill in the same change.
 - A spec lists the docs it touches; the plan's last task updates them; a report says which ones changed.
 - Doc conventions: header with the versions it was written against and links to related docs; claims labelled
-  `(verified: <file, command or URL>)` or `(opinion)`; measured numbers keep their caveats and come from `docs/benchmarks/`;
+  `(verified: <file, command or URL>)` or `(opinion)`; measured numbers keep their caveats and come from `docs/benchmarks/` or a committed script;
   no invented numbers; end with Checklist, Anti-patterns, Sources. Lines near 110 characters (`docs/` is not checked by Prettier).
 - Open items go to `docs/superpowers/backlog/` (facts versus ideas), finished chunks to `docs/superpowers/reports/`.
 
@@ -47,7 +47,8 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   include alphas); never `expo install` or upgrade them blindly. On Windows, add dev
   deps with `pnpm add -D` (`npx expo install ... -- --dev` misplaces them). Never type versions from memory.
 - Style with Uniwind classes and semantic tokens only (`bg-background`, `text-foreground`, ...); no
-  hard-coded colours. Not NativeWind.
+  hard-coded colours (`scripts/design-guard.test.ts` fails on hex, `rgb()`/`hsl()`, literal `*Color` values and `dark:`
+  colour pairs outside `src/components/ui`). Not NativeWind.
 - Uniwind ignores unsupported variants silently (`placeholder:`, `hover:`, `focus-visible:`, `web:`,
   `group-*`); non-style colour props need `*ClassName="accent-..."`; wrap third-party components with
   `withUniwind` once. `scripts/uniwind-guard.test.ts` enforces this.

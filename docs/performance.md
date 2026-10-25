@@ -90,8 +90,9 @@ Other list rules (project): `keyboardShouldPersistTaps="handled"` on lists with 
   (verified: same page). `ProductRow` sets `memory-disk`.
 - Give every image fixed dimensions through classes (`size-16`) so layout does not shift. Set `accessible={false}` on
   decorative thumbnails (verified: `product-row.tsx`).
-- Wrap `expo-image` with `withUniwind` once (`StyledImage`) so `className` works (verified: `product-row.tsx`,
-  `product-detail-screen.tsx`; a second feature using it should share one file, see [components.md](components.md)).
+- Wrap `expo-image` with `withUniwind` once (`StyledImage` in `src/features/lab/components/styled-image.tsx`, shared by `product-row.tsx` and
+  `product-detail-screen.tsx`; it was defined twice before the review fix) so `className` works; a second feature using it
+  should move it to `src/components` ([components.md](components.md))).
 - Not measured: image decode cost, scroll jank with images, disk cache size. Open item in the backlog (image rows on a
   device).
 

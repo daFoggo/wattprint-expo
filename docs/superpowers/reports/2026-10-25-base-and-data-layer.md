@@ -1,18 +1,16 @@
 # Base and data layer report
 
-Date: 2026-10-25. Range: `git log --oneline 6b7d880..b762681` (from the Expo scaffold to the last commit on `main` before the
-documentation branch; 82 commits on `main`, counted with `git log --oneline | wc -l` on 2026-10-25). Closes the specs
+Date: 2026-10-25. Range: `git log --oneline 6b7d880..b762681` (80 commits after the Expo scaffold commit `6b7d880`, up to the last commit on
+`main` before the documentation branch; use `git log --oneline --root` for the whole history, 82 commits on `main`). Closes the specs
 `../specs/2026-10-24-expo-base-design.md` and `../specs/2026-10-25-data-architecture-design.md` and the plan
 `../plans/2026-10-24-expo-base.md` (goals G1 to G5 in [HANDOFF.md](../HANDOFF.md)).
 
 ## Status
 
 Done and on `main`. CI is green on `main`: `gh run list --repo daFoggo/wattprint-expo` shows `success` for the last five
-runs, newest "ci: run format:check before check to fail fast" (2026-10-25). On the documentation branch,
-`npx jest --ci --roots <rootDir>/src <rootDir>/scripts` gave 255 passed and 1 failed of 256 tests (35 suites); the one failure
-is `scripts/config-guard.test.ts` "single css entry", caused by a second `src/global.css` found inside the untracked
-`.claude/worktrees/agent-a5abcc418e75c49f3` (another session's worktree), not by a code change. On a clean clone that
-worktree does not exist. A plain `pnpm check` on a machine with that worktree fails in lint and in that test for the same reason.
+runs, newest "ci: run format:check before check to fail fast" (2026-10-25). On the documentation branch, with `.claude/` present, `pnpm format:check` passes, `pnpm check` passes (lint with zero
+warnings, typecheck, jest: 257 tests in 35 suites) and `npx expo-doctor` passes 20/20 (2026-10-25). `.claude/` (local state and
+other sessions' worktrees) is now ignored by git, ESLint, Prettier, Jest and the config guard.
 
 ## What exists
 
@@ -54,6 +52,7 @@ worktree does not exist. A plain `pnpm check` on a machine with that worktree fa
   these come from the baseline measurements (`docs/data-fetching.md`) with their caveats (emulator, relative, text-only rows).
 - Query persistence deferred; auth, chat and per-tab error boundaries designed but not built.
 - "My call" items (the user was asleep and opted out of questions): recorded in the specs under "my calls".
+- Not written: there is no routing or providers doc (`docs/architecture.md` and `AGENTS.md` cover part of it).
 - Documentation pass (this branch): `docs/components.md`, `design-system.md`, `client-state.md`, `performance.md`, the routing
   table in `AGENTS.md`, `scripts/design-guard.test.ts` and `scripts/contrast-report.js`.
 

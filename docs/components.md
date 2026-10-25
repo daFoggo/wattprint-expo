@@ -26,9 +26,9 @@ eight rules; the skill's examples use `TextInput`, so it covers React Native, an
 | 7   | `patterns-children-over-render-props` | `children` for structure, render props only when data flows back          | 4, 5    |
 | 8   | `react19-no-forwardref`               | `ref` is a prop and `use()` replaces `useContext()` in our own code       | 7       |
 
-Our state-rule examples are not in the code base yet: there is no `createContext` outside vendored code today
-(verified: `grep createContext src` finds only `src/components/ui/**` through gluestack). Sections 6 and 7 are
-therefore the rule for the first compound component we write, not a description of existing code.
+Our state-rule examples are not in the code base yet: `grep -rn createContext src` finds no match; the vendored parts share
+state through gluestack's `withStyleContext`/`useStyleContext`. Sections 6 and 7 are therefore the rule for the first compound
+component we write, not a description of existing code.
 
 ## 2. Compound parts
 
@@ -208,12 +208,12 @@ duplicate. `components` never imports `features`, `screens` or `app` (enforced b
 | Used by several screens of **one** feature                                         | `src/features/<name>/components/<name>-thing.tsx`       |
 | Needed by a second feature and has a role name (`EmptyState`)                      | `src/components/<group>/`                               |
 | Only style repeated (a container class string)                                     | A `tva` next to the components (`state-style.ts`)       |
-| Wrapper around a third-party component that needs Uniwind                          | `withUniwind` once in one file, reuse (`StyledImage` in `product-row.tsx`, `StyledUIIcon`) |
+| Wrapper around a third-party component that needs Uniwind                          | `withUniwind` once in one file, reuse (`StyledImage` in `features/lab/components/styled-image.tsx`, `StyledUIIcon`) |
 | Needs a visual change that `variant`/`size` cannot express                         | Add a variant (section 3), not a call-site override     |
 
-Naming: kebab-case files, feature-prefixed component files (`product-row.tsx`), tests colocated. `ProductRow` has a
-`StyledImage = withUniwind(Image)` defined in its own file; a second feature using `expo-image` is the signal to move
-it to a shared file (opinion; not yet needed).
+Naming: kebab-case files, feature-prefixed component files (`product-row.tsx`), tests colocated. `StyledImage = withUniwind(Image)` was defined twice in the lab feature
+(`product-row.tsx` and `product-detail-screen.tsx`) and now lives once in `src/features/lab/components/styled-image.tsx`. A second
+feature using `expo-image` is the signal to move it to `src/components` (opinion; not yet needed).
 
 ## Checklist
 
