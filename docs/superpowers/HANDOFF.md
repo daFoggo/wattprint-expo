@@ -76,11 +76,11 @@ item), Next. Reference report: `reports/2026-10-25-base-and-data-layer.md`.
   benchmarks (data removed on 2026-10-26), architecture). Details: `reports/2026-10-25-base-and-data-layer.md`.
 - **Documentation pass** (branch `docs/base-documentation`): `docs/components.md`, `design-system.md`, `client-state.md`,
   `performance.md`, the routing table in `AGENTS.md`, `scripts/design-guard.test.ts`, reports and backlog folders.
-- **Smarthome UI demo (mock data) done**: Home, Devices, Energy and Settings tabs, `devices` and `energy` mock-backed slices,
+- **Smarthome UI demo (mock data) done** (`reports/2026-10-26-smarthome-ui-demo.md`): Home, Devices, Energy and Settings tabs, `devices` and `energy` mock-backed slices,
   victory-native chart, hand-copied gluestack parts; verified on the physical phone in light, dark, vi and font scale 2.0.
 - **Open items** (each a file in `backlog/`): query persistence spike, auth and session store, chat streaming, per-tab
   ErrorBoundary, production-env build check, first-frame theme flash in a release build, design-system findings (contrast, Input
-  touch target), victory-native 43 upgrade.
+  touch target), victory-native 43 upgrade, font-scale and dark-Switch findings, CMake policy variable.
 - Open for the owner (`README.md`): `vi` stays the second locale; app icon and splash are Expo placeholders; pnpm 12.14.0 on EAS
   build images is unverified until the first `eas build`.
 - CI: green on `main` (`gh run list --repo daFoggo/wattprint-expo`, checked 2026-10-25).

@@ -34,3 +34,10 @@ The next step and the first command to run.
 ```
 
 Do not edit a report after the fact except to fix a factual error; write a new report instead.
+
+## Index
+
+- [2026-10-25-base-and-data-layer](2026-10-25-base-and-data-layer.md): base, data layer, architecture.
+- [2026-10-25-vercel-rn-audit](2026-10-25-vercel-rn-audit.md): React Native best-practice audit.
+- [2026-10-25-wave-c](2026-10-25-wave-c.md): contrast, Input 48 dp, project skill, docs-links guard.
+- [2026-10-26-smarthome-ui-demo](2026-10-26-smarthome-ui-demo.md): Home, Devices, Energy and Settings tabs on mock data.
