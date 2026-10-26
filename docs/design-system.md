@@ -4,7 +4,8 @@ Tokens, type, spacing, Android rules, component usage and accessibility for this
 Expo SDK 58.0.19, React Native 0.88.0, React 19.3.0, Uniwind 1.13.0, Tailwind CSS 4.3.3, `@gluestack-ui/core` 5.0.15,
 `react-native-reanimated` 4.7.1. Related: [components.md](components.md) (composition and variants),
 [architecture.md](architecture.md), [client-state.md](client-state.md) (the theme preference store),
-[performance.md](performance.md).
+[performance.md](performance.md). Theme changed 2026-10-26: Sense-style tonal surfaces (grey page, white flat cards, no
+border or shadow) and the Emerald green primary; the demo is [design-system/wattprint-design-system.html](design-system/wattprint-design-system.html).
 
 Labels: **(verified: ...)** names the file, command or URL checked. **(opinion)** is our choice or advice, not proven.
 This project styles with Uniwind classes and semantic tokens only; there is no second styling system and no
@@ -14,32 +15,37 @@ design-token TypeScript file (verified: `src/global.css` is the single source; `
 
 Source: `src/global.css`. Each token is a space separated RGB triple defined twice, in `:where(.light, .light *)` and
 `:where(.dark, .dark *)` inside `@layer theme`, and mapped to a Tailwind colour by `@theme inline`
-(`--color-primary: rgb(var(--primary))`), so `bg-primary`, `text-primary-foreground`, `border-border`, `accent-primary`
+(`--color-primary: rgb(var(--primary))`), so `bg-primary`, `bg-primary-strong`, `text-primary-foreground`, `border-border`, `accent-primary`
 and `bg-overlay/50` all exist (verified: `src/global.css`). `Uniwind.setTheme` switches the block
 (verified: <https://docs.uniwind.dev/theming/basics.md>). Values below are copied from the file.
 
 | Token                    | Light RGB       | Dark RGB        | Intended use (and where it is used today)                                      |
 | ------------------------ | --------------- | --------------- | ------------------------------------------------------------------------------ |
-| `background`             | 255 255 255     | 10 10 10        | Screen and page background (`bg-background` on every screen root, states)      |
-| `foreground`             | 10 10 10        | 250 250 250     | Primary text (`text-foreground`)                                               |
-| `card`                   | 255 255 255     | 23 23 23        | List rows and raised surfaces (`bg-card`)                      |
-| `card-foreground`        | 10 10 10        | 250 250 250     | Text on `card` (defined; no class uses it yet, `text-foreground` is equal)     |
-| `popover`                | 255 255 255     | 23 23 23        | Menus and popovers (defined; unused)                                           |
-| `popover-foreground`     | 10 10 10        | 250 250 250     | Text on `popover` (defined; unused)                                            |
-| `primary`                | 23 23 23        | 255 245 245     | Default Button fill, cursor and selection tint, spinner (`accent-primary`)     |
-| `primary-foreground`     | 250 250 250     | 23 23 23        | Text and icons on `primary`                                                    |
-| `secondary`              | 245 245 245     | 38 38 38        | Secondary Button fill                                                          |
-| `secondary-foreground`   | 23 23 23        | 250 250 250     | Text on `secondary`                                                            |
-| `muted`                  | 245 245 245     | 38 38 38        | Quiet fills: image placeholder, pressed row (`active:bg-muted`)                |
-| `muted-foreground`       | 115 115 115     | 161 161 161     | Secondary text, input placeholder and icon (`text-muted-foreground`)           |
-| `accent`                 | 247 247 247     | 38 38 38        | Pressed or hover fill of outline and ghost Buttons                             |
-| `accent-foreground`      | 52 52 52        | 250 250 250     | Text on a pressed outline Button                                               |
-| `destructive`            | 231 0 11        | 255 100 103     | Destructive Button fill, error text (`text-destructive`), invalid input border |
-| `destructive-foreground` | 250 250 250     | 250 250 250     | Text on a destructive Button                                                   |
-| `border`                 | 229 229 229     | 46 46 46        | Dividers and outline Button border (`border-border`); decorative, not 3:1      |
-| `input`                  | 148 148 148     | 100 100 100     | Input border (`border-input`), dark Input fill tint (`dark:bg-input/30`), outline Button dark fill |
-| `ring`                   | 64 64 64        | 212 212 212     | Focused input border (`data-[focus=true]:border-ring`)                         |
+| `background`             | 244 244 244     | 15 20 18        | Page, grey so white cards stand out (`bg-background` on every screen root, states) |
+| `foreground`             | 14 32 25        | 242 245 243     | Primary text (`text-foreground`)                                               |
+| `card`                   | 255 255 255     | 24 31 28        | Flat raised surface: Card, list rows (`bg-card`, no border, no shadow)         |
+| `card-foreground`        | 14 32 25        | 242 245 243     | Text on `card` (defined; no class uses it yet, `text-foreground` is equal)     |
+| `popover`                | 255 255 255     | 24 31 28        | Menus and popovers (defined; unused)                                           |
+| `popover-foreground`     | 14 32 25        | 242 245 243     | Text on `popover` (defined; unused)                                            |
+| `primary`                | 10 155 84       | 22 160 90       | Bright green for shapes only: Switch track, Progress track tint, chart bars, cursor and spinner (`accent-primary`). Not for small text |
+| `primary-strong`         | 6 122 70        | 43 212 125      | Default Button and Badge fill, Progress fill, link text; the only green for small text |
+| `primary-foreground`     | 255 255 255     | 4 33 15         | Text and icons on `primary-strong`                                             |
+| `secondary`              | 236 238 237     | 34 43 39        | Secondary Button fill, Input fill (`bg-secondary`)                             |
+| `secondary-foreground`   | 14 32 25        | 242 245 243     | Text on `secondary`                                                            |
+| `muted`                  | 236 238 237     | 34 43 39        | Quiet fills: image placeholder, pressed row (`active:bg-muted`)                |
+| `muted-foreground`       | 101 108 104     | 142 152 147     | Secondary text, input placeholder and icon (`text-muted-foreground`)           |
+| `accent`                 | 232 235 233     | 34 43 39        | Pressed or hover fill of outline and ghost Buttons                             |
+| `accent-foreground`      | 14 32 25        | 242 245 243     | Text on a pressed outline Button                                               |
+| `destructive`            | 200 40 30       | 255 122 112     | Destructive Button fill, error text (`text-destructive`), invalid input border |
+| `destructive-foreground` | 255 255 255     | 250 250 250     | Text on a destructive Button                                                   |
+| `border`                 | 224 227 225     | 44 54 49        | Dividers and outline Button border (`border-border`); decorative, not 3:1      |
+| `input`                  | 133 141 137     | 100 110 105     | Switch off track (`accent-input`), outline Button dark fill tint (`dark:bg-input/[0.045]`) |
+| `ring`                   | 6 122 70        | 43 212 125      | Focused Input border (`data-[focus=true]:border-ring`)                         |
 | `overlay`                | 0 0 0           | 0 0 0           | Modal backdrop (`bg-overlay/50`)                                               |
+| `switch-thumb`           | 255 255 255     | 255 255 255     | Switch thumb (`accent-switch-thumb`)                                           |
+
+Surface rule (opinion, from the Sense app measured on 2026-10-24): depth comes from the step from `background` to `card`,
+never from a border or shadow. Cards are `rounded-3xl`, Buttons and Inputs `rounded-2xl`.
 
 Rules:
 
@@ -48,15 +54,18 @@ Rules:
   (`bg-red-500`). Enforced by `scripts/design-guard.test.ts` for hex colours in a colour position, colour functions (`rgb()`, `hsl()`, `color-mix()`, ...), literal values of `*Color` style props (`color: 'white'`) and `dark:` colour pairs;
   palette classes are not guarded (opinion: add if they appear).
 - No `dark:` colour pairs outside `src/components/ui` (the tokens already switch). The guard allows `dark:` pairs anywhere
-  under `src/components/ui/` (vendored upstream code); today `badge`, `button` and `input` have them (verified: `grep -rln 'dark:' src --include=*.tsx
-  --include=*.ts --exclude-dir=ui` finds no file with a `dark:` class outside `ui`; inside `ui`, `badge`, `button` and `input`
+  under `src/components/ui/` (vendored upstream code); today `badge` and `button` have them (verified: `grep -rln 'dark:' src --include=*.tsx
+  --include=*.ts --exclude-dir=ui` finds no file with a `dark:` class outside `ui`; inside `ui`, `badge` and `button`
   `index.tsx` match, 2026-10-26). One `rgb(` template is
   allow-listed in `src/lib/nav-theme.ts`: the exact literal `rgb(${parts.join(', ')})`, which turns a token triple into the CSS
   colour React Navigation needs.
 - Never put `text-destructive-foreground` on a solid `bg-destructive` in dark: that pair is 2.77:1 (section 2). The Button
   avoids it with `dark:bg-destructive/60`.
-- Control boundaries (inputs, checkboxes, selects, any custom control drawn with a border) use `border-input` (3:1);
-  `border-border` is for dividers only (1.26:1 light, decorative).
+- A custom control drawn with a border (checkbox, select) uses `border-input` (3:1); `border-border` is for dividers only
+  (decorative). The `Input` is the exception: a filled `bg-secondary` field with a transparent resting border, like Sense; see
+  the known limit in section 2.
+- Green: use `bg-primary-strong` / `text-primary-strong` for a Button fill or any text; `bg-primary` is for shapes (its white
+  text pair is 3.60:1 and fails the 4.5:1 text rule).
 - To change a colour, edit the triple in both blocks in `src/global.css`, add or update the pair in `PAIRS` in
   `scripts/contrast-report.js`, and re-run `node scripts/contrast-report.js` (section 2); `scripts/contrast.test.ts` must pass.
   Do not add a token for one screen (opinion).
@@ -75,66 +84,61 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 
 | Pair (foreground on background)       | Kind | Light       | Dark        |
 | ------------------------------------- | ---- | ----------- | ----------- |
-| `foreground` on `background`          | text | 19.80 pass  | 18.97 pass  |
-| `card-foreground` on `card`           | text | 19.80 pass  | 17.18 pass  |
-| `popover-foreground` on `popover`     | text | 19.80 pass  | 17.18 pass  |
-| `primary-foreground` on `primary`     | text | 17.18 pass  | 16.76 pass  |
-| `secondary-foreground` on `secondary` | text | 16.44 pass  | 14.50 pass  |
-| `accent-foreground` on `accent`       | text | 11.62 pass  | 14.50 pass  |
-| `destructive-foreground` on solid `destructive` | text | 4.57 pass | not used; n/a in script, 2.77 if used |
-| `muted-foreground` on `background`    | text | 4.74 pass   | 7.66 pass   |
-| `muted-foreground` on `muted`         | text | **4.35 fail** | 5.86 pass |
-| `destructive` on `background`         | text | 4.77 pass   | 6.85 pass   |
-| `destructive-foreground` on `destructive/60` over `background` (dark Button) | text | n/a | 6.20 pass |
-| `destructive-foreground` on `destructive/60` over `card` | text | n/a | 5.77 pass |
-| `destructive-foreground` on `destructive/50` over `background` (dark Button pressed) | text | n/a | 7.76 pass |
-| `muted-foreground` on `input/30` over `background` (dark Input fill and placeholder) | text | n/a | 5.93 pass |
-| `foreground` on `input/30` over `background` (dark Input text) | text | n/a | 14.69 pass |
-| `foreground` on `input/4.5` and `input/7.5` over `background` (dark outline Button fill, pressed) | text | n/a | 18.49 / 18.13 pass |
-| `muted-foreground` on `card`          | text | 4.74 pass   | 6.94 pass   |
-| `primary` on `background`             | ui   | 17.93 pass  | 18.51 pass  |
-| `primary` on `card` (chart bars, Progress fill) | ui | 17.93 pass | 16.76 pass |
-| `primary` on `primary/20` over `card` (Progress track) | ui | 11.69 pass | 9.13 pass |
-| `input` on `background` (Input border) | ui   | 3.03 pass   | 3.35 pass   |
-| `input` on `card`                     | ui   | 3.03 pass   | 3.03 pass   |
-| `switch-thumb` on `primary` (Switch thumb on the on track) | ui | 17.93 pass | 3.85 pass |
-| `switch-thumb` on `card` (thumb next to its card, dark only) | ui | n/a | 4.36 pass |
-| `switch-thumb` on `input` (thumb on the off track, light only) | ui | 3.03 pass | n/a (1.44, see below) |
-| `ring` on `background` (focused Input border) | ui | 10.37 pass | 13.36 pass |
-| `ring` on `card`                      | ui   | 10.37 pass  | 12.09 pass  |
-| `ring` on `input` (focus step from the unfocused border) | ui | 3.42 pass | 3.99 pass |
-| `destructive/40` over `background` (invalid Input border) | ui | **2.11 fail** | **1.95 fail** |
+| `foreground` on `background`          | text | 15.41 pass  | 16.94 pass  |
+| `card-foreground` on `card`           | text | 16.94 pass  | 15.28 pass  |
+| `popover-foreground` on `popover`     | text | 16.94 pass  | 15.28 pass  |
+| `primary-foreground` on `primary-strong` (Button, Badge) | text | 5.41 pass | 8.80 pass |
+| `primary-strong` on `background`      | text | 4.92 pass   | 9.58 pass   |
+| `primary-strong` on `card`            | text | 5.41 pass   | 8.64 pass   |
+| `secondary-foreground` on `secondary` | text | 14.54 pass  | 13.26 pass  |
+| `accent-foreground` on `accent`       | text | 14.11 pass  | 13.26 pass  |
+| `destructive-foreground` on solid `destructive` | text | 5.56 pass | not used; n/a in script |
+| `muted-foreground` on `background`    | text | 4.90 pass   | 6.26 pass   |
+| `muted-foreground` on `muted`         | text | 4.62 pass   | 4.89 pass   |
+| `destructive` on `background`         | text | 5.05 pass   | 7.32 pass   |
+| `destructive-foreground` on `destructive/60` over `background` (dark Button) | text | n/a | 5.36 pass |
+| `destructive-foreground` on `destructive/60` over `card` | text | n/a | 5.06 pass |
+| `destructive-foreground` on `destructive/50` over `background` (dark Button pressed) | text | n/a | 6.69 pass |
+| `muted-foreground` on `input/30` over `background` (older dark Input pair, still checked) | text | n/a | 4.60 pass |
+| `foreground` on `input/30` over `background` | text | n/a | 12.46 pass |
+| `foreground` on `input/4.5` and `input/7.5` over `background` (dark outline Button fill, pressed) | text | n/a | 16.35 / 15.93 pass |
+| `muted-foreground` on `card`          | text | 5.39 pass   | 5.64 pass   |
+| `primary` on `background`             | ui   | 3.28 pass   | 5.50 pass   |
+| `primary` on `card` (chart bars, Switch track) | ui | 3.60 pass | 4.96 pass |
+| `primary-strong` on `primary/20` over `card` (Progress fill on its track) | ui | 4.27 pass | 6.55 pass |
+| `switch-thumb` on `primary` (Switch thumb on the on track) | ui | 3.60 pass | 3.38 pass |
+| `switch-thumb` on `card` (thumb next to its card, dark only) | ui | n/a | 16.78 pass |
+| `switch-thumb` on `input` (thumb on the off track) | ui | 3.40 pass | 5.28 pass |
+| `input` on `background` (Switch off track) | ui | 3.10 pass | 3.52 pass |
+| `input` on `card`                     | ui   | 3.40 pass   | 3.18 pass   |
+| `ring` on `background`                | ui   | 4.92 pass   | 9.58 pass   |
+| `ring` on `card`                      | ui   | 5.41 pass   | 8.64 pass   |
+| `ring` on `secondary` (focused Input border against its fill) | ui | 4.64 pass | 7.50 pass |
+| `destructive` on `secondary` (invalid Input border against its fill) | ui | 4.77 pass | 5.73 pass |
 
-**Known limit (dark Switch):** the thumb on the off track (`input`) is 1.44:1 in dark, below 3:1, and is not in `PAIRS` or
-`KNOWN_FAILURES` (it is documented here instead). The state is carried by the thumb position and by the track against the card
-(`input` on `card` 3.03), not by thumb colour alone; light thumb on `card` is 1.00 (white on white) for the same reason
-(verified: `node scripts/contrast-report.js`; opinion: acceptable for a switch that also moves).
+**Known limit (Input):** like Sense, the Input is a filled `bg-secondary` field without a resting border, so the field
+against `card` or `background` is about 1.1:1 and does not meet 3:1 for the control boundary (WCAG 1.4.11). It is
+carried by the always-visible label and placeholder, the 48 dp height and the focus border (4.64:1 light, 7.50:1 dark). This is
+an accepted design trade-off (opinion); to restore a 3:1 boundary give the Input `border-input` again. Light thumb on `card` is
+1.00 (white on white): the track carries the state there (verified: `node scripts/contrast-report.js`, 2026-10-26).
 
-Before the fix (same script): `input` on `background` was 1.26 light / 1.46 dark (the Input used `border-border`, and `--input`
-equalled `--border`); light `ring` was 2.52. The first fix left dark `ring` (115) barely above dark `input` (100); `ring` is
-now 64 light / 212 dark. `border` on `background` is still 1.26 light / 1.46 dark: it is for dividers and
-is deliberately not a checked pair.
+Before the 2026-10-26 theme change (same script): `primary` was near-black grey (23 23 23) with 17.93:1 on `background`, the
+Input drew `border-input` and `ring` was 64 / 212. The green `primary` is only 3.60:1 against white, so small text and Button
+fills moved to `primary-strong` (5.41:1) and `primary` stayed for shapes. `border` is still a divider token and not a checked pair.
 
 The script (`node scripts/contrast-report.js`) also composites alpha classes over their parent token, which is how
 `bg-destructive/60` renders; rows with "over" use that. It models only the pairs listed in `PAIRS`. The table is measured;
 the reading below is opinion.
 
-- Dark `destructive-foreground` on **solid** `destructive` fails (2.77:1) but nothing renders that pair: the dark destructive
-  Button is `bg-destructive/60` (6.20:1 over `background`, 5.77:1 over `card`, 7.76:1 pressed at `/50`). Rule: never put
+- Dark `destructive-foreground` on **solid** `destructive` is not rendered: the dark destructive Button is
+  `bg-destructive/60` (5.36:1 over `background`, 5.06:1 over `card`, 6.69:1 pressed at `/50`). Rule: never put
   `text-destructive-foreground` on a solid `bg-destructive` in dark.
-- `muted-foreground` text must sit on `background` or `card`, not on `muted` (light 4.35:1; only the pressed row
-  `active:bg-muted` uses that, low priority).
-- `border` is for dividers, where 1.26:1 is decorative (unchanged). `Input` draws its boundary with `border-input`
-  (148 light, 100 dark), which clears 3:1 on `background` and `card`; the focused `ring` (64 light, 212 dark) is 10.37:1 / 13.36:1
-  on `background` and 3.42:1 / 3.99:1 against the unfocused `input` border, so focus is a clear step. The pair
-  `ring` on `input` is in `PAIRS`, so `scripts/contrast.test.ts` fails if that step shrinks. The
-  invalid border (`/40`) is still 2.11:1 / 1.95:1; the error text below the field compensates. It is the only boundary
-  failure left and is labelled in `KNOWN_FAILURES` in the script, with light `muted-foreground` on `muted`; the backlog file
-  records both.
+- `muted-foreground` on `muted` now passes (4.62:1 light), so the old "keep it off `muted`" rule is lifted for short text.
+- `KNOWN_FAILURES` in the script is empty. The invalid Input border (`border-destructive`) is 4.77:1 / 5.73:1 against the field.
 - `scripts/contrast.test.ts` runs the script's pairs in Jest: any pair below its threshold fails, except the labelled
   known failures, and a known failure that starts passing fails too (stale entry).
-- `README.md` says the dark input placeholder has low contrast; the script computes 5.93:1 for `muted-foreground` on the dark
-  input fill, so that note looks stale (unverified on a device).
+- `README.md` says the dark input placeholder has low contrast; the Input fill is now `bg-secondary` and `muted-foreground` on
+  `secondary` is not a checked pair, so check the placeholder on the device (unverified).
 
 ## 3. Type
 
@@ -168,7 +172,7 @@ Use these roles; add a new one only after a second screen needs it (opinion).
 
 No spacing token exists beyond Tailwind's scale (4 px steps). Tiers in use outside `src/components/ui`
 (same grep, 2026-10-25): gap `gap-1` 3, `gap-2` 3, `gap-3` 3, `gap-4` 2; padding `px-4` 4, `py-3` 4, `px-6` 2, `p-6` 1,
-`p-4` 1, `p-2` 1, `py-12` 1; radius `rounded-md` 1, `rounded-lg` 1. Used as:
+`p-4` 1, `p-2` 1, `py-12` 1; radius `rounded-md` 1, `rounded-lg` 1 (counts from before the 2026-10-26 theme). Used as:
 
 | Tier | Class        | Use                                                    |
 | ---- | ------------ | ------------------------------------------------------ |
@@ -177,7 +181,7 @@ No spacing token exists beyond Tailwind's scale (4 px steps). Tiers in use outsi
 | loose | `gap-4`, `p-6`, `px-6` | stacked controls on a screen, state container padding |
 | gutter | `px-4`, `py-3` | list and row horizontal gutter 16 dp, vertical 12 dp |
 
-Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do not add arbitrary values
+Radius: `rounded-3xl` Card (24 dp), `rounded-2xl` Button and Input (16 dp) since 2026-10-26; `rounded-md` for image thumbnails; `rounded-lg` once. Do not add arbitrary values
 (`w-[320px]`, `p-[13px]`) (opinion; not guarded). Screens use `bg-background flex-1` as root and
 `contentContainerClassName` on scroll views (verified: `screens/settings/index.tsx`).
 
@@ -225,7 +229,8 @@ Disabled looks like `opacity-40` through `data-[disabled=true]`. Label text is a
 
 ### Input
 
-`Input` (frame) + `InputField` (the `TextInput`) + optional `InputIcon`/`InputSlot`. Pass `isInvalid` for the error border
+`Input` (frame) + `InputField` (the `TextInput`) + optional `InputIcon`/`InputSlot`. The frame is a filled `bg-secondary`
+`rounded-2xl` field with a transparent `border-2`; focus shows `border-ring`. Pass `isInvalid` for the error border
 and render the error text below with `selectable` and `accessibilityLiveRegion="polite"` (verified: `screens/settings/sample-form.tsx`).
 Always set `accessibilityLabel` or `aria-label` on `InputField` (verified: `screens/settings/sample-form.tsx`).
 Placeholder, cursor and selection colours come from `*ClassName` bindings already inside `InputField`; do not pass
@@ -259,7 +264,7 @@ Full screen by default; pass `className="flex-none p-2"` to embed (verified: `st
 
 ### Card, Heading, Text, Divider
 
-`Card` is `bg-card border border-border rounded-xl shadow-sm`; `size="default"` is `p-4 gap-6`, `size="sm"` is `p-3 gap-3`
+`Card` is `bg-card rounded-3xl` (no border, no shadow); `size="default"` is `p-4 gap-3`, `size="sm"` is `p-3 gap-3`
 (verified: `src/components/ui/card/styles.tsx`). The dashboard and list screens use `size="sm"`. `Heading` takes `size` and
 carries `accessibilityRole="header"` at the call site; `Text` takes `size` (`2xs` to `3xl`) and class colour tokens
 (`text-muted-foreground`). `Text` `isTruncated` maps to `line-clamp-1`; it is not used by our code and was not exercised on a
@@ -273,7 +278,7 @@ The whole row is the control: a `Pressable` with `accessibilityRole="switch"`, `
 `importantForAccessibility="no-hide-descendants"`, so TalkBack sees one node and the small native Switch is only an indicator
 (verified: `src/features/devices/components/device-row.tsx`, `device-row.test.tsx`). Colour bindings are inside `Switch`:
 `trackColorOnClassName="accent-primary"`, `trackColorOffClassName="accent-input"`, `thumbColorClassName="accent-switch-thumb"`
-(verified: `src/components/ui/switch/index.tsx`); the contrast pairs and the dark thumb-on-off-track limit are in section 2. An
+(verified: `src/components/ui/switch/index.tsx`); the contrast pairs are in section 2 (the dark thumb is white since 2026-10-26, so the old off-track limit is gone). An
 offline device sets `disabled` on the row `Pressable`, which dims the row once (`opacity-40` through `data-[disabled=true]`) and
 blocks the press; the inner `Switch` is not given `disabled`, so it does not dim a second time.
 
@@ -285,7 +290,7 @@ not a touch target.
 
 ### Progress
 
-`<Progress value={n}><ProgressFilledTrack /></Progress>`: `h-2` track `bg-primary/20`, fill `bg-primary`. `value` is a 0 to 100
+`<Progress value={n}><ProgressFilledTrack /></Progress>`: `h-2` track `bg-primary/20`, fill `bg-primary-strong`. `value` is a 0 to 100
 percentage; compute it with a guarded selector so a zero total gives 0, not `NaN` (verified: `shareOf` in
 `src/features/energy/energy-selectors.ts`, tested in `energy-selectors.test.ts`).
 
@@ -342,7 +347,7 @@ points or only zeros renders `EmptyState` and never mounts `CartesianChart` (ver
 - [ ] Only token classes for colour; `scripts/design-guard.test.ts` passes (via `pnpm check`).
 - [ ] New or changed token: both theme blocks edited, the pair added to `PAIRS`, `node scripts/contrast-report.js` re-run and
       `scripts/contrast.test.ts` green; table in section 2 updated.
-- [ ] A control's boundary uses `border-input`, never `border-border`.
+- [ ] A custom bordered control uses `border-input`, never `border-border`; green text and Button fills use `primary-strong`.
 - [ ] Every pressable is at least 48 dp tall and wide, including inputs and icon buttons (or the gap is recorded).
 - [ ] Titles have `accessibilityRole="header"`; icon-only controls have a label; status text has a live region.
 - [ ] Text uses a type role from section 3; no fixed heights on text containers.
@@ -356,7 +361,7 @@ points or only zeros renders `EmptyState` and never mounts `CartesianChart` (ver
 - `bg-white dark:bg-black`: the tokens already switch themes.
 - `placeholder:`, `hover:`, `focus-visible:`, `group-*`: silently ignored on native (see `README.md`).
 - `className="h-8 px-2 text-xs"` on a Button instead of `size`/`variant`.
-- Text on `bg-muted` using `text-muted-foreground` in light (4.35:1).
+- `bg-primary` under small or white text (3.60:1): use `bg-primary-strong`.
 - Passing `placeholderTextColor` or `color` props instead of `*ClassName="accent-..."` bindings.
 - Meaning carried only by colour (a red border without error text).
 - `h-10` on a container of text (clips with a large system font).

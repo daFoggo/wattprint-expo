@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WattPrint Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Demo theme cho WattPrint, lay phong cach tu app Sense (do tu video 2026-10-24).
+   Token ten giong shadcn/gluestack de map thang vao src/global.css. Don vi: 1 "pt" = 1px o day. */
+:root{
+  /* Do tu anh Sense: nen xam #F4F4F4, card trang, khong shadow, khong border */
+  --background:#F4F4F4; --card:#FFFFFF; --secondary:#ECEEED; --muted:#ECEEED;
+  --foreground:#0E2019; --ink-2:#4A524E; --muted-foreground:#656C68;
+  --primary:#0A9B54; --primary-strong:#067A46; --primary-foreground:#FFFFFF; --primary-tint:#E6F5EC;
+  --solar:#F0BB43; --solar-bg:#FCF7E5; --solar-fg:#7A5200; --grid:#658ED0; --neutral-bubble:#707070;
+  --destructive:#C8281E; --destructive-bg:#FCEBE9;
+  --separator:#0000000F; --overlay:#0E201980;
+  --r-card:24px; --r-control:16px; --r-row:16px; --r-pill:999px;
+  --sans:"Plus Jakarta Sans","Helvetica Neue",Arial,sans-serif;
+  --ease:cubic-bezier(.2,0,0,1);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --background:#0F1412; --card:#181F1C; --secondary:#222B27; --muted:#222B27;
+  --foreground:#F2F5F3; --ink-2:#B4BDB8; --muted-foreground:#8E9893;
+  --primary-foreground:#04210F;
+  --solar:#F0BB43; --solar-bg:#2A2412; --solar-fg:#F0D58A; --grid:#8BAAE0; --neutral-bubble:#59605C;
+  --destructive:#FF7A70; --destructive-bg:#34201E;
+  --separator:#FFFFFF14; --overlay:#000000A6;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:5rem}
+body{margin:0;background:var(--background);color:var(--ink-2);font-family:var(--sans);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;transition:background .3s var(--ease),color .3s var(--ease)}
+h1,h2,h3,h4,p{margin:0}
+h1,h2,h3,h4{color:var(--foreground);font-weight:600;letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+:focus-visible{outline:2px solid var(--primary-strong);outline-offset:2px}
+.wrap{max-width:1120px;margin-inline:auto;padding-inline:max(20px,env(safe-area-inset-left))}
+.eyebrow{font-size:12px;line-height:16px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--primary-strong)}
+:root[data-theme="dark"] .eyebrow{color:var(--primary)}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---- trang tai lieu ---- */
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--background) 88%,transparent);backdrop-filter:blur(12px)}
+.topbar .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.brand{font-weight:700;color:var(--foreground);letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.brand i{width:22px;height:22px;border-radius:8px;background:var(--primary);display:inline-block}
+.topbar nav{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.topbar nav a{font-size:14px;font-weight:600;color:var(--ink-2);text-decoration:none;padding:8px 12px;border-radius:var(--r-pill);white-space:nowrap}
+.topbar nav a:hover{background:var(--card)}
+.themebtn{height:36px;padding:0 14px;border-radius:var(--r-pill);background:var(--card);font-size:14px;font-weight:600;color:var(--foreground)}
+section{padding-block:72px 8px}
+.sec-head{display:flex;flex-direction:column;gap:12px;max-width:720px;margin-bottom:32px}
+.sec-head h2{font-size:clamp(28px,4vw,40px)}
+.sec-head p{font-size:17px}
+.hero{padding-block:56px 16px}
+.hero h1{font-size:clamp(34px,6vw,56px);max-width:16ch}
+.hero p{font-size:18px;max-width:60ch;margin-top:16px}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.panel{background:var(--card);border-radius:var(--r-card);padding:20px}
+.panel h3{font-size:20px;margin-bottom:12px}
+.rule{display:flex;gap:12px;align-items:flex-start}
+.rule b{flex:none;width:28px;height:28px;border-radius:50%;background:var(--primary-tint);color:var(--primary-strong);display:grid;place-items:center;font-size:13px}
+:root[data-theme="dark"] .rule b{background:#1F3A2B;color:var(--primary)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{white-space:nowrap;text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-foreground);font-weight:700;padding:0 12px 10px}
+td{padding:10px 12px;border-top:1px solid var(--separator);vertical-align:middle}
+.tcell{display:flex;align-items:center;gap:10px;white-space:nowrap}.sw{display:inline-block;width:28px;height:28px;border-radius:10px;vertical-align:middle;margin-right:10px;box-shadow:inset 0 0 0 1px var(--separator)}
+.chip{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:var(--r-pill);font-size:12px;font-weight:700}
+.ok{background:var(--primary-tint);color:var(--primary-strong)}
+:root[data-theme="dark"] .ok{background:#1F3A2B;color:var(--primary)}
+.no{background:var(--destructive-bg);color:var(--destructive)}
+.picker{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.pick{display:flex;align-items:center;gap:10px;height:48px;padding:0 18px 0 8px;border-radius:var(--r-pill);background:var(--card);font-weight:600;color:var(--foreground)}
+.pick i{width:32px;height:32px;border-radius:50%}
+.pick[aria-pressed="true"]{background:var(--primary-strong);color:var(--primary-foreground)}
+:root[data-theme="dark"] .pick[aria-pressed="true"]{background:var(--primary);color:var(--primary-foreground)}
+.scale{display:flex;flex-direction:column}
+.scale>div{display:flex;align-items:baseline;gap:20px;padding:14px 0;border-top:1px solid var(--separator)}
+.scale>div:first-child{border-top:0}
+.scale .meta{flex:none;width:200px;font-size:12px;color:var(--muted-foreground)}
+.space-row{display:flex;align-items:center;gap:16px;padding:8px 0}
+.space-row .bar{height:16px;background:var(--primary);border-radius:4px}
+.space-row span{font-size:14px}
+.canvas{background:var(--background);border-radius:var(--r-card);padding:20px;display:grid;gap:20px}
+/* nen tai lieu da la --background, cho canvas demo noi len bang vien mo */
+.stage{background:var(--muted);border-radius:32px;padding:24px;display:grid;gap:20px}
+.phones{display:flex;gap:28px;overflow-x:auto;padding:8px 4px 24px;scroll-snap-type:x mandatory}
+.cap{font-size:13px;color:var(--muted-foreground);margin-top:10px;text-align:center}
+
+/* ---- thanh phan dung chung (day la thu se thanh class Uniwind) ---- */
+.ui-card{background:var(--card);border-radius:var(--r-card);padding:16px;display:flex;flex-direction:column;gap:12px}
+.ui-card .title{font-size:22px;line-height:26px;font-weight:600;color:var(--foreground);letter-spacing:-.01em}
+.ui-card .body{font-size:14px;line-height:20px;color:var(--ink-2)}
+.ui-card .foot{font-size:12px;line-height:16px;color:var(--muted-foreground)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 20px;border-radius:var(--r-control);font-size:16px;font-weight:600;transition:transform .15s var(--ease),background .15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--primary-strong);color:#fff}
+:root[data-theme="dark"] .btn.primary{background:var(--primary);color:var(--primary-foreground)}
+.btn.secondary{background:var(--secondary);color:var(--foreground)}
+.btn.ghost{color:var(--primary-strong)}
+:root[data-theme="dark"] .btn.ghost{color:var(--primary)}
+.btn.danger{background:var(--card);color:var(--destructive)}
+.btn.block{width:100%}
+.btn.sm{height:40px;font-size:14px;padding:0 16px}
+.switch{width:52px;height:32px;border-radius:var(--r-pill);background:var(--muted);position:relative;transition:background .2s var(--ease);flex:none}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.switch[aria-checked="true"]{background:var(--primary)}
+.switch[aria-checked="true"]::after{transform:translateX(20px)}
+.seg{display:flex;background:var(--muted);border-radius:var(--r-pill);padding:4px;gap:2px}
+.seg button{flex:1;height:36px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--ink-2)}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--foreground)}
+.notice{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:var(--r-row);background:var(--solar-bg);color:var(--solar-fg);font-size:14px;line-height:20px;font-weight:600}
+.notice svg{flex:none}
+.badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-pill);font-size:12px;font-weight:700;background:var(--primary-tint);color:var(--primary-strong)}
+:root[data-theme="dark"] .badge{background:#1F3A2B;color:var(--primary)}
+.field{height:52px;border-radius:var(--r-control);background:var(--secondary);padding:0 16px;display:flex;align-items:center;font-size:16px;color:var(--foreground)}
+.field small{color:var(--muted-foreground)}
+.row{display:flex;align-items:center;gap:14px;background:var(--card);border-radius:var(--r-row);padding:12px 14px;min-height:56px}
+.row .t{font-size:16px;font-weight:600;color:var(--foreground);line-height:20px}
+.row .s{font-size:13px;color:var(--muted-foreground);line-height:18px}
+.row .grow{flex:1;min-width:0}
+.ico{width:32px;height:32px;flex:none;display:grid;place-items:center;color:var(--grid)}
+.ico svg{width:28px;height:28px;fill:currentColor}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--solar)}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:32px;line-height:36px;font-weight:700;color:var(--foreground);letter-spacing:-.02em}
+.stat b em{font-style:normal;font-size:16px;color:var(--ink-2);font-weight:600;margin-left:2px}
+.stat span{font-size:13px;color:var(--muted-foreground)}
+.list{display:flex;flex-direction:column;gap:4px}
+.group{background:var(--card);border-radius:var(--r-card);overflow:hidden}
+.group .gi{display:flex;align-items:center;gap:14px;padding:0 16px;height:56px;font-size:16px;color:var(--foreground);font-weight:500}
+.group .gi + .gi{box-shadow:inset 0 1px 0 var(--separator)}
+.group .gi .ci{width:32px;height:32px;border-radius:50%;background:var(--muted);display:grid;place-items:center;color:var(--muted-foreground);flex:none}
+.group .gi .ci svg{width:16px;height:16px;fill:currentColor}
+.group .gi .chev{margin-left:auto;color:var(--muted-foreground)}
+
+/* ---- khung dien thoai ---- */
+.phone{flex:none;width:390px;scroll-snap-align:center}
+.screen{position:relative;width:390px;height:800px;border-radius:44px;background:var(--background);overflow:hidden;box-shadow:0 0 0 10px var(--foreground)}
+:root[data-theme="dark"] .screen{box-shadow:0 0 0 10px #2C3531}
+.sb{height:48px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 6px;font-size:15px;font-weight:700;color:var(--foreground)}
+.body-scroll{position:absolute;inset:48px 0 0 0;padding:8px 20px 120px;overflow:hidden;display:flex;flex-direction:column;gap:20px}
+.large-title{font-size:34px;line-height:40px;font-weight:700;letter-spacing:-.03em;color:var(--foreground);padding-top:20px}
+.hl{font-size:28px;line-height:34px;font-weight:700;letter-spacing:-.02em;color:var(--foreground)}
+.hl em{font-style:normal;color:var(--primary-strong)}
+:root[data-theme="dark"] .hl em{color:var(--primary)}
+.tabbar{position:absolute;left:16px;right:16px;bottom:20px;height:64px;border-radius:var(--r-pill);background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(16px);display:flex;align-items:center;padding:6px;gap:2px;box-shadow:0 0 0 1px var(--separator)}
+.tabbar a{flex:1;height:52px;border-radius:var(--r-pill);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;color:var(--foreground)}
+.tabbar a svg{width:22px;height:22px;fill:currentColor}
+.tabbar a[aria-current="page"]{background:var(--muted);color:var(--primary-strong)}
+:root[data-theme="dark"] .tabbar a[aria-current="page"]{color:var(--primary)}
+.bubbles{position:relative;height:330px}
+.bubbles .b{position:absolute;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:600;text-align:center}
+.pill-w{position:absolute;right:0;bottom:0;background:var(--card);border-radius:var(--r-pill);height:40px;padding:0 14px;display:flex;align-items:center;gap:8px;font-weight:700;color:var(--foreground)}
+.tl{display:flex;flex-direction:column;gap:10px}
+.tl .t0{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted-foreground);padding-left:2px}
+footer{padding-block:72px 96px;font-size:14px;color:var(--muted-foreground)}
+.code{background:var(--card);border-radius:var(--r-row);padding:14px 16px;overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.6;color:var(--foreground);white-space:pre-wrap;overflow-wrap:anywhere}
+.diff-del{color:var(--destructive)} .diff-add{color:var(--primary-strong)}
+:root[data-theme="dark"] .diff-add{color:var(--primary)}
+@media (max-width:900px){.topbar nav a{padding:8px 8px;font-size:13px}}
+@media (max-width:640px){ section{padding-top:48px} .scale>div{flex-direction:column;gap:6px} .scale .meta{width:auto} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><i></i>WattPrint</div>
+    <nav aria-label="Mục lục">
+      <a href="#nguyen-tac">Nguyên tắc</a><a href="#mau">Màu</a><a href="#chu">Chữ</a><a href="#khoang">Khoảng cách</a>
+      <a href="#thanh-phan">Thành phần</a><a href="#man-hinh">Màn hình</a><a href="#ap-dung">Áp dụng</a>
+    </nav>
+    <button class="themebtn" id="themeBtn" aria-pressed="false">Tối</button>
+  </div>
+</header>
+
+<main>
+<!-- ============ HERO ============ -->
+<div class="wrap hero">
+  <p class="eyebrow">Design system · bản demo</p>
+  <h1>Phẳng, sạch, mỗi thẻ nói một ý.</h1>
+  <p>Phong cách lấy từ Sense: nền xám nhạt, thẻ trắng nổi lên bằng chênh màu, không shadow, không viền. Màu chính chuyển từ cam sang xanh lá cho app năng lượng. Mọi số đo bên dưới có ghi nguồn: đo từ ảnh Sense hay là đề xuất.</p>
+</div>
+
+<!-- ============ NGUYEN TAC ============ -->
+<section id="nguyen-tac"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">01 · Nguyên tắc</p><h2>Sáu quy tắc tạo nên cảm giác "không có gì sai"</h2>
+  <p>Gần như mọi thứ ở Sense suy ra từ sáu quy tắc này. Giữ đúng chúng quan trọng hơn thêm chi tiết.</p></div>
+  <div class="grid g3">
+    <div class="panel rule"><b>1</b><div><h3>Phân tầng bằng tông màu</h3><p>Nền <span class="mono">#F4F4F4</span>, thẻ <span class="mono">#FFFFFF</span>. Thẻ nổi nhờ chênh màu, không nhờ shadow hay viền. (đo từ ảnh)</p></div></div>
+    <div class="panel rule"><b>2</b><div><h3>Một thẻ một ý</h3><p>Nhãn nhỏ viết hoa, một câu kết luận, một hình trực quan. Không thêm thông tin phụ ngoài chú thích.</p></div></div>
+    <div class="panel rule"><b>3</b><div><h3>Bo góc lớn, đồng nhất</h3><p>Thẻ lớn bo 24, hàng danh sách bo 16, nút bo 16, chip và tab bar bo tròn hẳn. (thẻ đo ≈25, còn lại đề xuất)</p></div></div>
+    <div class="panel rule"><b>4</b><div><h3>Một màu nhấn</h3><p>Chỉ xanh lá làm màu chính. Vàng và xanh dương chỉ xuất hiện như dữ liệu (điện mặt trời, lưới điện).</p></div></div>
+    <div class="panel rule"><b>5</b><div><h3>Chữ phân cấp bằng cỡ và độ đậm</h3><p>Hai độ đậm chính: 600 và 700. Số liệu là nhân vật, nhãn thì nhỏ và viết hoa.</p></div></div>
+    <div class="panel rule"><b>6</b><div><h3>Khoảng trắng thay đường kẻ</h3><p>Lề 20, khoảng giữa thẻ 20, đệm trong thẻ 16. Đường kẻ chỉ dùng bên trong nhóm danh sách.</p></div></div>
+  </div>
+</div></section>
+
+<!-- ============ MAU ============ -->
+<section id="mau"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">02 · Màu</p><h2>Xanh lá sạch, không bẩn</h2>
+  <p>Màu xanh trước đây bị xám và hơi ngả xanh ngọc nên nhìn đục. Bản này giữ độ bão hòa cao (khoảng 85–90%) và độ sáng thấp vừa phải, đúng như màu cam của Sense (bão hòa 78%, sáng 55%). Chọn thử bên dưới, cả trang đổi theo.</p></div>
+
+  <div class="picker" role="group" aria-label="Chọn màu chính" id="picker"></div>
+
+  <div class="grid g2">
+    <div class="panel">
+      <h3>Token</h3>
+      <table id="tokenTable"><thead><tr><th>Token</th><th>Giá trị</th><th>Dùng cho</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="grid" style="align-content:start">
+      <div class="panel">
+        <h3>Hai vai trò của màu chính</h3>
+        <p style="margin-bottom:12px"><b style="color:var(--foreground)">primary</b> (tươi) cho hình lớn: bong bóng, biểu đồ, công tắc bật, icon tab. Trắng trên màu này chỉ đạt khoảng 3:1, nên không đặt chữ nhỏ lên.</p>
+        <p><b style="color:var(--foreground)">primary-strong</b> (đậm hơn) cho nút có chữ trắng, chữ nhãn nhỏ, liên kết. Đạt AA (từ 4.5:1).</p>
+      </div>
+      <div class="panel">
+        <h3>Kiểm tra tương phản (tính trực tiếp)</h3>
+        <table id="contrastTable"><thead><tr><th>Cặp</th><th>Tỉ lệ</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:20px">
+    <h3>Màu dữ liệu năng lượng</h3>
+    <p style="margin-bottom:16px">Mỗi nguồn năng lượng có một màu cố định ở mọi biểu đồ. Vàng và xanh dương mượn từ chấm vàng và icon thiết bị của Sense (đo từ ảnh).</p>
+    <div class="grid g3">
+      <div class="row" style="background:var(--background)"><span class="sw" style="background:var(--primary);margin:0"></span><div class="grow"><div class="t">Tiêu thụ</div><div class="s">primary · điện nhà đang dùng</div></div></div>
+      <div class="row" style="background:var(--background)"><span class="sw" style="background:var(--solar);margin:0"></span><div class="grow"><div class="t">Điện mặt trời</div><div class="s">solar · sản xuất</div></div></div>
+      <div class="row" style="background:var(--background)"><span class="sw" style="background:var(--grid);margin:0"></span><div class="grow"><div class="t">Lưới điện</div><div class="s">grid · mua hoặc bán</div></div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ CHU ============ -->
+<section id="chu"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">03 · Chữ</p><h2>Một họ chữ hình học, đủ dấu tiếng Việt</h2>
+  <p>Sense dùng chữ không chân hình học, tròn trịa. Mình chọn Plus Jakarta Sans vì có sẵn bộ ký tự tiếng Việt trên Google Fonts (đã kiểm tra: có subset <span class="mono">vietnamese</span>). Figtree gần Sense hơn nhưng thiếu dấu tiếng Việt. Khi lên app thật, tải font bằng <span class="mono">expo-font</span> và đặt ở <span class="mono">@theme</span>.</p></div>
+  <div class="panel"><div class="scale">
+    <div><span class="meta">Headline · 28/34 · 700</span><span class="hl">Hôm nay bạn đã dùng <em>5,86 $</em></span></div>
+    <div><span class="meta">Large title · 34/40 · 700</span><span class="large-title" style="padding:0">Thiết bị</span></div>
+    <div><span class="meta">Card title · 22/26 · 600</span><span style="font-size:22px;line-height:26px;font-weight:600;color:var(--foreground)">Mức dùng cao hơn 92% nhà lân cận.</span></div>
+    <div><span class="meta">Số liệu · 32/36 · 700</span><span class="stat"><b class="tnum">4.910<em>W</em></b></span></div>
+    <div><span class="meta">Body · 16/22 · 400</span><span style="font-size:16px;line-height:22px">Điện năng tiêu thụ của bạn trong 30 ngày qua.</span></div>
+    <div><span class="meta">Caption · 13/18 · 400</span><span style="font-size:13px;line-height:18px;color:var(--muted-foreground)">So với 35 hộ gia đình cùng mã bưu chính.</span></div>
+    <div><span class="meta">Eyebrow · 12/16 · 700 · +0.08em</span><span class="eyebrow">So sánh</span></div>
+    <div><span class="meta">Tab label · 11/14 · 600</span><span style="font-size:11px;font-weight:600;color:var(--foreground)">Bảng điều khiển</span></div>
+  </div></div>
+  <p class="cap" style="text-align:left;margin-top:12px">Cỡ chữ Sense đo gần đúng từ ảnh rồi làm tròn về bậc gần nhất (đề xuất). Số liệu dùng <span class="mono">tabular-nums</span> để không nhảy khi cập nhật.</p>
+</div></section>
+
+<!-- ============ KHOANG ============ -->
+<section id="khoang"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">04 · Khoảng cách và bo góc</p><h2>Lưới 4, lề 20</h2>
+  <p>Ảnh Sense là 1320 px rộng, tức 440 pt ở 3x. Mọi số dưới đây đã chia cho 3.</p></div>
+  <div class="grid g2">
+    <div class="panel">
+      <h3>Khoảng cách</h3>
+      <div class="space-row"><div class="bar" style="width:4px"></div><span><b>4</b> · khoảng giữa các hàng trong danh sách (đo ≈4)</span></div>
+      <div class="space-row"><div class="bar" style="width:8px"></div><span><b>8</b> · icon với chữ, chấm timeline</span></div>
+      <div class="space-row"><div class="bar" style="width:12px"></div><span><b>12</b> · nhãn, tiêu đề, nội dung trong thẻ</span></div>
+      <div class="space-row"><div class="bar" style="width:16px"></div><span><b>16</b> · đệm trong thẻ (đo ≈16)</span></div>
+      <div class="space-row"><div class="bar" style="width:20px"></div><span><b>20</b> · lề màn hình và khoảng giữa các thẻ (đo ≈20)</span></div>
+      <div class="space-row"><div class="bar" style="width:32px"></div><span><b>32</b> · giữa hai cụm nội dung khác nhau</span></div>
+      <div class="space-row"><div class="bar" style="width:48px"></div><span><b>48</b> · chiều cao tối thiểu vùng chạm, nút chính</span></div>
+    </div>
+    <div class="panel">
+      <h3>Bo góc</h3>
+      <div class="grid" style="grid-template-columns:repeat(2,1fr);gap:16px">
+        <div><div style="height:72px;background:var(--background);border-radius:24px"></div><p class="cap">24 · thẻ lớn (đo ≈25)</p></div>
+        <div><div style="height:72px;background:var(--background);border-radius:16px"></div><p class="cap">16 · hàng danh sách</p></div>
+        <div><div style="height:72px;background:var(--background);border-radius:16px"></div><p class="cap">16 · nút, ô nhập</p></div>
+        <div><div style="height:72px;background:var(--background);border-radius:999px"></div><p class="cap">pill · chip, tab, công tắc</p></div>
+      </div>
+      <p style="margin-top:16px;font-size:14px">Vùng chạm tối thiểu 48 để khớp Material và hướng dẫn trợ năng của Android.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ THANH PHAN ============ -->
+<section id="thanh-phan"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">05 · Thành phần</p><h2>Phẳng, không viền, không bóng</h2>
+  <p>Các thành phần dưới đây đặt trên nền xám, đúng như trong app. Bật chế độ tối ở góc trên để xem bản tối.</p></div>
+  <div class="stage">
+    <div class="grid g2">
+      <div class="ui-card">
+        <span class="eyebrow">So sánh</span>
+        <h3 class="title">Mức dùng của bạn cao hơn 92% nhà lân cận.</h3>
+        <div class="stat" style="align-items:flex-end"><b class="tnum">4.910<em>W</em></b><span>BẠN</span></div>
+        <svg viewBox="0 0 320 28" width="100%" height="28" aria-hidden="true"><rect x="0" y="6" width="100" height="16" rx="8" fill="var(--muted)"/><rect x="104" y="6" width="104" height="16" rx="8" fill="var(--muted)"/><rect x="212" y="6" width="108" height="16" rx="8" fill="var(--primary)"/></svg>
+        <p class="foot">So với 35 hộ cùng mã bưu chính trong 30 ngày qua.</p>
+      </div>
+      <div class="ui-card">
+        <span class="eyebrow">Mục tiêu</span>
+        <p class="body">Đặt cảnh báo để theo dõi mức dùng điện của bạn.</p>
+        <button class="btn primary block">Tạo mục tiêu</button>
+        <button class="btn secondary block">Để sau</button>
+      </div>
+    </div>
+    <div class="grid g3">
+      <div class="ui-card"><span class="eyebrow">Nút</span>
+        <button class="btn primary">Chính</button><button class="btn secondary">Phụ</button><button class="btn ghost">Liên kết</button><button class="btn danger">Xóa thiết bị</button><button class="btn primary sm">Nhỏ</button></div>
+      <div class="ui-card"><span class="eyebrow">Điều khiển</span>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="color:var(--foreground);font-weight:600">Hiện trên dòng thời gian</span><button class="switch" role="switch" aria-checked="true" aria-label="Hiện trên dòng thời gian"></button></div>
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="color:var(--foreground);font-weight:600">Báo khi bật</span><button class="switch" role="switch" aria-checked="false" aria-label="Báo khi bật"></button></div>
+        <div class="seg" role="tablist" id="seg"><button role="tab" aria-selected="false">Phút</button><button role="tab" aria-selected="false">Giờ</button><button role="tab" aria-selected="true">Ngày</button><button role="tab" aria-selected="false">Tuần</button><button role="tab" aria-selected="false">Tháng</button></div>
+        <div class="field"><small>Mã bưu chính&nbsp;&nbsp;</small>33928</div></div>
+      <div class="ui-card"><span class="eyebrow">Trạng thái</span>
+        <div class="notice"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>Bạn đang dùng giá điện trung bình. Cập nhật để ước tính chính xác hơn.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge">Đang bật</span><span class="chip no">Lỗi</span><span class="chip" style="background:var(--solar-bg);color:var(--solar-fg)">Điện mặt trời</span></div>
+        <div class="stat"><b class="tnum">1.446<em>W</em></b><span>đang dùng</span></div></div>
+    </div>
+    <div class="grid g2">
+      <div class="list">
+        <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></span><div class="grow"><div class="t">Luôn bật</div><div class="s">1.038 W</div></div><span class="dot"></span></div>
+        <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/></svg></span><div class="grow"><div class="t">Tủ lạnh</div><div class="s">124 W · Bếp</div></div><span class="dot"></span></div>
+        <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a6 6 0 00-3 11.2V16h6v-2.8A6 6 0 0012 2zm-2 16h4v2h-4z"/></svg></span><div class="grow"><div class="t">Đèn gác mái</div><div class="s">Gác mái</div></div><button class="switch" role="switch" aria-checked="false" aria-label="Đèn gác mái"></button></div>
+      </div>
+      <div class="group">
+        <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0z"/></svg></span>Tài khoản<span class="chev">&rsaquo;</span></div>
+        <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-3v9H6v-9H3z"/></svg></span>Nhà của tôi<span class="chev">&rsaquo;</span></div>
+        <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></span>Điện mặt trời<span class="chev">&rsaquo;</span></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ============ MAN HINH ============ -->
+<section id="man-hinh"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">06 · Màn hình mẫu</p><h2>Dựng lại bốn màn của Sense</h2>
+  <p>Bố cục theo ảnh: Now, Dashboard, Devices, Settings. Số liệu là dữ liệu giả để xem nhịp điệu và màu, không phải dữ liệu thật.</p></div>
+  <div class="phones" id="phones">
+
+    <!-- NOW -->
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>8:57</span><span>5G ▮</span></div>
+      <div class="body-scroll">
+        <div><p class="hl">Hôm nay bạn đã dùng <em>5,86&nbsp;$</em>.</p><p style="margin-top:6px;font-size:15px">Nhiều hơn một chút so với các thứ Bảy gần đây.</p></div>
+        <div class="bubbles">
+          <div class="b" style="left:40px;top:90px;width:260px;height:260px;background:var(--primary);color:var(--primary-foreground);font-size:22px">Luôn bật</div>
+          <div class="b" style="left:120px;top:0;width:150px;height:150px;background:var(--neutral-bubble);font-size:20px">Khác</div>
+          <div class="b" style="left:0;top:120px;width:104px;height:104px;background:color-mix(in srgb,var(--primary) 78%,#fff);color:var(--primary-foreground);font-size:18px">Tủ lạnh</div>
+          <div class="pill-w tnum"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--primary)" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></svg>1.458 <small style="font-weight:600;color:var(--ink-2)">W</small></div>
+        </div>
+        <div class="tl"><span class="eyebrow" style="color:var(--foreground)">Hôm nay</span>
+          <div class="t0"><span class="dot"></span>8:36</div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/></svg></span><div class="grow t" style="font-weight:500;font-size:15px">Tủ lạnh (Bếp) đã bật</div></div>
+        </div>
+      </div>
+      <nav class="tabbar" aria-label="Tab"><a href="#man-hinh" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></svg>Now</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M4 20V10h4v10zm6 0V4h4v16zm6 0v-7h4v7z"/></svg>Bảng</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M2 12h5l2-6 4 12 2-6h7v2h-5.5L14 22 10 10l-1 4H2z"/></svg>Đồng hồ</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M8 2v5h8V2h2v5h1v4a6 6 0 01-5 5.9V22h-2v-5.1A6 6 0 015 11V7h1V2z"/></svg>Thiết bị</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>Cài đặt</a></nav>
+    </div><p class="cap">Now · bong bóng và dòng thời gian</p></div>
+
+    <!-- DASHBOARD -->
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>8:57</span><span>5G ▮</span></div>
+      <div class="body-scroll">
+        <div class="ui-card" style="gap:8px">
+          <span class="eyebrow">Mức dùng</span>
+          <h3 class="title">Bạn dùng ít hơn 6% so với cùng kỳ tháng trước.</h3>
+          <div style="display:flex;gap:20px;font-size:13px"><span><span class="dot" style="display:inline-block;background:var(--primary);margin-right:6px"></span>Tháng này <b class="tnum" style="color:var(--foreground)">334 $</b></span><span style="color:var(--muted-foreground)"><span class="dot" style="display:inline-block;background:var(--muted);margin-right:6px"></span>Tháng trước <b class="tnum">357 $</b></span></div>
+          <svg viewBox="0 0 320 120" width="100%" aria-hidden="true"><path d="M4 104 L90 84 L150 70 L214 52 L316 30" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round"/><path d="M4 106 L90 88 L150 76 L214 58" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round"/><circle cx="214" cy="58" r="7" fill="var(--primary)"/><line x1="214" y1="64" x2="214" y2="112" stroke="var(--muted)" stroke-width="2"/></svg>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted-foreground)"><span>1/10</span><span>31/10</span></div>
+        </div>
+        <div class="ui-card">
+          <span class="eyebrow">So sánh</span>
+          <h3 class="title">Mức dùng của bạn cao hơn 92% nhà lân cận.</h3>
+          <div class="stat" style="align-items:flex-end"><b class="tnum" style="font-size:20px;line-height:24px">4.910 W</b><span>BẠN</span></div>
+          <svg viewBox="0 0 320 20" width="100%" aria-hidden="true"><rect x="0" y="2" width="100" height="14" rx="7" fill="var(--muted)"/><rect x="104" y="2" width="104" height="14" rx="7" fill="var(--muted)"/><rect x="212" y="2" width="108" height="14" rx="7" fill="var(--primary)"/></svg>
+        </div>
+        <div class="ui-card" style="background:var(--solar-bg);flex-direction:row;align-items:center;justify-content:space-between;gap:12px"><div><span class="eyebrow" style="color:var(--solar-fg)">Watt check</span><h3 class="title" style="font-size:18px;line-height:22px;margin-top:4px">Thiết bị nào ăn điện nhất?</h3></div><button class="btn primary sm" style="flex:none">Bắt đầu</button></div>
+      </div>
+      <nav class="tabbar" aria-label="Tab"><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></svg>Now</a><a href="#man-hinh" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 20V10h4v10zm6 0V4h4v16zm6 0v-7h4v7z"/></svg>Bảng</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M2 12h5l2-6 4 12 2-6h7v2h-5.5L14 22 10 10l-1 4H2z"/></svg>Đồng hồ</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M8 2v5h8V2h2v5h1v4a6 6 0 01-5 5.9V22h-2v-5.1A6 6 0 015 11V7h1V2z"/></svg>Thiết bị</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>Cài đặt</a></nav>
+    </div><p class="cap">Dashboard · thẻ dữ liệu xếp dọc</p></div>
+
+    <!-- DEVICES -->
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>8:57</span><span>5G ▮</span></div>
+      <div class="body-scroll" style="gap:16px">
+        <h1 class="large-title">Thiết bị</h1>
+        <div class="list">
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></span><div class="grow"><div class="t">Luôn bật</div><div class="s tnum">1.038 W</div></div><span class="dot"></span></div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l9 8v10H3V11z"/></svg></span><div class="grow"><div class="t">Khác</div><div class="s tnum">266 W</div></div><span class="dot"></span></div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/></svg></span><div class="grow"><div class="t">Tủ lạnh</div><div class="s tnum">124 W · Bếp</div></div><span class="dot"></span></div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2l2 6 6 .5-4.6 4 1.4 6L12 15l-4.8 3.5 1.4-6L4 8.500 10 8z"/></svg></span><div class="grow"><div class="t">Điều hòa</div></div></div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="3"/></svg></span><div class="grow"><div class="t">Nồi chiên</div><div class="s">Bếp</div></div></div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a6 6 0 00-3 11.2V16h6v-2.8A6 6 0 0012 2zm-2 16h4v2h-4z"/></svg></span><div class="grow"><div class="t">Đèn gác mái</div><div class="s">Gác mái</div></div><button class="switch" role="switch" aria-checked="false" aria-label="Đèn gác mái"></button></div>
+          <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="3"/></svg></span><div class="grow"><div class="t">Máy sấy</div></div></div>
+        </div>
+      </div>
+      <nav class="tabbar" aria-label="Tab"><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></svg>Now</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M4 20V10h4v10zm6 0V4h4v16zm6 0v-7h4v7z"/></svg>Bảng</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M2 12h5l2-6 4 12 2-6h7v2h-5.5L14 22 10 10l-1 4H2z"/></svg>Đồng hồ</a><a href="#man-hinh" aria-current="page"><svg viewBox="0 0 24 24"><path d="M8 2v5h8V2h2v5h1v4a6 6 0 01-5 5.9V22h-2v-5.1A6 6 0 015 11V7h1V2z"/></svg>Thiết bị</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>Cài đặt</a></nav>
+    </div><p class="cap">Devices · tiêu đề lớn, hàng cách nhau 4</p></div>
+
+    <!-- SETTINGS -->
+    <div class="phone"><div class="screen">
+      <div class="sb"><span>8:57</span><span>5G ▮</span></div>
+      <div class="body-scroll" style="gap:16px">
+        <h1 class="large-title">Cài đặt</h1>
+        <div class="group">
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0z"/></svg></span>Tài khoản<span class="chev">&rsaquo;</span></div>
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>Bảo mật<span class="chev">&rsaquo;</span></div>
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 00-6 6v5l-2 3h16l-2-3V9a6 6 0 00-6-6zm-2 17h4a2 2 0 01-4 0z"/></svg></span>Thông báo<span class="chev">&rsaquo;</span></div>
+        </div>
+        <div class="group">
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><path d="M12 3l9 8h-3v9H6v-9H3z"/></svg></span>Nhà của tôi<span class="chev">&rsaquo;</span></div>
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg></span>Giá điện<span class="chev">&rsaquo;</span></div>
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg></span>Điện mặt trời<span class="chev">&rsaquo;</span></div>
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="8" rx="2"/></svg></span>Thiết bị kết nối<span class="chev">&rsaquo;</span></div>
+        </div>
+        <div class="group">
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></span>Giao diện<span class="chev">&rsaquo;</span></div>
+          <div class="gi"><span class="ci"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg></span>Hỗ trợ<span class="chev">&rsaquo;</span></div>
+        </div>
+      </div>
+      <nav class="tabbar" aria-label="Tab"><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></svg>Now</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M4 20V10h4v10zm6 0V4h4v16zm6 0v-7h4v7z"/></svg>Bảng</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M2 12h5l2-6 4 12 2-6h7v2h-5.5L14 22 10 10l-1 4H2z"/></svg>Đồng hồ</a><a href="#man-hinh"><svg viewBox="0 0 24 24"><path d="M8 2v5h8V2h2v5h1v4a6 6 0 01-5 5.9V22h-2v-5.1A6 6 0 015 11V7h1V2z"/></svg>Thiết bị</a><a href="#man-hinh" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/></svg>Cài đặt</a></nav>
+    </div><p class="cap">Settings · nhóm danh sách, đường kẻ chỉ ở trong nhóm</p></div>
+  </div>
+</div></section>
+
+<!-- ============ AP DUNG ============ -->
+<section id="ap-dung"><div class="wrap">
+  <div class="sec-head"><p class="eyebrow">07 · Áp dụng vào app</p><h2>Đã áp vào token và các component</h2>
+  <p>Đã áp ngày 26/10/2026. Kiểm tra: <span class="mono">pnpm check</span> (389 test), <span class="mono">format:check</span>, <span class="mono">expo-doctor</span> đạt, và đã xem trên Pixel 8a (màn Trang chủ và Cài đặt, sáng lẫn tối; hai tab Thiết bị và Năng lượng chưa xem).</p></div>
+  <div class="grid g2">
+    <div class="panel"><h3><span class="mono">src/global.css</span></h3>
+      <div class="code"><span class="diff-del">- --background: 255 255 255;</span>
+<span class="diff-add">+ --background: 244 244 244;</span>
+<span class="diff-del">- --primary: 23 23 23;</span>
+<span class="diff-add">+ --primary: 10 155 84;</span>
+<span class="diff-add">+ --primary-strong: 6 122 70;</span>
+<span class="diff-del">- --secondary: 245 245 245;</span>
+<span class="diff-add">+ --secondary: 236 238 237;</span>
+<span class="diff-del">- --destructive: 231 0 11;</span>
+<span class="diff-add">+ --destructive: 200 40 30;</span>
+<span class="diff-add">+ --ring: 6 122 70;</span>
+  --card: 255 255 255;   (giữ trắng)</div></div>
+    <div class="panel"><h3><span class="mono">src/components/ui</span></h3>
+      <div class="code"><span class="diff-del">- card:   bg-card border border-border rounded-xl shadow-sm</span>
+<span class="diff-add">+ card:   bg-card rounded-3xl</span>
+<span class="diff-del">- button: bg-primary rounded-md text-sm</span>
+<span class="diff-add">+ button: bg-primary-strong rounded-2xl text-base font-semibold</span>
+<span class="diff-del">- input:  border border-input rounded-md bg-transparent</span>
+<span class="diff-add">+ input:  bg-secondary rounded-2xl border-2 border-transparent</span>
+<span class="diff-add">+ badge, progress: bg-primary-strong</span></div></div>
+  </div>
+  <div class="panel" style="margin-top:20px"><h3>Còn lại, chưa làm</h3>
+    <p>Biến thể outline của Button và Badge vẫn có viền (Sense không dùng viền). Thanh tab dưới là thanh native của Material nên màu xám xanh nhạt lấy từ hệ thống, chưa theo token. Icon app và splash vẫn là màu mẫu của Expo. Font Plus Jakarta Sans chưa thêm vào app. Bản tối là đề xuất vì Sense không có ảnh bản tối để đo.</p></div>
+</div></section>
+</main>
+
+<footer><div class="wrap">WattPrint design system · bản demo HTML · nguồn số đo: video Sense 2026-10-24 (1320x2868, 3x), đo bằng lấy mẫu điểm ảnh.</div></footer>
+
+<script>
+(function(){
+  var OPTIONS = [
+    {id:'emerald', name:'Emerald', fill:'#0A9B54', strong:'#067A46', dark:'#2BD47D', darkFill:'#16A05A', tint:'#E6F5EC'},
+    {id:'leaf',    name:'Leaf',    fill:'#16A34A', strong:'#15803D', dark:'#4ADE80', tint:'#E8F6EC'},
+    {id:'jade',    name:'Jade',    fill:'#00A86B', strong:'#007A4D', dark:'#2DD4A0', tint:'#E3F6EF'},
+    {id:'spring',  name:'Spring',  fill:'#1FAE4B', strong:'#14803A', dark:'#5BDB7E', tint:'#E8F7EC'}
+  ];
+  var root = document.documentElement, current = OPTIONS[0];
+  function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){} return null; }
+
+  function lum(hex){ var h=hex.replace('#',''); var c=[0,2,4].map(function(i){var v=parseInt(h.substr(i,2),16)/255; return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4);}); return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
+  function ratio(a,b){ var x=lum(a), y=lum(b); var hi=Math.max(x,y), lo=Math.min(x,y); return (hi+0.05)/(lo+0.05); }
+  function css(name){ return getComputedStyle(root).getPropertyValue(name).trim(); }
+  function toHex(v){ if(v[0]==='#'){ return v.length===4? '#'+v[1]+v[1]+v[2]+v[2]+v[3]+v[3] : v.slice(0,7); } var m=v.match(/\d+/g); return '#'+m.slice(0,3).map(function(n){return ('0'+(+n).toString(16)).slice(-2);}).join(''); }
+
+  function apply(){
+    var dark = root.getAttribute('data-theme')==='dark';
+    root.style.setProperty('--primary', dark? (current.darkFill||current.dark) : current.fill);
+    root.style.setProperty('--primary-strong', dark? current.dark : current.strong);
+    root.style.setProperty('--primary-tint', dark? '#1F3A2B' : current.tint);
+    document.querySelectorAll('.pick').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.id===current.id); });
+    renderTables();
+  }
+  function renderPicker(){
+    var el=document.getElementById('picker');
+    OPTIONS.forEach(function(o){
+      var b=document.createElement('button'); b.className='pick'; b.dataset.id=o.id; b.setAttribute('aria-pressed','false');
+      b.innerHTML='<i style="background:'+o.fill+'"></i>'+o.name+' <span class="mono" style="opacity:.8">'+o.fill+'</span>';
+      b.addEventListener('click',function(){ current=o; store('wp-primary',o.id); apply(); });
+      el.appendChild(b);
+    });
+  }
+  var TOKENS = [
+    ['background','Nền trang, màu nền các màn hình'],['card','Thẻ, hàng danh sách, nhóm danh sách'],['secondary','Nút phụ, ô nhập (cùng màu nền trang)'],
+    ['muted','Công tắc tắt, tab đang chọn, đoạn thanh chưa dùng'],['foreground','Tiêu đề, số liệu'],['ink-2','Chữ nội dung'],['muted-foreground','Chú thích, nhãn phụ'],
+    ['primary','Hình lớn: bong bóng, biểu đồ, công tắc bật'],['primary-strong','Nút có chữ trắng, nhãn nhỏ, liên kết'],['solar','Điện mặt trời, chấm báo'],
+    ['grid','Lưới điện, icon thiết bị'],['destructive','Lỗi, xóa']
+  ];
+  function renderTables(){
+    var tb=document.querySelector('#tokenTable tbody'); tb.innerHTML='';
+    TOKENS.forEach(function(t){ var v=toHex(css('--'+t[0])); var tr=document.createElement('tr');
+      tr.innerHTML='<td><span class="tcell"><span class="sw" style="background:var(--'+t[0]+');margin:0;flex:none"></span><span class="mono">'+t[0]+'</span></span></td><td class="mono">'+v.toUpperCase()+'</td><td>'+t[1]+'</td>'; tb.appendChild(tr); });
+    var dark = root.getAttribute('data-theme')==='dark';
+    var pairs = [
+      ['foreground trên card', css('--foreground'), css('--card'), 4.5],
+      ['ink-2 trên card', css('--ink-2'), css('--card'), 4.5],
+      ['muted-foreground trên nền', css('--muted-foreground'), css('--background'), 4.5],
+      ['primary-strong trên card', css('--primary-strong'), css('--card'), 4.5],
+      ['primary-strong trên nền', css('--primary-strong'), css('--background'), 4.5],
+      ['chữ trắng trên primary-strong (nút)', dark? css('--primary-foreground') : '#FFFFFF', css('--primary-strong'), 4.5],
+      ['primary trên card (hình lớn)', css('--primary'), css('--card'), 3],
+      ['solar-fg trên solar-bg', css('--solar-fg'), css('--solar-bg'), 4.5],
+      ['destructive trên card', css('--destructive'), css('--card'), 4.5]
+    ];
+    var cb=document.querySelector('#contrastTable tbody'); cb.innerHTML='';
+    pairs.forEach(function(p){ var r=ratio(toHex(p[1]),toHex(p[2])); var pass=r>=p[3]; var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+p[0]+'</td><td class="mono">'+r.toFixed(2)+':1</td><td><span class="chip '+(pass?'ok':'no')+'">'+(pass?'Đạt '+p[3]:'Chưa đạt '+p[3])+'</span></td>'; cb.appendChild(tr); });
+  }
+  var btn=document.getElementById('themeBtn');
+  function setTheme(t){ if(t==='dark') root.setAttribute('data-theme','dark'); else root.removeAttribute('data-theme');
+    btn.textContent = t==='dark'?'Sáng':'Tối'; btn.setAttribute('aria-pressed', t==='dark'); store('wp-theme',t); apply(); }
+  btn.addEventListener('click',function(){ setTheme(root.getAttribute('data-theme')==='dark'?'light':'dark'); });
+  document.querySelectorAll('.switch').forEach(function(s){ s.addEventListener('click',function(){ s.setAttribute('aria-checked', s.getAttribute('aria-checked')!=='true'); }); });
+  var seg=document.getElementById('seg'); seg.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; seg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-selected', x===b);}); });
+
+  renderPicker();
+  var savedP = store('wp-primary'); if(savedP){ OPTIONS.forEach(function(o){ if(o.id===savedP) current=o; }); }
+  var savedT = store('wp-theme'); setTheme(savedT==='dark'?'dark':'light');
+})();
+</script>
+</body>
+</html>

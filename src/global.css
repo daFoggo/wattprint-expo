@@ -8,51 +8,53 @@
    Uniwind's ProcessorBuilder recognises :where(.dark) as theme-scoped variables.  */
 @layer theme {
   :where(.light, .light *) {
-    --primary: 23 23 23;
-    --primary-foreground: 250 250 250;
+    --primary: 10 155 84;
+    --primary-strong: 6 122 70;
+    --primary-foreground: 255 255 255;
     --card: 255 255 255;
-    --card-foreground: 10 10 10;
-    --secondary: 245 245 245;
-    --secondary-foreground: 23 23 23;
-    --background: 255 255 255;
+    --card-foreground: 14 32 25;
+    --secondary: 236 238 237;
+    --secondary-foreground: 14 32 25;
+    --background: 244 244 244;
     --popover: 255 255 255;
-    --popover-foreground: 10 10 10;
-    --muted: 245 245 245;
-    --muted-foreground: 115 115 115;
-    --destructive: 231 0 11;
-    --destructive-foreground: 250 250 250;
+    --popover-foreground: 14 32 25;
+    --muted: 236 238 237;
+    --muted-foreground: 101 108 104;
+    --destructive: 200 40 30;
+    --destructive-foreground: 255 255 255;
     --overlay: 0 0 0;
-    --foreground: 10 10 10;
-    --border: 229 229 229;
-    --input: 148 148 148;
-    --ring: 64 64 64;
-    --accent: 247 247 247;
-    --accent-foreground: 52 52 52;
+    --foreground: 14 32 25;
+    --border: 224 227 225;
+    --input: 133 141 137;
+    --ring: 6 122 70;
+    --accent: 232 235 233;
+    --accent-foreground: 14 32 25;
     --switch-thumb: 255 255 255;
   }
 
   :where(.dark, .dark *) {
-    --primary: 255 245 245;
-    --primary-foreground: 23 23 23;
-    --card: 23 23 23;
-    --card-foreground: 250 250 250;
-    --secondary: 38 38 38;
-    --secondary-foreground: 250 250 250;
-    --background: 10 10 10;
-    --popover: 23 23 23;
-    --popover-foreground: 250 250 250;
-    --muted: 38 38 38;
-    --muted-foreground: 161 161 161;
-    --destructive: 255 100 103;
+    --primary: 22 160 90;
+    --primary-strong: 43 212 125;
+    --primary-foreground: 4 33 15;
+    --card: 24 31 28;
+    --card-foreground: 242 245 243;
+    --secondary: 34 43 39;
+    --secondary-foreground: 242 245 243;
+    --background: 15 20 18;
+    --popover: 24 31 28;
+    --popover-foreground: 242 245 243;
+    --muted: 34 43 39;
+    --muted-foreground: 142 152 147;
+    --destructive: 255 122 112;
     --destructive-foreground: 250 250 250;
     --overlay: 0 0 0;
-    --foreground: 250 250 250;
-    --border: 46 46 46;
-    --input: 100 100 100;
-    --accent: 38 38 38;
-    --accent-foreground: 250 250 250;
-    --ring: 212 212 212;
-    --switch-thumb: 125 125 125;
+    --foreground: 242 245 243;
+    --border: 44 54 49;
+    --input: 100 110 105;
+    --accent: 34 43 39;
+    --accent-foreground: 242 245 243;
+    --ring: 43 212 125;
+    --switch-thumb: 255 255 255;
   }
 }
 
@@ -61,6 +63,7 @@
    bg-primary → rgb(var(--primary)), text-foreground → rgb(var(--foreground)), etc. */
 @theme inline {
   --color-primary: rgb(var(--primary));
+  --color-primary-strong: rgb(var(--primary-strong));
   --color-primary-foreground: rgb(var(--primary-foreground));
   --color-card: rgb(var(--card));
   --color-card-foreground: rgb(var(--card-foreground));

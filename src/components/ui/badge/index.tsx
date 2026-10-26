@@ -13,7 +13,7 @@ const badgeStyle = tva({
   base: 'flex-row items-center justify-center rounded-sm px-2 py-0.5',
   variants: {
     variant: {
-      default: 'bg-primary',
+      default: 'bg-primary-strong',
       secondary: 'bg-secondary',
       destructive: 'bg-destructive dark:bg-destructive/60',
       outline: 'border border-border dark:border-border/90 bg-transparent',

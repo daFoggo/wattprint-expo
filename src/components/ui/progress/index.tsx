@@ -22,7 +22,7 @@ const progressStyle = tva({
 });
 
 const progressFilledTrackStyle = tva({
-  base: 'bg-primary  transition-all',
+  base: 'bg-primary-strong  transition-all',
   variants: {
     orientation: {
       horizontal: 'h-full',
