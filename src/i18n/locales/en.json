@@ -59,5 +59,16 @@
     },
     "watts": "{{value}} W",
     "onCount": "{{on}} of {{total}} on"
+  },
+  "energy": {
+    "ranges": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "total": "Total usage",
+    "cost": "Estimated cost",
+    "topDevices": "Top devices",
+    "kwh": "{{value}} kWh"
   }
 }

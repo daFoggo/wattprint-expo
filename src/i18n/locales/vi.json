@@ -59,5 +59,16 @@
     },
     "watts": "{{value}} W",
     "onCount": "Bật {{on}}/{{total}}"
+  },
+  "energy": {
+    "ranges": {
+      "day": "Ngày",
+      "week": "Tuần",
+      "month": "Tháng"
+    },
+    "total": "Tổng điện năng",
+    "cost": "Chi phí ước tính",
+    "topDevices": "Thiết bị dùng nhiều nhất",
+    "kwh": "{{value}} kWh"
   }
 }
