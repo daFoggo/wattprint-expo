@@ -52,7 +52,7 @@ gifted-charts (user decision).
 - Keep the Settings tab (4 tabs) instead of dropping it.
 - Mock data in `src/features/{devices,energy}/mock-data.ts` with `schemas.ts`; device on/off state is local
   `useState`/small hook, not a store, not persisted.
-- A chart is wrapped once in `src/features/energy/components` as a compound part with token-driven colours (Skia takes
+- A chart is wrapped once in the energy feature's `components/` folder as a compound part with token-driven colours (Skia takes
   colour values, so read them through the theme hook, not hex literals; guard test must stay green).
 - Extra gluestack parts are hand-copied from the cached Uniwind template; any part with no stable upstream is skipped
   and its need met by composing existing parts.
