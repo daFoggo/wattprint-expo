@@ -31,6 +31,7 @@ Read the digest for the pattern, then the doc section for the rule and the reaso
 | Edit or add a gluestack part | Hand-copy, stable pins, note deviation; never the CLI | [digest][tool] / [doc][comp-vendored], [README][decisions] |
 | Move a component to shared | Only when a second feature needs it | [digest][comp] / [doc][comp-extract] |
 | Colour, dark mode, spacing, type | Tokens from `src/global.css`; green text and Button fills use `primary-strong`; Input is a filled field | [digest][ds] / [doc][ds-tokens] |
+| Page header, back button, tab bar | `CollapsingScrollView` (large title to compact bar) / `DetailHeader` with `headerShown: false`; `useTabBarTheme`; Settings still native | [digest][ds] / [doc][ds-headers] |
 | Class has no effect on device | Unsupported variant, or `*ClassName` binding missing | [digest][ds] / [README][uniwind] |
 | Third-party component needs `className` | `withUniwind` once in one file | [digest][ds] / [doc][comp-extract] |
 | Touch targets, labels, live regions | 48 dp minimum; roles and labels; `min-h-*` on text | [digest][ds] / [doc][ds-android] |
@@ -96,6 +97,7 @@ open items). Evals: [evals/evals.json](evals/evals.json).
 [ds-tokens]: ../../../docs/design-system.md#1-tokens
 [ds-android]: ../../../docs/design-system.md#5-android-rules
 [ds-states]: ../../../docs/design-system.md#state-components
+[ds-headers]: ../../../docs/design-system.md#headers-and-tab-bar
 [ds-motion]: ../../../docs/design-system.md#7-motion
 [state-homes]: ../../../docs/client-state.md#1-the-homes-of-state
 [state-persist]: ../../../docs/client-state.md#4-persistence

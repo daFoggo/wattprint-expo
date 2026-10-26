@@ -5,6 +5,40 @@ import '@shopify/flash-list/jestSetup';
 // native TurboModule. MMKV itself switches to an in-memory mock under Jest (isTest()).
 jest.mock('react-native-nitro-modules', () => ({ NitroModules: {} }));
 
+// Reanimated's native worklets runtime does not exist under Jest (not even its official mock loads), so hooks run on
+// the JS thread and entering/exiting animations are inert chains. A test can still override this with its own mock.
+jest.mock('react-native-reanimated', () => {
+  const chain: object = new Proxy(() => chain, { get: () => () => chain });
+  return {
+    __esModule: true,
+    default: { createAnimatedComponent: <T>(component: T) => component },
+    useSharedValue: <T>(initial: T) => {
+      const ref = { value: initial, get: () => ref.value, set: (v: T) => (ref.value = v) };
+      return ref;
+    },
+    useAnimatedStyle: (factory: () => object) => factory(),
+    interpolate: (x: number, input: number[], output: number[]) =>
+      Math.min(
+        Math.max(
+          output[0] + ((x - input[0]) / (input[1] - input[0])) * (output[1] - output[0]),
+          output[0],
+        ),
+        output[1],
+      ),
+    Extrapolation: { CLAMP: 'clamp' },
+    Easing: { linear: 'linear' },
+    FadeIn: chain,
+    FadeOut: chain,
+    ZoomIn: chain,
+  };
+});
+
+// The safe area insets come from a native view; this gives zero insets under Jest.
+jest.mock(
+  'react-native-safe-area-context',
+  () => jest.requireActual('react-native-safe-area-context/jest/mock').default,
+);
+
 // react-aria (used by @gluestack-ui/utils) probes window.visualViewport and window.screen.orientation
 // at load time when NODE_ENV === 'test'. The React Native jest env defines `window` without `screen`.
 const jestWindow = (globalThis as unknown as { window?: Record<string, unknown> }).window;

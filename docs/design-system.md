@@ -200,10 +200,10 @@ Radius: `rounded-3xl` Card (24 dp), `rounded-2xl` Button and Input (16 dp) since
   follows the device (verified: <https://docs.uniwind.dev/theming/basics.md>). `app.json` has `userInterfaceStyle: automatic`.
   Whether the first release frame flashes the wrong theme is open (backlog, "T4").
 - **Status bar:** `<StatusBar style="auto" />` from `expo-status-bar` in the root layout (verified: `src/app/_layout.tsx`).
-- **Safe areas:** screens do not use `SafeAreaView` or `useSafeAreaInsets` (verified: grep of `src` finds neither);
-  headers and tab bar come from the native stack and `NativeTabs` (opinion: they handle insets; not verified on a device
-  for edge-to-edge in this documentation change). When a screen draws under the system bars, add insets with
-  `react-native-safe-area-context` (a dependency).
+- **Safe areas:** screens with the native header (Settings) rely on it for the top inset; `NativeTabs` handles the bottom
+  (opinion: not verified for edge-to-edge in this documentation change). Screens that hide the native header start with
+  `ScreenHeader`, which adds the top inset with `useSafeAreaInsets` from `react-native-safe-area-context` (a dependency;
+  see "Headers and tab bar" in section 6).
 - **Predictive back** is off (`predictiveBackGestureEnabled: false`, verified: `app.json`).
 - **Keyboard:** lists and scroll views with inputs set `keyboardShouldPersistTaps="handled"`
   (verified: `screens/settings/index.tsx`).
@@ -235,6 +235,32 @@ and render the error text below with `selectable` and `accessibilityLiveRegion="
 Always set `accessibilityLabel` or `aria-label` on `InputField` (verified: `screens/settings/sample-form.tsx`).
 Placeholder, cursor and selection colours come from `*ClassName` bindings already inside `InputField`; do not pass
 `placeholderTextColor`.
+
+### Headers and tab bar
+
+The Home and Devices tabs hide the native header (`<Stack screenOptions={{ headerShown: false }}>`, verified:
+`src/app/(home)/_layout.tsx`, `src/app/(devices)/_layout.tsx`) and render their scroll content in
+`CollapsingScrollView` (`src/components/collapsing-scroll-view.tsx`), the Sense pattern: a large title (`ScreenHeader`,
+`src/components/screen-header.tsx`: `text-3xl` bold, optional subtitle and action) at the top of the content that scrolls away,
+and a flat compact bar (`bg-background`, no blur, border or shadow) with the centred title that fades in between 16 and 48 dp of
+scroll. The bar is hidden from TalkBack so the title is announced once, by the large header. The scroll offset is written to a
+Reanimated shared value from the JS `onScroll` event (`scrollY.set(...)`; the React Compiler lint forbids `.value =` in a
+handler), which is enough for a fade; use `useAnimatedScrollHandler` if a heavier effect is added. `ScreenHeader` adds the
+safe area top inset itself (`useSafeAreaInsets`), because the native header no longer clears the status bar. The native large
+title is iOS only (verified: `headerLargeTitleEnabled` is marked `@platform ios` in
+`node_modules/expo-router/build/react-navigation/native-stack/types.d.ts`), so Android needs this component. Jest has a
+global Reanimated mock in `jest.setup.ts` (the official mock does not load without the native worklets runtime).
+`DetailHeader` (`src/components/detail-header.tsx`) is the same idea for a detail screen: a `RoundIconButton`
+(`src/components/round-icon-button.tsx`, 48 dp, `bg-card`, no border or shadow) for back, an optional centred title and a
+trailing slot. No screen uses `DetailHeader` yet because there is no detail route; add `headerShown: false` to that screen.
+The Settings tab still uses the native header (opinion: move it when its screen is restyled).
+
+The tab bar stays a real `NativeTabs` (Material 3 on Android). `useTabBarTheme` (`src/hooks/use-tab-bar-theme.ts`, pure part
+`src/lib/tab-bar-theme.ts`) passes token colours as props: `backgroundColor` is `card`, `indicatorColor` and `rippleColor` are
+`muted`, and icon and label are `muted-foreground`, or `primary-strong` when selected. The props take colour values, not
+classes, so the hook reads the tokens with `useCSSVariable` like `use-nav-theme`. A floating pill bar like Sense would need a
+custom `tabBar` and loses the native ripple and accessibility behaviour (opinion), so it was not built. Checked on a Pixel 8a
+on 2026-10-26: Home and Devices, light and dark, and the collapse on the Devices tab (dark).
 
 ### Modal
 
@@ -349,6 +375,7 @@ points or only zeros renders `EmptyState` and never mounts `CartesianChart` (ver
       `scripts/contrast.test.ts` green; table in section 2 updated.
 - [ ] A custom bordered control uses `border-input`, never `border-border`; green text and Button fills use `primary-strong`.
 - [ ] Every pressable is at least 48 dp tall and wide, including inputs and icon buttons (or the gap is recorded).
+- [ ] A tab screen that hides the native header uses `CollapsingScrollView` (or `ScreenHeader` for a non-scrolling screen); tab bar colours come from tokens.
 - [ ] Titles have `accessibilityRole="header"`; icon-only controls have a label; status text has a live region.
 - [ ] Text uses a type role from section 3; no fixed heights on text containers.
 - [ ] Looked at light and dark on the phone (see AGENTS.md "Device verification").

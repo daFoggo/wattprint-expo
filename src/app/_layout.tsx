@@ -5,6 +5,7 @@ import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { DeviceStatesProvider } from '@/features/devices/device-states';
 import { useAppStateFocus } from '@/hooks/use-app-state-focus';
 import { useNavTheme } from '@/hooks/use-nav-theme';
+import { useTabBarTheme } from '@/hooks/use-tab-bar-theme';
 import { initOnlineManager } from '@/lib/online-manager';
 import { queryClient } from '@/lib/query-client';
 import { RouteError } from '@/screens/route-error';
@@ -31,6 +32,7 @@ export default function RootLayout() {
   const { t } = useTranslation();
   const theme = usePreferencesStore((s) => s.theme);
   const navTheme = useNavTheme();
+  const tabBarTheme = useTabBarTheme();
   useAppStateFocus();
 
   return (
@@ -39,7 +41,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={navTheme}>
           <DeviceStatesProvider>
-            <NativeTabs>
+            <NativeTabs {...tabBarTheme}>
               <NativeTabs.Trigger name="(home)">
                 <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
                 <NativeTabs.Trigger.Icon md="home" sf="house.fill" />
