@@ -5,6 +5,7 @@ import { Badge, BadgeText } from '@/components/ui/badge';
 import { Pressable } from '@/components/ui/pressable';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
+import { liveWatts } from '@/features/devices/device-selectors';
 import type { Device } from '@/features/devices/schemas';
 import { formatNumber } from '@/lib/format';
 
@@ -19,12 +20,18 @@ export function DeviceRow({
 }) {
   const { t, i18n } = useTranslation();
   const offline = device.status === 'offline';
+  const watts = formatNumber(liveWatts(device), i18n.language);
 
   return (
     <Pressable
       accessibilityRole="switch"
       accessibilityState={{ checked: device.on, disabled: offline }}
-      accessibilityLabel={device.name}
+      accessibilityLabel={t('devices.rowLabel', {
+        name: device.name,
+        type: t(`devices.types.${device.type}`),
+        status: t(`devices.status.${device.status}`),
+        watts: t('devices.watts', { value: watts }),
+      })}
       disabled={offline}
       onPress={() => onToggle(device.id)}
       className="min-h-12 flex-row items-center gap-3 py-2"
@@ -39,7 +46,7 @@ export function DeviceRow({
             <BadgeText>{t(`devices.status.${device.status}`)}</BadgeText>
           </Badge>
           <Text size="sm" className="text-muted-foreground">
-            {t('devices.watts', { value: formatNumber(device.watts, i18n.language) })}
+            {t('devices.watts', { value: watts })}
           </Text>
         </View>
       </View>
@@ -48,7 +55,8 @@ export function DeviceRow({
         pointerEvents="none"
         importantForAccessibility="no-hide-descendants"
       >
-        <Switch value={device.on} disabled={offline} />
+        {/* Dimming comes from the disabled Pressable only; a disabled Switch would dim twice. */}
+        <Switch value={device.on} />
       </View>
     </Pressable>
   );

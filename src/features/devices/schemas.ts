@@ -16,7 +16,7 @@ export const deviceSchema = z.object({
   name: z.string().min(1),
   type: deviceTypeSchema,
   on: z.boolean(),
-  watts: z.number().nonnegative(),
+  ratedWatts: z.number().positive(),
   status: z.enum(['online', 'offline']),
 });
 

@@ -77,7 +77,8 @@
       "offline": "Offline"
     },
     "watts": "{{value}} W",
-    "onCount": "{{on}} of {{total}} on"
+    "onCount": "{{on}} of {{total}} on",
+    "rowLabel": "{{name}}, {{type}}, {{status}}, {{watts}}"
   },
   "energy": {
     "ranges": {
@@ -89,7 +90,9 @@
     "cost": "Estimated cost",
     "topDevices": "Top devices",
     "kwh": "{{value}} kWh",
-    "chartLabel": "Energy usage chart",
-    "noUsageTitle": "No usage in this period"
+    "noUsageTitle": "No usage in this period",
+    "topShare": "{{name}}: {{share}}% of total",
+    "chartSummaryEmpty": "{{range}}: no usage",
+    "chartSummary": "{{range}}: {{total}} kWh, peak {{peak}}"
   }
 }

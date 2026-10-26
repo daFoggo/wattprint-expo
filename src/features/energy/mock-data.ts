@@ -17,30 +17,35 @@ const round = (value: number) => Math.round(value * 100) / 100;
 const dayKwh = (hour: number) =>
   hour < 6 ? 0 : round(0.3 + 0.9 * Math.abs(Math.sin((hour / 24) * Math.PI * 2 + 1)));
 
-const topDevices = [
-  { deviceId: 'd9', name: 'Water heater', kwh: 18.4 },
-  { deviceId: 'd3', name: 'Air conditioner', kwh: 14.2 },
-  { deviceId: 'd4', name: 'Refrigerator', kwh: 6.1 },
-  { deviceId: 'd2', name: 'Smart TV', kwh: 2.3 },
+// Each range has its own list: a device cannot use more than the whole period's total.
+const NAMES = [
+  { deviceId: 'd9', name: 'Water heater' },
+  { deviceId: 'd3', name: 'Air conditioner' },
+  { deviceId: 'd4', name: 'Refrigerator' },
+  { deviceId: 'd2', name: 'Smart TV' },
 ];
+const topDevices = (kwh: number[]) => NAMES.map((n, i) => ({ ...n, kwh: kwh[i] }));
 
-const base = { topDevices, pricePerKwh: 2500, currency: 'VND' };
+const base = { pricePerKwh: 2500, currency: 'VND' };
 
 // Parsed at module load: a bad mock throws into the root ErrorBoundary.
 export const energyMock: Record<EnergyRange, EnergySummary> = {
   day: energySummarySchema.parse({
     ...base,
     range: 'day',
+    topDevices: topDevices([4.6, 3.9, 2.1, 0.8]),
     points: points(24, HOUR_MS, (i) => dayKwh(i)),
   }),
   week: energySummarySchema.parse({
     ...base,
     range: 'week',
+    topDevices: topDevices([18.4, 14.2, 6.1, 2.3]),
     points: points(7, DAY_MS, (i) => round(6 + 3 * Math.abs(Math.sin(i * 1.3)))),
   }),
   month: energySummarySchema.parse({
     ...base,
     range: 'month',
+    topDevices: topDevices([73.6, 56.8, 24.4, 9.2]),
     points: points(30, DAY_MS, (i) => round(5 + 4 * Math.abs(Math.sin(i * 0.7)))),
   }),
 };

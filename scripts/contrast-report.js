@@ -65,9 +65,12 @@ const PAIRS = [
   ['primary', 'card', 'ui'],
   // Progress fill (`bg-primary`) on its track (`bg-primary/20`) on a Card.
   ['primary', 'primary/20@card', 'ui'],
-  // Switch thumb (`accent-card`) on the off track (`accent-input`) and on the on track (`accent-primary`).
-  ['card', 'input', 'ui'],
-  ['card', 'primary', 'ui'],
+  // Switch thumb (`accent-switch-thumb`) on the on track (`accent-primary`), and next to the card around it.
+  // Thumb vs card is dark only (light is white on white; the track carries it there). Thumb vs off track
+  // (`accent-input`) is light only: dark is 1.44 by design, the thumb position and track vs card carry the state.
+  ['switch-thumb', 'primary', 'ui'],
+  ['switch-thumb', 'card', 'ui', 'dark'],
+  ['switch-thumb', 'input', 'ui', 'light'],
   ['muted-foreground', 'card', 'text'],
   // `border` is for dividers: decorative, so it is not a pair. The Input boundary is `border-input`.
   ['input', 'background', 'ui'],

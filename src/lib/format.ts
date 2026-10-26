@@ -6,3 +6,8 @@ export function formatNumber(
 ): string {
   return new Intl.NumberFormat(locale, options).format(value);
 }
+
+// The currency decides the fraction digits (VND none, USD two); do not override them here.
+export function formatCurrency(value: number, locale: string, currency: string): string {
+  return formatNumber(value, locale, { style: 'currency', currency });
+}

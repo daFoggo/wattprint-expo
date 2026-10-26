@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react-native';
-import { Text } from 'react-native';
 
 import '@/i18n';
 import en from '@/i18n/locales/en.json';
@@ -63,10 +62,27 @@ test('renders the axis labels as text', async () => {
   await render(
     <EnergyChart points={usage} accessibilityLabel="x">
       <EnergyChartAxis labels={['00:00', '12:00', '23:00']} />
-      <Text>after</Text>
     </EnergyChart>,
   );
   expect(screen.getByText('12:00')).toBeTruthy();
+});
+
+test('renders no axis for fewer than two labels', async () => {
+  await render(
+    <EnergyChart points={usage} accessibilityLabel="x">
+      <EnergyChartAxis labels={['00:00']} />
+    </EnergyChart>,
+  );
+  expect(screen.queryByText('00:00')).toBeNull();
+});
+
+test('renders no axis when there is no usage', async () => {
+  await render(
+    <EnergyChart points={[{ at, kwh: 0 }]} accessibilityLabel="x">
+      <EnergyChartAxis labels={['00:00', '12:00', '23:00']} />
+    </EnergyChart>,
+  );
+  expect(screen.queryByText('12:00')).toBeNull();
 });
 
 test('parts throw outside EnergyChart', async () => {

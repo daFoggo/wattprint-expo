@@ -16,21 +16,30 @@ export function TopDevicesList({ devices, total }: { devices: DeviceUsage[]; tot
       <Heading size="md" accessibilityRole="header">
         {t('energy.topDevices')}
       </Heading>
-      {devices.map((device) => (
-        <View key={device.deviceId} className="gap-1">
-          <View className="flex-row items-start justify-between gap-3">
-            <Text className="flex-1">{device.name}</Text>
-            <Text size="sm" className="text-muted-foreground">
-              {t('energy.kwh', {
-                value: formatNumber(device.kwh, i18n.language, { maximumFractionDigits: 1 }),
+      {devices.map((device) => {
+        const share = shareOf(device.kwh, total);
+        return (
+          <View key={device.deviceId} className="gap-1">
+            <View className="flex-row items-start justify-between gap-3">
+              <Text className="flex-1">{device.name}</Text>
+              <Text size="sm" className="text-muted-foreground">
+                {t('energy.kwh', {
+                  value: formatNumber(device.kwh, i18n.language, { maximumFractionDigits: 1 }),
+                })}
+              </Text>
+            </View>
+            <Progress
+              value={share}
+              accessibilityLabel={t('energy.topShare', {
+                name: device.name,
+                share: formatNumber(share, i18n.language, { maximumFractionDigits: 0 }),
               })}
-            </Text>
+            >
+              <ProgressFilledTrack />
+            </Progress>
           </View>
-          <Progress value={shareOf(device.kwh, total)}>
-            <ProgressFilledTrack />
-          </Progress>
-        </View>
-      ))}
+        );
+      })}
     </Card>
   );
 }

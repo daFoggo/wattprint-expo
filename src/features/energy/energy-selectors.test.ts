@@ -1,4 +1,4 @@
-import { costOf, hasUsage, shareOf, topN, totalKwh } from './energy-selectors';
+import { costOf, hasUsage, peakKwh, shareOf, topN, totalKwh } from './energy-selectors';
 import { energyMock } from './mock-data';
 import { energySummarySchema, type DeviceUsage, type EnergyRange } from './schemas';
 
@@ -9,6 +9,15 @@ test.each(['day', 'week', 'month'] as EnergyRange[])('the %s range of the mock p
   expect(result.success).toBe(true);
   expect(energyMock[range].range).toBe(range);
 });
+
+test.each(['day', 'week', 'month'] as EnergyRange[])(
+  'the %s top devices never use more than the range total',
+  (range) => {
+    const { topDevices, points } = energyMock[range];
+    const sum = topDevices.reduce((acc, d) => acc + d.kwh, 0);
+    expect(sum).toBeLessThanOrEqual(totalKwh(points));
+  },
+);
 
 test('the day range has 24 hourly points including zero hours', () => {
   const { points } = energyMock.day;
@@ -37,6 +46,18 @@ test('totalKwh and hasUsage handle empty and zero input', () => {
 test('shareOf never returns NaN', () => {
   expect(shareOf(5, 0)).toBe(0);
   expect(shareOf(1, 4)).toBe(25);
+  expect(shareOf(5, 4)).toBe(100);
+  expect(shareOf(-1, 4)).toBe(0);
+});
+
+test('peakKwh is the highest point and 0 for no points', () => {
+  expect(peakKwh([])).toBe(0);
+  expect(
+    peakKwh([
+      { at, kwh: 1 },
+      { at, kwh: 2.5 },
+    ]),
+  ).toBe(2.5);
 });
 
 test('costOf multiplies by the price', () => {

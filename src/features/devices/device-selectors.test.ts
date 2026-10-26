@@ -1,4 +1,4 @@
-import { countOn, currentWatts, groupByRoom } from './device-selectors';
+import { countOn, currentWatts, groupByRoom, liveWatts } from './device-selectors';
 import { devicesMock } from './mock-data';
 import { devicesResponseSchema, type Device } from './schemas';
 
@@ -7,7 +7,7 @@ const device = (patch: Partial<Device> & Pick<Device, 'id'>): Device => ({
   name: 'Device',
   type: 'plug',
   on: true,
-  watts: 10,
+  ratedWatts: 10,
   status: 'online',
   ...patch,
 });
@@ -21,20 +21,28 @@ test('mock data parses and every device points at an existing room', () => {
   for (const d of devicesMock.devices) expect(roomIds).toContain(d.roomId);
   expect(devicesMock.devices.some((d) => d.status === 'offline')).toBe(true);
   expect(devicesMock.devices.some((d) => d.name.length >= 40)).toBe(true);
+  for (const d of devicesMock.devices) expect(d.ratedWatts).toBeGreaterThan(0);
 });
 
 test('currentWatts counts only devices that are on and online', () => {
   const devices = [
-    device({ id: 'a', watts: 100 }),
-    device({ id: 'b', watts: 50, on: false }),
-    device({ id: 'c', watts: 25, status: 'offline' }),
+    device({ id: 'a', ratedWatts: 100 }),
+    device({ id: 'b', ratedWatts: 50, on: false }),
+    device({ id: 'c', ratedWatts: 25, status: 'offline' }),
   ];
   expect(currentWatts(devices)).toBe(100);
   expect(currentWatts([])).toBe(0);
 });
 
-test('countOn counts devices that are on', () => {
+test('liveWatts is the rated power only while on and online', () => {
+  expect(liveWatts(device({ id: 'a', ratedWatts: 40 }))).toBe(40);
+  expect(liveWatts(device({ id: 'b', ratedWatts: 40, on: false }))).toBe(0);
+  expect(liveWatts(device({ id: 'c', ratedWatts: 40, status: 'offline' }))).toBe(0);
+});
+
+test('countOn counts devices that are on and online', () => {
   expect(countOn([device({ id: 'a' }), device({ id: 'b', on: false })])).toBe(1);
+  expect(countOn([device({ id: 'a' }), device({ id: 'c', status: 'offline' })])).toBe(1);
 });
 
 test('groupByRoom keeps room order and empty rooms', () => {

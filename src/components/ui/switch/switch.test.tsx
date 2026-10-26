@@ -8,5 +8,5 @@ test('Switch binds track and thumb colours to tokens', async () => {
   const props = screen.getByTestId('switch').props;
   expect(props.trackColorOnClassName).toBe('accent-primary');
   expect(props.trackColorOffClassName).toBe('accent-input');
-  expect(props.thumbColorClassName).toBe('accent-card');
+  expect(props.thumbColorClassName).toBe('accent-switch-thumb');
 });

@@ -15,7 +15,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Ceiling light',
       type: 'light',
       on: true,
-      watts: 12,
+      ratedWatts: 12,
       status: 'online',
     },
     {
@@ -24,7 +24,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Smart TV',
       type: 'tv',
       on: true,
-      watts: 95,
+      ratedWatts: 95,
       status: 'online',
     },
     {
@@ -33,7 +33,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Air conditioner',
       type: 'ac',
       on: true,
-      watts: 900,
+      ratedWatts: 900,
       status: 'online',
     },
     {
@@ -42,7 +42,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Refrigerator',
       type: 'fridge',
       on: true,
-      watts: 120,
+      ratedWatts: 120,
       status: 'online',
     },
     {
@@ -51,7 +51,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Countertop smart plug powering the espresso machine and the milk frother',
       type: 'plug',
       on: false,
-      watts: 0,
+      ratedWatts: 1800,
       status: 'online',
     },
     {
@@ -60,7 +60,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Bedside lamp',
       type: 'light',
       on: false,
-      watts: 0,
+      ratedWatts: 9,
       status: 'online',
     },
     {
@@ -69,7 +69,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Air conditioner',
       type: 'ac',
       on: false,
-      watts: 0,
+      ratedWatts: 1000,
       status: 'online',
     },
     {
@@ -78,7 +78,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Washing machine',
       type: 'washer',
       on: false,
-      watts: 0,
+      ratedWatts: 500,
       status: 'offline',
     },
     {
@@ -87,7 +87,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Water heater',
       type: 'water_heater',
       on: true,
-      watts: 1500,
+      ratedWatts: 1500,
       status: 'online',
     },
     {
@@ -96,7 +96,7 @@ export const devicesMock: DevicesResponse = devicesResponseSchema.parse({
       name: 'Garage light',
       type: 'light',
       on: true,
-      watts: 18,
+      ratedWatts: 18,
       status: 'offline',
     },
   ],

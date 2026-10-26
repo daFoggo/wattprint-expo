@@ -12,8 +12,24 @@ import { Home } from '.';
 const fixture: DevicesResponse = {
   rooms: [{ id: 'r1', name: 'Hall' }],
   devices: [
-    { id: 'a', roomId: 'r1', name: 'Lamp', type: 'light', on: true, watts: 10, status: 'online' },
-    { id: 'b', roomId: 'r1', name: 'Heater', type: 'ac', on: true, watts: 90, status: 'online' },
+    {
+      id: 'a',
+      roomId: 'r1',
+      name: 'Lamp',
+      type: 'light',
+      on: true,
+      ratedWatts: 10,
+      status: 'online',
+    },
+    {
+      id: 'b',
+      roomId: 'r1',
+      name: 'Heater',
+      type: 'ac',
+      on: true,
+      ratedWatts: 90,
+      status: 'online',
+    },
   ],
 };
 
@@ -36,7 +52,7 @@ async function renderHome() {
 test('current draw follows the provider state', async () => {
   await renderHome();
   expect(screen.getByText('100 W')).toBeTruthy();
-  await fireEvent.press(screen.getByLabelText('Heater'));
+  await fireEvent.press(screen.getByRole('switch', { name: /^Heater,/ }));
   // The lamp row also reads 10 W, so the draw card makes two matches.
   expect(screen.getAllByText('10 W')).toHaveLength(2);
   expect(screen.queryByText('100 W')).toBeNull();

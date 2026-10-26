@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
 import { costOf, totalKwh } from '@/features/energy/energy-selectors';
 import type { EnergySummary } from '@/features/energy/schemas';
-import { formatNumber } from '@/lib/format';
+import { formatCurrency, formatNumber } from '@/lib/format';
 
 export function UsageSummaryCard({ summary }: { summary: EnergySummary }) {
   const { t, i18n } = useTranslation();
@@ -27,11 +27,7 @@ export function UsageSummaryCard({ summary }: { summary: EnergySummary }) {
           {t('energy.cost')}
         </Text>
         <Text size="lg" bold>
-          {formatNumber(costOf(total, summary.pricePerKwh), i18n.language, {
-            style: 'currency',
-            currency: summary.currency,
-            maximumFractionDigits: 0,
-          })}
+          {formatCurrency(costOf(total, summary.pricePerKwh), i18n.language, summary.currency)}
         </Text>
       </View>
     </Card>

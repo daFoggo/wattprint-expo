@@ -25,3 +25,18 @@ test('switching to week re-renders the chart with the week points', async () => 
     energyMock.week.points.length,
   );
 });
+
+test('the chart label is built from the data with the i18n summary key', async () => {
+  await render(
+    <GluestackUIProvider>
+      <EnergyScreen />
+    </GluestackUIProvider>,
+  );
+  const { points } = energyMock.day;
+  const total = points.reduce((sum, p) => sum + p.kwh, 0);
+  const peak = Math.max(...points.map((p) => p.kwh));
+  const fmt = (v: number) => new Intl.NumberFormat('en', { maximumFractionDigits: 1 }).format(v);
+  expect(
+    screen.getByLabelText(`${en.energy.ranges.day}: ${fmt(total)} kWh, peak ${fmt(peak)} kWh`),
+  ).toBeTruthy();
+});

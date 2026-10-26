@@ -23,3 +23,9 @@ test('fills each bar to its share of the total', async () => {
   expect(tree()).toContain('"width":"75%"');
   expect(tree()).toContain('"width":"25%"');
 });
+
+test('each bar is labelled with the device name and share', async () => {
+  await render(<TopDevicesList devices={devices} total={4} />);
+  expect(screen.getByLabelText('Heater: 75% of total')).toBeTruthy();
+  expect(screen.getByLabelText('Lamp: 25% of total')).toBeTruthy();
+});

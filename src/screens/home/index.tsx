@@ -11,7 +11,7 @@ import { currentWatts, groupByRoom } from '@/features/devices/device-selectors';
 import { useDeviceStates } from '@/features/devices/device-states';
 import { costOf, totalKwh } from '@/features/energy/energy-selectors';
 import { useEnergySummary } from '@/features/energy/hooks/use-energy-summary';
-import { formatNumber } from '@/lib/format';
+import { formatCurrency, formatNumber } from '@/lib/format';
 
 import { greetingKey } from './greeting';
 
@@ -50,11 +50,10 @@ export function Home() {
           })}
         </Text>
         <Text size="sm" className="text-muted-foreground">
-          {formatNumber(costOf(todayKwh, today.pricePerKwh), i18n.language, {
-            style: 'currency',
-            currency: today.currency,
-            maximumFractionDigits: 0,
-          })}
+          {t('home.cost')}
+        </Text>
+        <Text size="lg" bold>
+          {formatCurrency(costOf(todayKwh, today.pricePerKwh), i18n.language, today.currency)}
         </Text>
       </Card>
 

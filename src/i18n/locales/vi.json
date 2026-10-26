@@ -77,7 +77,8 @@
       "offline": "Ngoại tuyến"
     },
     "watts": "{{value}} W",
-    "onCount": "Bật {{on}}/{{total}}"
+    "onCount": "Bật {{on}}/{{total}}",
+    "rowLabel": "{{name}}, {{type}}, {{status}}, {{watts}}"
   },
   "energy": {
     "ranges": {
@@ -89,7 +90,9 @@
     "cost": "Chi phí ước tính",
     "topDevices": "Thiết bị dùng nhiều nhất",
     "kwh": "{{value}} kWh",
-    "chartLabel": "Biểu đồ điện năng tiêu thụ",
-    "noUsageTitle": "Không có mức dùng trong khoảng này"
+    "noUsageTitle": "Không có mức dùng trong khoảng này",
+    "topShare": "{{name}}: {{share}}% tổng",
+    "chartSummaryEmpty": "{{range}}: không có mức dùng",
+    "chartSummary": "{{range}}: {{total}} kWh, cao nhất {{peak}}"
   }
 }

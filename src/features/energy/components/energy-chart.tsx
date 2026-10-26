@@ -77,6 +77,8 @@ export function EnergyChartBars() {
 
 // Plain RN text instead of Skia text: no font loading, and the labels follow the system font scale.
 export function EnergyChartAxis({ labels }: { labels: string[] }) {
+  const { points } = useEnergyChart().state;
+  if (labels.length < 2 || !hasUsage(points)) return null;
   const first = labels[0];
   const middle = labels[Math.floor(labels.length / 2)];
   const last = labels[labels.length - 1];
