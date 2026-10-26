@@ -42,5 +42,22 @@
     "emptyTitle": "Chưa có gì ở đây",
     "pausedTitle": "Bạn đang ngoại tuyến",
     "pausedDescription": "Nội dung sẽ tải khi có kết nối trở lại."
+  },
+  "devices": {
+    "types": {
+      "light": "Đèn",
+      "ac": "Điều hòa",
+      "fridge": "Tủ lạnh",
+      "tv": "TV",
+      "washer": "Máy giặt",
+      "water_heater": "Bình nóng lạnh",
+      "plug": "Ổ cắm thông minh"
+    },
+    "status": {
+      "online": "Trực tuyến",
+      "offline": "Ngoại tuyến"
+    },
+    "watts": "{{value}} W",
+    "onCount": "Bật {{on}}/{{total}}"
   }
 }

@@ -42,5 +42,22 @@
     "emptyTitle": "Nothing here yet",
     "pausedTitle": "You are offline",
     "pausedDescription": "Content will load when the connection is back."
+  },
+  "devices": {
+    "types": {
+      "light": "Light",
+      "ac": "Air conditioner",
+      "fridge": "Refrigerator",
+      "tv": "TV",
+      "washer": "Washing machine",
+      "water_heater": "Water heater",
+      "plug": "Smart plug"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "watts": "{{value}} W",
+    "onCount": "{{on}} of {{total}} on"
   }
 }
