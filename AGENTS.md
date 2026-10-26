@@ -9,7 +9,7 @@ Before calling work done, run and report real results:
 - `pnpm check` (lint with zero warnings, typecheck, jest); lint includes the type-aware `@typescript-eslint/no-deprecated` for `src` (not vendored `components/ui`), so `pnpm lint` is noticeably slower
 - `pnpm format:check`
 - `npx expo-doctor`
-- For UI or native changes: run on the emulator and verify (see Device verification).
+- For UI or native changes: run on the physical phone and verify (see Device verification).
 
 ## Read the doc before changing the area
 
@@ -73,8 +73,8 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   imports `@/app`, `@/screens`, another feature or `../` (use `./` or `@/features/<name>/...`); `lib`, `stores`,
   `hooks`, `i18n`, `env.ts` never import `components`, `features`, `screens`, `app`; `components` never imports
   `features`, `screens`, `app`; `screens` never imports `app`. Per-feature rules are generated from the folders in `src/features`.
-- Architecture: feature slices with thin routes (`docs/architecture.md`): per feature `api.ts`, `schemas.ts`,
-  `queries.ts` (key factory + `queryOptions`), `hooks/`, `components/`, `screens/`, colocated tests; no barrel
+- Architecture: feature slices with thin routes (`docs/architecture.md`): per feature `<feature>/api.ts`, `<feature>/schemas.ts`,
+  `<feature>/queries.ts` (key factory + `queryOptions`), `hooks/`, `components/`, `screens/`, colocated tests; no barrel
   files; extract to shared only when a second feature needs it. Data rules and choices (staleTime,
   FlashList for a few hundred rows or more, placeholder from list rows): `docs/data-fetching.md`.
 - Routes: one folder per tab under `src/app` with its own `_layout.tsx` Stack; the root layout exports
@@ -85,15 +85,18 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 
 ## Device verification
 
-- No Expo Go. Use the dev build on the emulator (`Medium_Phone_API_37.0`): `pnpm android` for native changes,
-  `npx expo start --dev-client` for JS-only changes.
-- Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb logcat -d ReactNativeJS:V *:S`: no `E` lines.
+- No Expo Go. Use the dev build on the physical phone (Pixel 8a, adb serial `3C081JEKB17021`; always
+  `adb -s 3C081JEKB17021 ...`): `pnpm android` for native changes, `npx expo start --dev-client` for JS-only changes.
+  Metro is reached through `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, so the deep link uses `localhost:8081`.
+- Fallback (optional): the emulator `Medium_Phone_API_37.0` (`emulator-5554`). Its builds are x86 and the phone is ARM, so an
+  x86 apk does not install on the phone; use the matching device for each build and use `10.0.2.2:8081` in the deep link there.
+- Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S`: no `E` lines.
 - Android on Windows needs `LongPathsEnabled=1`, SDK CMake 4.x, JDK 17, `ANDROID_HOME`, and `CMAKE_POLICY_VERSION_MINIMUM=3.5` in the
   environment of `pnpm android` (Skia's CMakeLists declares `cmake_minimum_required 3.4.1`; PowerShell:
   `$env:CMAKE_POLICY_VERSION_MINIMUM='3.5'`). The plugin
   `plugins/with-android-cmake-dir.js` writes `cmake.dir` only on prebuild; an existing `android/` is not
   re-processed.
-- Deep-link relaunch: `adb shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2F10.0.2.2%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
+- Deep-link relaunch: `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
 - Stop Metro after checking; do not leave it running.
 
 ## EAS
@@ -103,4 +106,5 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 - Application ids: `com.dafoggo.wattprint` (production, in `app.json`), `.dev` (development) and `.preview`
   suffixes added by `app.config.ts`. Local `pnpm android` installs `com.dafoggo.wattprint.dev`; use it for
   `adb` commands. The id is cheap to change only until the first `eas build`.
-- The first tab (`src/screens/home`) is the base-check screen; replace it when building features.
+- The first tab (`src/screens/home`) is the smart-home dashboard (mock data); the base checks (theme buttons, modal, sample
+  form, SecureStore) live in `src/screens/settings`.

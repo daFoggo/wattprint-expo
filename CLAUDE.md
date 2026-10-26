@@ -28,5 +28,5 @@ Favor caution over speed; for trivial edits (typos, renames) use judgment. Adapt
 
 - Turn the task into a verifiable goal with a check per step; test first where you can.
 - "Done" means the commands in AGENTS.md "Done commands" ran and you report their real output, failures included; UI or
-  native changes are also run on the emulator.
+  native changes are also run on the physical phone.
 - Say what was and was not verified; never claim a flow works if only its error path was tried.

@@ -6,7 +6,7 @@ Backend: external FastAPI (no Expo `+api` routes). Test API for experiments: dum
 
 - All HTTP goes through `createApiClient` (`src/lib/http.ts`): Zod `schema` per call, timeout via AbortController linked to TanStack's `signal`, single-flight 401 refresh (retry once, re-read the token so a late 401 does not refresh twice), `onSessionExpired` when a refresh yields no token (once per refresh) or the retried request still gets 401. `auth: false` requests (login, the refresh call itself) send no token and never refresh. Never put tokens in URLs (the `onRequest` hook logs paths).
 - Errors (`src/lib/errors.ts`): `ApiError` (FastAPI `{detail}` string or 422 list), `NetworkError`, `ContractError` (never retried). Throw; never return fallback data. `isRetryable` = network or 5xx.
-- One feature `api.ts` calls the client and parses; `queries.ts` holds the key factory and `queryOptions`; the key contains every variable `queryFn` uses.
+- One `<feature>/api.ts` calls the client and parses; `<feature>/queries.ts` holds the key factory and `queryOptions`; the key contains every variable `queryFn` uses.
 - Query defaults (`src/lib/query-client.ts`): `staleTime 30_000`, `retry` only if retryable and < 2, mutations never retry. Tune `staleTime` per query; do not default it to 0 (opinion: with 0 a reopen or a detail opened from the list always refetches; an earlier emulator measurement of this was removed and not repeated).
 - Detail screens use the cached list row as `placeholderData` (opinion: first content shows at once while the real request runs; an earlier emulator measurement was removed and not repeated).
 - Search inputs: debounce with TanStack Pacer (300 ms) plus `keepPreviousData`.
@@ -19,4 +19,4 @@ Backend: external FastAPI (no Expo `+api` routes). Test API for experiments: dum
 
 - **Query persistence** (MMKV + `@tanstack/react-query-persist-client` with `@tanstack/query-async-storage-persister`): deferred. The benefit (skipping a cold refetch) and the hydration cost are both unmeasured. Spike only when a real read-mostly screen (dashboard summary) exists: measure hydration, set `maxAge` (`gcTime >= maxAge`), `buster` = app version, persist only small summaries, never chat or large lists.
 - **Auth/session store** and `Stack.Protected` (design in the spec; build with the first FastAPI integration).
-- **Chat streaming**: fetch reader + own SSE parser with fixtures, abort via AbortController, final message via `setQueryData`; confirm on emulator when the chat feature starts.
+- **Chat streaming**: fetch reader + own SSE parser with fixtures, abort via AbortController, final message via `setQueryData`; confirm on the phone when the chat feature starts.

@@ -6,7 +6,7 @@ description: >
   components and gluestack-ui parts, Uniwind classes and tokens, colours, dark mode, touch targets, TanStack Query,
   createApiClient, Zod schemas, staleTime, offline, loading/empty/error states, Zustand stores, MMKV, SecureStore,
   FlashList, expo-image, installing a package (expo install, pnpm), forwardRef or ref props, import boundary lint
-  errors, emulator checks, or "what is the project convention for X", even when the user does not name the repo.
+  errors, device checks on the phone, or "what is the project convention for X", even when the user does not name the repo.
 ---
 
 # wattprint-base: conventions and decision router
@@ -24,7 +24,7 @@ Read the digest for the pattern, then the doc section for the rule and the reaso
 | --- | --- | --- |
 | Add a feature, screen or route | Slice `src/features/<name>`; thin route | [digest][arch] / [doc][arch-layout] |
 | Lint forbids an import | Fix the layer; compose features in `src/screens` | [digest][arch] / [doc][arch-rules] |
-| Call the backend, query keys, `staleTime` | `api.ts`, `createApiClient`, Zod; typed errors | [digest][data] / [doc][data-rules] |
+| Call the backend, query keys, `staleTime` | `<feature>/api.ts`, `createApiClient`, Zod; typed errors | [digest][data] / [doc][data-rules] |
 | Loading, empty, error, offline UI | `components/states/*`; keep cached data on refresh error | [digest][data] / [doc][ds-states] |
 | Query persistence, auth store, chat streaming | Not decided: read the backlog first | [digest][data] / [doc][data-open] |
 | Build or extend a component | Compound parts, `variant`/`size`, `ref` as a prop | [digest][comp] / [doc][comp-variants] |
@@ -41,7 +41,7 @@ Read the digest for the pattern, then the doc section for the rule and the reaso
 | A "faster" claim | Release build, n >= 5, median, range, caveats | [digest][perf] / [doc][perf-method] |
 | Install or upgrade a package | `npx expo install`; `pnpm add -D` for dev deps | [digest][tool] / [AGENTS][agents-code] |
 | Env var | Static `process.env.EXPO_PUBLIC_X`; never a secret | [digest][tool] / [README][env] |
-| Finish a task | All gates, emulator screenshot and logcat | [digest][tool] / [AGENTS][agents-device] |
+| Finish a task | All gates, phone screenshot and logcat | [digest][tool] / [AGENTS][agents-device] |
 | Change a rule or a doc | One commit; docs-links test passes | [digest][tool] / [AGENTS][agents-maint] |
 
 ## 2. Golden rules (each has a guard or a doc section)

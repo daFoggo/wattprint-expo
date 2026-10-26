@@ -8,15 +8,17 @@ Uniwind (Tailwind CSS v4) and gluestack-ui v5 components, TanStack Query/Form/Pa
 persistence, expo-secure-store, i18next, a validated env module, lint/format/typecheck/test, git hooks,
 EAS config (no builds yet) and GitHub Actions CI. Build features on top of it.
 
-The first tab is the **base-check screen**: it exists only to verify styling, gluestack components, the
-form, the persisted theme store, secure storage and i18n on a device. Replace it when building features.
+The app has four tabs: **Home** (smart-home dashboard), **Devices**, **Energy** (a victory-native chart) and **Settings**.
+Home, Devices and Energy run on static mock data validated by Zod (no backend yet; real data is the next step). The
+base checks (theme buttons, modal, sample form, secure storage, i18n) live in the Settings tab (`src/screens/settings`).
 
 ## Requirements
 
 - Node >= 22.13 (`.nvmrc`: 22.23.3)
 - pnpm 12 (`packageManager`: pnpm@12.14.0)
 - JDK 17
-- Android SDK with an AVD (developed on `Medium_Phone_API_37.0`), `ANDROID_HOME` set
+- Android SDK, `ANDROID_HOME` set, and a device for the dev build: the physical phone (Pixel 8a, USB debugging, adb serial
+  `3C081JEKB17021`) is the verification device; the emulator `Medium_Phone_API_37.0` is an optional fallback
 - Windows only: Android SDK CMake 4.x installed (see "Windows long-path workaround")
 - Windows only: `LongPathsEnabled=1` (see below)
 
@@ -36,13 +38,16 @@ pnpm android           # expo run:android: builds and launches the dev build
 pnpm check           # lint (max-warnings 0) + typecheck (expo customize tsconfig.json && tsc) + jest
 pnpm format:check    # prettier --check
 npx expo-doctor      # all checks must pass
-pnpm android         # then verify on the emulator (screenshot + logcat with no E ReactNativeJS lines)
+pnpm android         # then verify on the phone (screenshot + logcat with no E ReactNativeJS lines)
 ```
 
-Relaunch via the dev-client deep link with `adb shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2F10.0.2.2%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
+Verification device: the physical phone. Forward Metro with `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, then relaunch via the
+dev-client deep link with `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
+Emulator fallback (optional): use `adb -s emulator-5554` and `10.0.2.2:8081` in the deep link; emulator builds are x86 and the
+phone is ARM, so an x86 apk does not install on the phone.
 
-Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch the app, take a screenshot (`adb shell screencap -p`) and read
-`adb logcat -d ReactNativeJS:V *:S`; there must be no `E` lines.
+Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch the app, take a screenshot
+(`adb -s 3C081JEKB17021 exec-out screencap -p`) and read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S`; there must be no `E` lines.
 
 ## Structure
 
@@ -66,11 +71,12 @@ scripts/contrast-report.js      prints WCAG contrast ratios for the tokens in sr
 scripts/docs-links.test.ts      guards docs: relative links, backticked repo paths, skills named in AGENTS.md
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
-src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), (settings)
+src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), (devices), (energy), (settings)
 src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider, card, switch, badge, progress, heading, text, pressable, divider
-src/features/<name>/             feature slices (docs/architecture.md); none yet (the example feature was removed 2026-10-26)
-src/screens/home/               base-check screen and its sample form
-src/screens/settings/           settings screen (placeholder)
+src/features/devices/          mock-backed slice: schemas, mock data, selectors, DeviceStatesProvider, rows, screen
+src/features/energy/           mock-backed slice: schemas, mock data, selectors, victory-native chart, summaries, screen
+src/screens/home/               dashboard composed from devices and energy (the only 2-feature screen)
+src/screens/settings/           settings: theme buttons, sample form, modal, SecureStore (base checks)
 src/screens/not-found/          not-found screen (used by +not-found.tsx)
 src/screens/route-error/        error screen (used by the root ErrorBoundary)
 src/hooks/                      shared hooks
@@ -175,7 +181,7 @@ with the error screen. Per-tab `ErrorBoundary` exports in the tab layouts are a 
 Expect API changes.
 
 **gluestack-ui.** The CLI is not used. `gluestack-ui init --uniwind` (5.0.3) forces NativeWind v4 when
-`android/` exists (it then classifies the app as a library) and installs alpha `core`/`utils`, downgrades
+`android/` exists (it then classifies the app as a library; gluestack's docs support `--uniwind`, so this is not a deliberate Uniwind gap: the CLI misclassified this project, cause not found; verified: <https://gluestack.io/ui/docs/home/getting-started/cli> and this history) and installs alpha `core`/`utils`, downgrades
 uniwind, tailwindcss and safe-area-context, and rewrites Metro/Babel config. All of that was reverted. The
 components (provider, icon, button, input, modal) were hand-copied from the CLI's cached Uniwind template with
 stable `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6; web variants were not copied. Later added from the same template: card, switch, badge, progress, heading, text, pressable, divider (`heading` needs `@expo/html-elements`; `box`, `hstack`, `vstack`, `avatar` and alpha parts were not copied; the copied files were converted from CRLF to LF and formatted with Prettier; duplicate imports from `@gluestack-ui/utils/nativewind-utils` were merged for lint). Deviations from upstream: `switch` drops `web:cursor-pointer`, `disabled:cursor-not-allowed` and the `ring-indicator-primary` class (no such token) and binds `trackColorOnClassName="accent-primary"`, `trackColorOffClassName="accent-input"`, `thumbColorClassName="accent-card"` on the native Switch (the thumb is the card colour so it keeps 3:1 on both the off track `input` and the on track `primary`, pairs in `scripts/contrast-report.js`; `primary-foreground` on `input` was below 3:1 in light) (Uniwind types it as `className?: never`); `badge` destructive text and icon use `text-destructive-foreground` (upstream `text-white`) and reuse `StyledUIIcon` from `@/components/ui/icon`; `heading` and `text` drop the `highlight` variant (`bg-yellow-500`, a palette class) and `text` `isTruncated` uses `line-clamp-1` (upstream `web:truncate`; Uniwind maps it to `numberOfLines` through `WebkitLineClamp`, `truncate` would be a no-op on native; verified: `node_modules/uniwind/dist/common/components/native/Text.js`). `heading` and `text` use `font-heading`, `font-body` and `tracking-sm`, which are not defined in `src/global.css`, so Uniwind drops them (verified: grep of `src/global.css` and `src/components/ui`); `pressable` base is `data-[disabled=true]:opacity-40` only (`data-[focus-visible=true]` classes are banned by `scripts/uniwind-guard.test.ts`). `card`, `progress` and `divider` are unchanged. Our code never passes the vendored boolean props (`bold`, `italic`, `underline`, `isTruncated`, ...). For the original five parts, three edits: `Input` is `min-h-12` (upstream `min-h-9`) and draws its border with `border-input` (upstream `border-border`; `--input` was darkened to reach 3:1, see `docs/design-system.md`); every `Button` size has at least `min-h-12` (48 dp Android touch target; upstream uses `min-h-8`/`min-h-9`/`min-h-10`/none, see the
@@ -255,8 +261,8 @@ resolves for all three profiles. The display name changes the native app label o
    colours `#E6F4FE` / `#208AEF`). Replace before the first store or preview distribution; they do not block
    `eas build` development builds.
 
-Further open items (persistence spike, auth, chat streaming, per-tab ErrorBoundary, production-env build check, device
-performance, design-system findings) are listed in `docs/superpowers/backlog/`.
+Further open items (persistence spike, auth, chat streaming, per-tab ErrorBoundary, production-env build check,
+first-frame theme flash, design-system findings, victory-native 43 upgrade) are listed in `docs/superpowers/backlog/`.
 
 Accepted without action (owner decision): `vi` stays as the second locale; pnpm 12.14.0 support on EAS build images stays
 unverified until the first `eas build`.

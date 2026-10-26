@@ -12,6 +12,7 @@ Use before installing a package, touching gluestack, reading env vars, verifying
 | `@gluestack-ui/core`, `utils`   | Keep exact pins 5.0.15 and 5.0.6 (alpha dist-tags); install with `pnpm add`; never upgrade blindly                                                           |
 | A new gluestack component       | Hand-copy from the Uniwind template with stable packages; never `gluestack-ui add` or `init` (forces NativeWind when `android/` exists, installs alphas)     |
 | Alpha components                | None: Tabs, Table, BottomSheet, Calendar, DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer                                                         |
+| Skia and victory-native         | Skia is Expo's pin (2.14.0); victory-native stays 42.0.1 until Expo bumps Skia to 2.15.1 or later (`backlog/2026-10-26-victory-native-43-upgrade.md`)        |
 | Edit a vendored file            | Record the deviation in `README.md` (three edits are there: `Input` `min-h-12` plus `border-input`, `Button` `min-h-12` sizes, the modal `ZoomIn` `opacity`) |
 | `react-native-web`, `react-dom` | Required peers only; never import under `src/` (`scripts/config-guard.test.ts`)                                                                              |
 | Env value                       | Static `process.env.EXPO_PUBLIC_X` in `src/env.ts`; destructuring is not inlined; never a secret                                                             |
@@ -22,8 +23,11 @@ Use before installing a package, touching gluestack, reading env vars, verifying
 ## Gates before "done"
 
 `pnpm check` (lint with zero warnings, typecheck, jest), `pnpm format:check`, `npx expo-doctor`, and for UI or native work the
-emulator: relaunch the dev build (`com.dafoggo.wattprint.dev`, `emulator-5554` only, never the physical phone), take a screenshot, read
-`adb logcat -d ReactNativeJS:V *:S` for no `E` lines, then stop Metro. Report real output, failures included.
+physical phone: `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, relaunch the dev build (`com.dafoggo.wattprint.dev`) with the
+`localhost:8081` deep link from AGENTS.md, take a screenshot, read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S` for no `E`
+lines, then stop Metro. The emulator (`Medium_Phone_API_37.0`, `emulator-5554`) is an optional fallback; its builds are x86 and the
+phone is ARM, so an x86 apk does not install on the phone. `pnpm android` with CMake 4.x needs `CMAKE_POLICY_VERSION_MINIMUM=3.5` in the
+environment (Skia). Report real output, failures included.
 
 ## Docs and this skill
 

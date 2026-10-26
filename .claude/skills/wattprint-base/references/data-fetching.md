@@ -7,10 +7,10 @@ Use for any request to the FastAPI backend, query keys, cache timing, or a data 
 
 | Need                  | Pattern                                                                                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Any HTTP call         | Feature `api.ts` calls `createApiClient` (`src/lib/http.ts`) with a Zod `schema` per call                                           |
+| Any HTTP call         | Feature `<feature>/api.ts` calls `createApiClient` (`src/lib/http.ts`) with a Zod `schema` per call                                 |
 | A failure             | Throw `ApiError`, `NetworkError` or `ContractError` (`src/lib/errors.ts`); never return fallback data                               |
 | Retrying              | Only `isRetryable` (network, 5xx), fewer than 2 times; mutations never retry; `ContractError` never                                 |
-| Query key             | Factory in `queries.ts`; the key holds every variable `queryFn` uses                                                                |
+| Query key             | Factory in `<feature>/queries.ts`; the key holds every variable `queryFn` uses                                                      |
 | Freshness             | Defaults in `src/lib/query-client.ts` (`staleTime` 30 s); tune per query, never default to 0                                        |
 | Detail screen         | Cached list row as `placeholderData`                                                                                                |
 | Search box            | Debounce 300 ms with TanStack Pacer plus `keepPreviousData`                                                                         |
@@ -20,7 +20,7 @@ Use for any request to the FastAPI backend, query keys, cache timing, or a data 
 
 ## Never do
 
-- Return `[]`, `null` or a default object from `api.ts` when the request fails.
+- Return `[]`, `null` or a default object from `<feature>/api.ts` when the request fails.
 - Set `staleTime: 0` as a default (opinion: a reopen or detail always refetches; the old measurement was removed).
 - Put a token in a URL (the `onRequest` hook logs paths) or call `fetch` outside the client.
 - Mirror query data into a Zustand store.

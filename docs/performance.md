@@ -16,14 +16,14 @@ in this file is ours. A physical phone was never used.
 - Dev mode costs JS performance ("suffers greatly" because of extra warnings and error checks), so measure in a release
   build (verified: <https://reactnative.dev/docs/performance>). FlashList's own page says the same (it can look slower than
   FlatList in dev) (verified: <https://shopify.github.io/flash-list/docs/fundamentals/performance>).
-- If you measure: release build, emulator `Medium_Phone_API_37.0` only, several runs per cell, report median with min-max
+- If you measure: release build on the physical phone (serial `3C081JEKB17021`; the emulator `Medium_Phone_API_37.0` only as a labelled fallback), several runs per cell, report median with min-max
   and the caveats; re-render counts need the dev build with the React Profiler because the Profiler is disabled in
   production React; never use dev-build timings (opinion).
 - React Native warns that `console.*` in a bundled app is a JS-thread bottleneck (verified:
   <https://reactnative.dev/docs/performance>); keep `console.*` out of `src`.
 - `am start -S -W` TotalTime is time to the first frame (Android's "time to initial display"), not useful content
   (verified: <https://developer.android.com/topic/performance/vitals/launch-time>).
-- Do not claim "fast" without a measurement; say "relative, emulator".
+- Do not claim "fast" without a measurement; say which device it was ("relative" if it was the emulator).
 
 ## 2. Lists
 
@@ -63,8 +63,7 @@ Other list rules (project): `keyboardShouldPersistTaps="handled"` on lists with 
   decorative thumbnails.
 - Wrap `expo-image` with `withUniwind` once so `className` works; a second feature using it
   should move it to `src/components` ([components.md](components.md))).
-- Not measured: image decode cost, scroll jank with images, disk cache size. Open item in the backlog (image rows on a
-  device).
+- Not measured: image decode cost, scroll jank with images, disk cache size.
 
 ## 4. Data and re-renders
 
@@ -121,7 +120,7 @@ search with Pacer plus `keepPreviousData`, no mirrored query data in stores.
 
 ## 8. Release-build measurement method (checklist for a perf claim)
 
-1. Record the commit, build variant and device (emulator AVD `Medium_Phone_API_37.0`; the phone is never used).
+1. Record the commit, build variant and device (the phone, serial `3C081JEKB17021`, or the emulator AVD `Medium_Phone_API_37.0` as a labelled fallback; never mix the two in one comparison).
 2. Build release: `npx expo run:android --variant release --no-bundler`; confirm Metro is off (port 8081 not listening) and the
    embedded bundle renders (screenshot).
 3. Control the cache state (cold: `am force-stop`; warm: data already fetched) and say which one each number is.

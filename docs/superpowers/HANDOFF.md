@@ -1,4 +1,4 @@
-# HANDOFF: wattprint-expo (refreshed 2026-10-25)
+# HANDOFF: wattprint-expo (refreshed 2026-10-26)
 
 Read this first after a compaction or in a new session. It holds goals, standing rules, state and next steps. Keep it short;
 details live in specs, plans, reports and the backlog. Update it when goals move.
@@ -24,9 +24,10 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
   task, a task review, a final review, one fix wave. Record calls the user was not asked about as "my calls" in the design docs.
 - Model convention (global `CLAUDE.md`): plan and design go to `planner` (Opus); code to `implementer` (Sonnet); review to `reviewer`
   (Opus); exploration and logs to `scout` or `runner`. Always pass `model` explicitly. Never use Fable models.
-- Debug device: **Android emulator `Medium_Phone_API_37.0` only** (`emulator-5554`, app id `com.dafoggo.wattprint.dev`). Never use
-  the physical phone (Pixel 8a `3C081JEKB17021`, may stay attached): no adb against it, no installs. Always
-  `adb -s emulator-5554 ...`. Restart the emulator:
+- Debug device: the **physical phone** (Pixel 8a, adb serial `3C081JEKB17021`, app id `com.dafoggo.wattprint.dev`), changed by the
+  user on 2026-10-26. Always `adb -s 3C081JEKB17021 ...`; Metro through `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081` and a
+  deep link with `localhost:8081` (`AGENTS.md` "Device verification"). The emulator `Medium_Phone_API_37.0` (`emulator-5554`) is an
+  optional fallback: its builds are x86 and the phone is ARM, so an x86 apk does not install on the phone. Restart the emulator:
   `Start-Process "$env:ANDROID_HOME\emulator\emulator.exe" -ArgumentList '-avd','Medium_Phone_API_37.0','-no-snapshot-save'`.
 - Progress rule: if a subagent task runs longer than about 5 to 10 minutes, check real evidence (git log, newest files, processes,
   adb) instead of waiting. `expo run:android` and `expo start` never exit (Metro); an agent "waiting on background work" for that is
@@ -46,7 +47,7 @@ Run from the repo root on a clean working tree. `.claude/worktrees/` is ignored 
 | 1   | Format                | `pnpm format:check`                                      | "All matched files use Prettier code style" (`docs/` is ignored by Prettier) |
 | 2   | Lint, types, tests    | `pnpm check`                                             | `eslint --max-warnings 0`, `tsc --noEmit` and `jest --ci` all exit 0 |
 | 3   | Expo config           | `npx expo-doctor`                                        | all checks pass                                                 |
-| 4   | Emulator (UI, native) | see `AGENTS.md` "Device verification"                    | app relaunched, screenshot taken, `adb logcat -d ReactNativeJS:V *:S` has no `E` lines |
+| 4   | Phone (UI, native)    | see `AGENTS.md` "Device verification"                    | app relaunched, screenshot taken, `adb logcat -d ReactNativeJS:V *:S` has no `E` lines |
 | 5   | Docs                  | routing table in `AGENTS.md`                             | the docs for the area you touched are updated in the same commit |
 
 Guards inside gate 2 (each has self-tests that fail first when you break the rule):
@@ -75,22 +76,27 @@ item), Next. Reference report: `reports/2026-10-25-base-and-data-layer.md`.
   benchmarks (data removed on 2026-10-26), architecture). Details: `reports/2026-10-25-base-and-data-layer.md`.
 - **Documentation pass** (branch `docs/base-documentation`): `docs/components.md`, `design-system.md`, `client-state.md`,
   `performance.md`, the routing table in `AGENTS.md`, `scripts/design-guard.test.ts`, reports and backlog folders.
+- **Smarthome UI demo (mock data) done**: Home, Devices, Energy and Settings tabs, `devices` and `energy` mock-backed slices,
+  victory-native chart, hand-copied gluestack parts; verified on the physical phone in light, dark, vi and font scale 2.0.
 - **Open items** (each a file in `backlog/`): query persistence spike, auth and session store, chat streaming, per-tab
-  ErrorBoundary, production-env build check, image-row list performance on a device, first-frame theme flash in a release
-  build, design-system findings (contrast, Input touch target).
+  ErrorBoundary, production-env build check, first-frame theme flash in a release build, design-system findings (contrast, Input
+  touch target), victory-native 43 upgrade.
 - Open for the owner (`README.md`): `vi` stays the second locale; app icon and splash are Expo placeholders; pnpm 12.14.0 on EAS
   build images is unverified until the first `eas build`.
 - CI: green on `main` (`gh run list --repo daFoggo/wattprint-expo`, checked 2026-10-25).
 
 ## Next
 
-Build the first real feature as `src/features/<name>` (see `docs/architecture.md`). Pick the next backlog item only when its
-"Start when" is true.
+Define the backend contract (FastAPI `/openapi.json`) and replace the mock data of `devices` and `energy` with
+`<feature>/api.ts` and `<feature>/queries.ts` (see `docs/architecture.md`). Pick the next backlog item only when its "Start when" is
+true.
 
 ## Environment pitfalls (learned the hard way)
 
 - Windows 260-character path limit: `LongPathsEnabled=1`, SDK CMake 4.1.2 through `plugins/with-android-cmake-dir.js` (win32 only,
-  on prebuild), `nodeLinker: hoisted`.
+  on prebuild), `nodeLinker: hoisted`. Skia's CMakeLists needs `CMAKE_POLICY_VERSION_MINIMUM=3.5` in the environment of
+  `pnpm android` with CMake 4.x (`README.md` "Skia and CMake 4.x").
+- victory-native is pinned to 42.0.1 (Skia 2.14.0 from Expo); upgrade trigger in `backlog/2026-10-26-victory-native-43-upgrade.md`.
 - `core.autocrlf=true` globally, so `.gitattributes` forces LF; after a `git checkout` or merge that removes tracked files, check
   the working tree (a merge once deleted the untracked `claude-config-summary.md`; it is git-ignored now).
 - `npx expo install ... -- --dev` misbehaves on Windows: use `pnpm add -D`.

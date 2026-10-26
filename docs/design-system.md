@@ -48,7 +48,9 @@ Rules:
   (`bg-red-500`). Enforced by `scripts/design-guard.test.ts` for hex colours in a colour position, colour functions (`rgb()`, `hsl()`, `color-mix()`, ...), literal values of `*Color` style props (`color: 'white'`) and `dark:` colour pairs;
   palette classes are not guarded (opinion: add if they appear).
 - No `dark:` colour pairs outside `src/components/ui` (the tokens already switch). The guard allows `dark:` pairs anywhere
-  under `src/components/ui/` (vendored upstream code); today only `button` and `input` have them. One `rgb(` template is
+  under `src/components/ui/` (vendored upstream code); today `badge`, `button` and `input` have them (verified: `grep -rln 'dark:' src --include=*.tsx
+  --include=*.ts --exclude-dir=ui` finds no file with a `dark:` class outside `ui`; inside `ui`, `badge`, `button` and `input`
+  `index.tsx` match, 2026-10-26). One `rgb(` template is
   allow-listed in `src/lib/nav-theme.ts`: the exact literal `rgb(${parts.join(', ')})`, which turns a token triple into the CSS
   colour React Navigation needs.
 - Never put `text-destructive-foreground` on a solid `bg-destructive` in dark: that pair is 2.77:1 (section 2). The Button
@@ -89,7 +91,10 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `muted-foreground` on `input/30` over `background` (dark Input fill and placeholder) | text | n/a | 5.93 pass |
 | `foreground` on `input/30` over `background` (dark Input text) | text | n/a | 14.69 pass |
 | `foreground` on `input/4.5` and `input/7.5` over `background` (dark outline Button fill, pressed) | text | n/a | 18.49 / 18.13 pass |
+| `muted-foreground` on `card`          | text | 4.74 pass   | 6.94 pass   |
 | `primary` on `background`             | ui   | 17.93 pass  | 18.51 pass  |
+| `primary` on `card` (chart bars, Progress fill) | ui | 17.93 pass | 16.76 pass |
+| `primary` on `primary/20` over `card` (Progress track) | ui | 11.69 pass | 9.13 pass |
 | `input` on `background` (Input border) | ui   | 3.03 pass   | 3.35 pass   |
 | `input` on `card`                     | ui   | 3.03 pass   | 3.03 pass   |
 | `card` on `input` (Switch thumb on the off track) | ui | 3.03 pass | 3.03 pass |
@@ -143,14 +148,14 @@ Swap the pattern for `font-(medium|semibold|bold)`, `gap-[0-9]+`, `(p|px|py)-[0-
 
 | Role                  | Classes in use                                               | Seen in                                        |
 | --------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| Screen title          | `text-foreground text-3xl font-bold`, `text-2xl font-bold`   | `screens/home`, `screens/not-found`, detail    |
+| Screen title          | `text-foreground text-3xl font-bold`, `text-2xl font-bold`   | `screens/home`, `screens/settings`, `screens/not-found` |
 | Section or card title | `text-foreground text-lg font-semibold`                      | state titles, modal title, detail price        |
 | Row title, list body  | `text-foreground text-base font-semibold`, `text-base`       | list rows, detail description                   |
 | Secondary text        | `text-muted-foreground text-sm` (`text-center` in states)    | descriptions, banners, row category            |
 | Button label          | `text-sm` (`text-xs` for `size="sm"`), colour from variant   | `ButtonText`                                   |
-| Error or helper       | `text-destructive text-sm` with `accessibilityLiveRegion`    | `sample-form` email error                      |
+| Error or helper       | `text-destructive text-sm` with `accessibilityLiveRegion`    | `sample-form` email error (`screens/settings`)   |
 
-Headings carry `accessibilityRole="header"` (verified: `empty-state.tsx`, `error-state.tsx`, `home/index.tsx`).
+Headings carry `accessibilityRole="header"` (verified: `empty-state.tsx`, `error-state.tsx`, `screens/settings/index.tsx`, `screens/home/index.tsx`).
 Use these roles; add a new one only after a second screen needs it (opinion).
 
 ## 4. Spacing, radius, size
@@ -168,7 +173,7 @@ No spacing token exists beyond Tailwind's scale (4 px steps). Tiers in use outsi
 
 Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do not add arbitrary values
 (`w-[320px]`, `p-[13px]`) (opinion; not guarded). Screens use `bg-background flex-1` as root and
-`contentContainerClassName` on scroll views (verified: `screens/home/index.tsx`).
+`contentContainerClassName` on scroll views (verified: `screens/settings/index.tsx`).
 
 ## 5. Android rules
 
@@ -176,7 +181,7 @@ Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do no
   (verified: <https://support.google.com/accessibility/android/answer/7101858>: "a width and height of at least 48dp").
   `Button` enforces it: `default` `min-h-12`, `sm` `min-h-12`, `lg` `min-h-14`, `icon` `min-h-12 min-w-12`; Tailwind `h-12` is
   48 dp (verified: `button/index.tsx`, `button.test.tsx`). The modal close button adds `min-h-12 min-w-12`
-  (verified: `screens/home/index.tsx`). A pressable row is tall enough through `py-3` plus content. `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
+  (verified: `screens/settings/index.tsx`). A pressable row is tall enough through `py-3` plus content. `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
   **Known gap:** `InputSlot` has no minimum size (verified: `input/index.tsx`); no screen uses a slot yet.
 - **Dark mode:** the preference is `system | light | dark` in `usePreferencesStore`; the root layout calls
   `Uniwind.setTheme(usePreferencesStore.getState().theme)` at module load, before the first render (comment in
@@ -191,7 +196,7 @@ Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do no
   `react-native-safe-area-context` (a dependency).
 - **Predictive back** is off (`predictiveBackGestureEnabled: false`, verified: `app.json`).
 - **Keyboard:** lists and scroll views with inputs set `keyboardShouldPersistTaps="handled"`
-  (verified: `home/index.tsx`).
+  (verified: `screens/settings/index.tsx`).
 
 ## 6. Component usage
 
@@ -203,7 +208,7 @@ Detailed composition rules: [components.md](components.md). The components are v
 | Need                   | Use                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------ |
 | Main action            | `<Button><ButtonText>...</ButtonText></Button>` (`variant="default"`)          |
-| Selected toggle option | `variant={selected ? 'default' : 'outline'}` plus `accessibilityState={{ selected }}` (`home/index.tsx`) |
+| Selected toggle option | `variant={selected ? 'default' : 'outline'}` plus `accessibilityState={{ selected }}` (`screens/settings/index.tsx`) |
 | Dangerous action       | `variant="destructive"`                                                        |
 | Secondary, quiet       | `secondary`, `outline`, `ghost`, `link`                                        |
 | Compact in a toolbar   | `size="sm"` (still 48 dp tall); icon only: `size="icon"` with `accessibilityLabel` |
@@ -215,15 +220,15 @@ Disabled looks like `opacity-40` through `data-[disabled=true]`. Label text is a
 ### Input
 
 `Input` (frame) + `InputField` (the `TextInput`) + optional `InputIcon`/`InputSlot`. Pass `isInvalid` for the error border
-and render the error text below with `selectable` and `accessibilityLiveRegion="polite"` (verified: `sample-form.tsx`).
-Always set `accessibilityLabel` or `aria-label` on `InputField` (verified: `sample-form.tsx`).
+and render the error text below with `selectable` and `accessibilityLiveRegion="polite"` (verified: `screens/settings/sample-form.tsx`).
+Always set `accessibilityLabel` or `aria-label` on `InputField` (verified: `screens/settings/sample-form.tsx`).
 Placeholder, cursor and selection colours come from `*ClassName` bindings already inside `InputField`; do not pass
 `placeholderTextColor`.
 
 ### Modal
 
 `Modal isOpen onClose` > `ModalBackdrop` + `ModalContent` > `ModalHeader` (title `Text` with `accessibilityRole="header"` and
-a `ModalCloseButton` with `accessibilityLabel`, 48 dp) + `ModalBody` + `ModalFooter` (verified: `home/index.tsx`). Sizes
+a `ModalCloseButton` with `accessibilityLabel`, 48 dp) + `ModalBody` + `ModalFooter` (verified: `screens/settings/index.tsx`). Sizes
 `xs` to `full`, default `md`. Use for short confirmations; a full-screen task is a route, not a modal (opinion).
 
 ### Icon
@@ -246,6 +251,51 @@ a `ModalCloseButton` with `accessibilityLabel`, 48 dp) + `ModalBody` + `ModalFoo
 Full screen by default; pass `className="flex-none p-2"` to embed (verified: `state-style.ts`). Data rules:
 [data-fetching.md](data-fetching.md).
 
+### Card, Heading, Text, Divider
+
+`Card` is `bg-card border border-border rounded-xl shadow-sm`; `size="default"` is `p-4 gap-6`, `size="sm"` is `p-3 gap-3`
+(verified: `src/components/ui/card/styles.tsx`). The dashboard and list screens use `size="sm"`. `Heading` takes `size` and
+carries `accessibilityRole="header"` at the call site; `Text` takes `size` (`2xs` to `3xl`) and class colour tokens
+(`text-muted-foreground`). `Text` `isTruncated` maps to `line-clamp-1`; it is not used by our code and was not exercised on a
+device (verified: `README.md` "gluestack-ui"; opinion: wrap long names instead, as `DeviceRow` does). `Divider` is `h-px bg-border`
+and no screen uses it yet (verified: grep of `src` outside `components/ui`).
+
+### Switch and switch rows
+
+The whole row is the control: a `Pressable` with `accessibilityRole="switch"`, `accessibilityState={{ checked, disabled }}`,
+`accessibilityLabel` and `min-h-12`, containing a `Switch` wrapped in a `View` with `pointerEvents="none"` and
+`importantForAccessibility="no-hide-descendants"`, so TalkBack sees one node and the small native Switch is only an indicator
+(verified: `src/features/devices/components/device-row.tsx`, `device-row.test.tsx`). Colour bindings are inside `Switch`:
+`trackColorOnClassName="accent-primary"`, `trackColorOffClassName="accent-input"`, `thumbColorClassName="accent-card"`
+(verified: `src/components/ui/switch/index.tsx`); the contrast pairs are in section 2. An offline device sets `disabled`, which
+dims the row (`opacity-40` through `data-[disabled=true]`) and blocks the press.
+
+### Badge
+
+`Badge variant="default | secondary | destructive | outline"` with a `BadgeText` child (`text-xs uppercase`)
+(verified: `src/components/ui/badge/index.tsx`). `DeviceRow` uses `secondary` for online and `outline` for offline. A badge is
+not a touch target.
+
+### Progress
+
+`<Progress value={n}><ProgressFilledTrack /></Progress>`: `h-2` track `bg-primary/20`, fill `bg-primary`. `value` is a 0 to 100
+percentage; compute it with a guarded selector so a zero total gives 0, not `NaN` (verified: `shareOf` in
+`src/features/energy/energy-selectors.ts`, tested in `energy-selectors.test.ts`).
+
+### Pressable
+
+`Pressable` (the gluestack part) has only a disabled opacity in its base; a pressable row sets its own `min-h-12` (48 dp) at
+the call site, as `DeviceRow` does (verified: `device-row.tsx`). Do not rely on content height for the target.
+
+### Energy chart (victory-native)
+
+A Skia canvas is invisible to TalkBack and cannot read Uniwind classes. So the chart is a Card with `accessible` and an
+`accessibilityLabel` summary, the bar colour comes from `useCSSVariable('--primary')` converted by `toCssColor` (a hook that
+re-runs when the theme changes), and axis labels are React Native `Text` outside the canvas, so they follow the font scale
+(verified: `src/features/energy/components/energy-chart.tsx`, `hooks/use-chart-bar-color.ts`, their tests). A range with no
+points or only zeros renders `EmptyState` and never mounts `CartesianChart` (verified: `energy-chart.test.tsx`). Skia is
+2.14.0 and victory-native 42.0.1 (verified: `README.md` "Pinned versions").
+
 ## 7. Motion
 
 - Reanimated 4.7.1 is installed and used only in the gluestack Modal (`FadeIn`/`FadeOut` backdrop, `ZoomIn`/`FadeOut`
@@ -257,7 +307,7 @@ Full screen by default; pass `className="flex-none p-2"` to embed (verified: `st
   (verified: <https://docs.swmansion.com/react-native-reanimated/docs/guides/accessibility/>,
   <https://docs.swmansion.com/react-native-reanimated/docs/device/useReducedMotion/>).
 - **Not verified:** whether the modal's `FadeIn.duration(200)` honours the system setting without an explicit
-  `.reduceMotion(...)`. Test on the emulator with "Remove animations" before claiming it (open doubt).
+  `.reduceMotion(...)`. Test on the phone with "Remove animations" before claiming it (open doubt).
 - Guidance (opinion): animate opacity and transform only; keep durations short (the modal uses 200 ms); never carry
   meaning by motion alone; check `expo-animation` skill before adding gestures or sheets.
 - A dev-only showcase screen that renders every token, variant and state is **out of scope** here and a good future item
@@ -272,12 +322,12 @@ Full screen by default; pass `className="flex-none p-2"` to embed (verified: `st
 - **Labels:** if a touchable has no `accessibilityLabel`, TalkBack reads its child text; icon-only controls and images that
   are decoration need one or `accessible={false}` (give the row one full label and hide the thumbnail).
 - **Live regions:** `accessibilityLiveRegion` `polite` for changing status and errors; `assertive` interrupts and is for
-  urgent cases only (verified: <https://reactnative.dev/docs/accessibility>; used in `error-state.tsx`, `sample-form.tsx`).
+  urgent cases only (verified: <https://reactnative.dev/docs/accessibility>; used in `error-state.tsx`, `screens/settings/sample-form.tsx`).
 - **State:** expose selection with `accessibilityState={{ selected }}`, disabled with `accessibilityState`/`isDisabled`.
 - **Font scaling:** `allowFontScaling` defaults to `true` and follows the system text size; `maxFontSizeMultiplier` caps it
   (verified: <https://reactnative.dev/docs/text>). Nothing in `src` sets either, so text scales without limit. Do not
   fix text heights (`h-*`) on text containers; use `min-h-*` so large text does not clip (opinion). Test the largest
-  system font size on the emulator for a new screen.
+  system font size on the phone for a new screen (done for the four tabs at 2.0 on 2026-10-26).
 - **Selectable text:** error text is `selectable` (project rule in `AGENTS.md`).
 
 ## Checklist
@@ -289,7 +339,7 @@ Full screen by default; pass `className="flex-none p-2"` to embed (verified: `st
 - [ ] Every pressable is at least 48 dp tall and wide, including inputs and icon buttons (or the gap is recorded).
 - [ ] Titles have `accessibilityRole="header"`; icon-only controls have a label; status text has a live region.
 - [ ] Text uses a type role from section 3; no fixed heights on text containers.
-- [ ] Looked at light and dark on the emulator (see AGENTS.md "Device verification").
+- [ ] Looked at light and dark on the phone (see AGENTS.md "Device verification").
 - [ ] Animations use opacity or transform, are short, and reduced motion was considered.
 - [ ] A new variant or state updates the usage tables here in the same commit.
 

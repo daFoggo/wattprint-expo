@@ -36,6 +36,18 @@ The first three are enforced by `eslint.boundaries.js` (proved by `scripts/bound
 - Naming: kebab-case; `use-*.ts` hooks; `*-screen.tsx`; feature-prefixed components (`<feature>-row.tsx`).
 - Cross-feature composition happens in `src/screens` or in routes, never inside a feature.
 
+## Current features
+
+`devices` and `energy` exist as mock-backed slices (2026-10-26): `<feature>/schemas.ts` (Zod), `mock-data.ts`, selectors
+(`device-selectors.ts`, `energy-selectors.ts`), `hooks/`, `components/`, `screens/` and tests. They have no `<feature>/api.ts` and
+no `<feature>/queries.ts` yet, because no backend contract exists; `mock-data.ts` and `*-selectors.ts` are allowed extra files
+(opinion: they are feature-specific; a feature-specific extra file is allowed by the layout above). The device on/off state is
+`DeviceStatesProvider` (`src/features/devices/device-states.tsx`), mounted in `src/app/_layout.tsx` above `NativeTabs` so
+Home and Devices share it; the root layout may import it because `src/app` is allowed to import features
+(verified: `src/features/devices/device-states.tsx`, `src/app/_layout.tsx`, `eslint.boundaries.js`). `src/screens/home` is the only
+screen composing two features; `src/screens/settings` holds the base checks. When a backend contract exists, add
+`<feature>/api.ts` and `<feature>/queries.ts` and make the provider read from them.
+
 ## Example feature
 
 The throwaway `lab` example feature (routes, tab trigger, i18n keys) was removed 2026-10-26. The first real feature

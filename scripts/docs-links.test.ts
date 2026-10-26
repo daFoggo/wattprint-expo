@@ -37,10 +37,9 @@ export const ABSENT_ON_PURPOSE = new Set(['babel.config.js']);
 
 // Backticked words that look like paths but are not (or name a file that a record says was removed).
 export const NOT_PATHS = new Set<string>([
-  // Role names of the files in a feature slice (`src/features/<name>/...`); no feature exists yet.
+  // Role names used by the 2026-10-25 data-architecture spec, a point-in-time record. Live docs use `<feature>/api.ts`.
   'api.ts',
   'queries.ts',
-  'schemas.ts',
   // Files of the `lab` example feature, named by records (spec, audit report) that predate its removal on 2026-10-26.
   'src/features/lab',
   'hooks/use-product-search.ts',

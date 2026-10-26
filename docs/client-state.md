@@ -16,11 +16,11 @@ Pick the first row that fits.
 
 | State is...                                                       | Home                                 | In this repo                                                                  |
 | ----------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------- |
-| Data owned by the FastAPI backend                                 | TanStack Query cache                 | `src/features/*/queries.ts` (verified); never copy it into a store           |
+| Data owned by the FastAPI backend                                 | TanStack Query cache                 | a feature's `<feature>/queries.ts` (no feature has one yet; the mock slices do not call a backend); never copy it into a store |
 | Which item or filter a screen shows, and must survive a deep link | Route params, `useLocalSearchParams` | a `[id]` route reading `useLocalSearchParams` (no example in the repo since 2026-10-26) |
-| Draft or toggle used by one component tree                        | `useState` / `useReducer`            | `showModal` and `submitted` in `src/screens/home/index.tsx`; TanStack Form for form fields (`sample-form.tsx`) |
+| Draft or toggle used by one component tree                        | `useState` / `useReducer`            | `showModal` in `src/screens/settings/index.tsx`; TanStack Form for form fields (`sample-form.tsx`); lifted: `DeviceStatesProvider` in `src/features/devices/device-states.tsx`, mounted above `NativeTabs` in `src/app/_layout.tsx` so Home and Devices share one `useState` (verified: those files) |
 | Client preference that must survive app restarts, read by several screens | Zustand + MMKV              | `src/stores/preferences-store.ts` (theme)                                    |
-| Secret (refresh token, API key)                                   | `expo-secure-store`                  | base-check in `src/screens/home/index.tsx` only; the session design is in the spec |
+| Secret (refresh token, API key)                                   | `expo-secure-store`                  | base-check in `src/screens/settings/index.tsx` only; the session design is in the spec |
 
 Notes:
 
@@ -89,7 +89,7 @@ Conventions (opinion unless labelled):
 
 ### Selectors and `useShallow`
 
-Read one primitive per call: `usePreferencesStore((s) => s.theme)` (verified: `_layout.tsx`, `use-nav-theme.ts`, `home/index.tsx`).
+Read one primitive per call: `usePreferencesStore((s) => s.theme)` (verified: `_layout.tsx`, `use-nav-theme.ts`, `screens/settings/index.tsx`).
 Selecting an object or array that is rebuilt on every call (`(s) => ({ a: s.a, b: s.b })`) returns a new reference each time,
 so wrap it in `useShallow` from `zustand/react/shallow` (verified: exported by `node_modules/zustand/react/shallow.d.ts`,
 signature `useShallow(selector)`). Do not subscribe to the whole store (`usePreferencesStore()`) in a component that
@@ -222,7 +222,7 @@ it('persists theme to MMKV', () => {
 - [ ] Persisted store: `name`, `version`, `partialize`, `migrate` for upgrades, validation in `merge`; no secrets.
 - [ ] A user-scoped store has `reset()` and is cleared on logout; a test proves it.
 - [ ] Colocated test resets MMKV and the store in `beforeEach` and asserts the persisted envelope.
-- [ ] Relaunched on the emulator and checked logcat for `E ReactNativeJS` after a persisted shape change.
+- [ ] Relaunched on the phone and checked logcat for `E ReactNativeJS` after a persisted shape change.
 
 ## Anti-patterns
 
