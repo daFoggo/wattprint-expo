@@ -69,6 +69,8 @@
     "total": "Total usage",
     "cost": "Estimated cost",
     "topDevices": "Top devices",
-    "kwh": "{{value}} kWh"
+    "kwh": "{{value}} kWh",
+    "chartLabel": "Energy usage chart",
+    "noUsageTitle": "No usage in this period"
   }
 }

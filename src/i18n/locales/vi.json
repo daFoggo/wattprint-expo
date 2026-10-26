@@ -69,6 +69,8 @@
     "total": "Tổng điện năng",
     "cost": "Chi phí ước tính",
     "topDevices": "Thiết bị dùng nhiều nhất",
-    "kwh": "{{value}} kWh"
+    "kwh": "{{value}} kWh",
+    "chartLabel": "Biểu đồ điện năng tiêu thụ",
+    "noUsageTitle": "Không có mức dùng trong khoảng này"
   }
 }
