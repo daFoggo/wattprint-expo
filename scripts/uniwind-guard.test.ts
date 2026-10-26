@@ -6,8 +6,9 @@ import { root, scan, srcDir, walk } from './guard-utils';
 // Uniwind on native silently ignores some Tailwind syntax (a rule whose selector it cannot
 // translate is skipped without a warning) and cannot set non-style colour props from `className`.
 // This guard fails on the known pitfalls so they cannot creep back in (see README "Uniwind native rules").
-// Scope: class tokens inside string/template literals, and the colour bindings of ActivityIndicator
-// and TextInput (plus the gluestack wrappers around them). Svg/Lucide icons are not checked.
+// Scope: class tokens inside string/template literals, the colour bindings of ActivityIndicator,
+// TextInput and the Switch track (plus the gluestack wrappers around them), and a Switch imported
+// from 'react-native' outside src/components/ui. Svg/Lucide icons are not checked.
 
 const BANNED_VARIANTS = new Set([
   'placeholder',
@@ -68,9 +69,19 @@ const REQUIRED_BINDINGS: { tag: string; binding: string }[] = [
   { tag: 'UISwitch', binding: 'trackColorOnClassName' },
 ];
 
+// `import { Switch } from 'react-native'` (also `Switch as X`, among other names). The vendored
+// `src/components/ui/switch` wraps it with the track and thumb bindings; use that one instead.
+const importsRNSwitch = (code: string): boolean =>
+  /import\s*(?:[\w$]+\s*,\s*)?\{[^}]*\bSwitch\b[^}]*\}\s*from\s*['"]react-native['"]/.test(code);
+
+const VENDORED_UI = 'src/components/ui/';
+
 export const findViolations = (file: string, source: string): string[] => {
   const { code, literals } = scan(source);
   const found = new Set<string>();
+  if (!file.startsWith(VENDORED_UI) && importsRNSwitch(source)) {
+    found.add(`${file}: Switch from 'react-native' (use @/components/ui/switch)`);
+  }
   for (const literal of literals) {
     for (const token of literal.split(/\s+/)) {
       for (const problem of tokenProblems(token)) {
@@ -143,6 +154,16 @@ describe('findViolations (self-test)', () => {
     expect(findViolations('x.tsx', '<UISwitch trackColorOnClassName="accent-primary" />')).toEqual(
       [],
     );
+  });
+
+  test("flags Switch imported from 'react-native' outside src/components/ui", () => {
+    const rn = "import { Switch } from 'react-native';";
+    expect(findViolations('src/screens/x.tsx', rn)).not.toEqual([]);
+    expect(
+      findViolations('src/screens/x.tsx', "import { View, Switch as S } from 'react-native';"),
+    ).not.toEqual([]);
+    expect(findViolations('src/components/ui/switch/index.tsx', rn)).toEqual([]);
+    expect(findViolations('src/screens/x.tsx', "import { View } from 'react-native';")).toEqual([]);
   });
 
   test('generics and type positions are not JSX tags', () => {

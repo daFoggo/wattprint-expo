@@ -92,6 +92,8 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `primary` on `background`             | ui   | 17.93 pass  | 18.51 pass  |
 | `input` on `background` (Input border) | ui   | 3.03 pass   | 3.35 pass   |
 | `input` on `card`                     | ui   | 3.03 pass   | 3.03 pass   |
+| `card` on `input` (Switch thumb on the off track) | ui | 3.03 pass | 3.03 pass |
+| `card` on `primary` (Switch thumb on the on track) | ui | 17.93 pass | 16.76 pass |
 | `ring` on `background` (focused Input border) | ui | 10.37 pass | 13.36 pass |
 | `ring` on `card`                      | ui   | 10.37 pass  | 12.09 pass  |
 | `ring` on `input` (focus step from the unfocused border) | ui | 3.42 pass | 3.99 pass |

@@ -9,7 +9,7 @@ export const textStyle = tva({
 
   variants: {
     isTruncated: {
-      true: 'truncate',
+      true: 'line-clamp-1',
     },
     bold: {
       true: 'font-bold',

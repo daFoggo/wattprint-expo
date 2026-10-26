@@ -31,7 +31,7 @@ const Switch = React.forwardRef<React.ComponentRef<typeof UISwitch>, ISwitchProp
       ref={ref}
       trackColorOnClassName="accent-primary"
       trackColorOffClassName="accent-input"
-      thumbColorClassName="accent-primary-foreground"
+      thumbColorClassName="accent-card"
       {...props}
       className={switchStyle({ size, class: className })}
     />

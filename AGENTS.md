@@ -88,7 +88,9 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 - No Expo Go. Use the dev build on the emulator (`Medium_Phone_API_37.0`): `pnpm android` for native changes,
   `npx expo start --dev-client` for JS-only changes.
 - Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb logcat -d ReactNativeJS:V *:S`: no `E` lines.
-- Android on Windows needs `LongPathsEnabled=1`, SDK CMake 4.x, JDK 17, `ANDROID_HOME`. The plugin
+- Android on Windows needs `LongPathsEnabled=1`, SDK CMake 4.x, JDK 17, `ANDROID_HOME`, and `CMAKE_POLICY_VERSION_MINIMUM=3.5` in the
+  environment of `pnpm android` (Skia's CMakeLists declares `cmake_minimum_required 3.4.1`; PowerShell:
+  `$env:CMAKE_POLICY_VERSION_MINIMUM='3.5'`). The plugin
   `plugins/with-android-cmake-dir.js` writes `cmake.dir` only on prebuild; an existing `android/` is not
   re-processed.
 - Deep-link relaunch: `adb shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2F10.0.2.2%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.

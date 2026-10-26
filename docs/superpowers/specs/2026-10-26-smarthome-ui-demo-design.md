@@ -46,6 +46,7 @@ Skia caveat (unverified): `victory-native` 43.0.1 declares Skia `>=2.15.1` while
 2.14.0 as latest. Which Skia Expo 58 pins is unknown. First plan task is a gate: `npx expo install
 @shopify/react-native-skia`, add `victory-native`, run on the emulator. If it does not work, stop and report; fallback is
 gifted-charts (user decision).
+Note 2026-10-26: Task 1 outcome: `victory-native` 42.0.1 was used (43.x peers on unscoped `react-native-skia >=2.15.1`); see the README Decisions.
 
 ## Decided by me (check these)
 
