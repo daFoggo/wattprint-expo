@@ -1,5 +1,7 @@
 # Data layer, architecture and benchmarks: design
 
+Note: benchmark data, scripts and the bench screen described below were removed on 2026-10-26; the benchmark docs folder, the bench scripts folder and the bench route no longer exist.
+
 Date: 2026-10-25. Status: approved by standing owner rule (no questions; "my calls" below). Source: planner (Opus) research, claims labelled V(url) = checked against that source, O = opinion or to confirm on device.
 
 ## Decision
@@ -49,6 +51,8 @@ Not gaps: keyboard (`adjustResize` already in manifest), splash gate (needed onl
 
 ## Lab feature (throwaway trial, dummyjson)
 
+Removed 2026-10-26; this section is the historical design.
+
 Data: `/products` (194; `limit/skip/select/sortBy`, `/products/search?q=`, `/products/{id}`), `/quotes` (1454; source for 100/500/1000 lists), `?delay=0..5000`. Routes: hidden `lab` NativeTabs trigger (`hidden` when `EXPO_PUBLIC_APP_ENV==='production'`, first render only), `src/app/lab/{_layout,index,[id],bench}.tsx`. Feature files in `src/features/lab/`: `api.ts`, `schemas.ts`, `queries.ts`, `hooks/use-product-search.ts` (Pacer debounced value 300ms + `keepPreviousData`), `components/{product-row,quote-row,search-field}.tsx`, `screens/{products,product-detail,list-bench}-screen.tsx`, `bench/{bench-log,render-count}`, tests colocated. Keys: `labKeys.all/products/productList({q,limit})/product(id)/quotes(n)`; detail uses list row as `placeholderData` (measure with/without). Prereqs: lib/http+errors, query defaults, online manager, state components, ErrorBoundary+not-found, tab Stacks, `npx expo install @shopify/flash-list expo-image`.
 
 ## Benchmark method (emulator-5554 only; relative numbers, not device truth)
@@ -62,7 +66,7 @@ Builds: dev build for functional + re-render counts only (Profiler disabled in p
 
 ## Execution order (each step has a check: pnpm check, format:check, expo-doctor, emulator + logcat no E)
 
-1 G3 gaps 3-8. 2 lib/errors + lib/http + query defaults. 3 expo-network + online manager (native rebuild; airplane-mode check). 4 state components + boundary lint + `scripts/boundaries.test.ts`. 5 lab feature (FlashList, expo-image). 6 benchmarks -> `docs/benchmarks/`. 7 lock `docs/architecture.md`, `docs/data-fetching.md`, README note, AGENTS.md rules; Opus review. 8 persistence decision from numbers.
+1 G3 gaps 3-8. 2 lib/errors + lib/http + query defaults. 3 expo-network + online manager (native rebuild; airplane-mode check). 4 state components + boundary lint + `scripts/boundaries.test.ts`. 5 lab feature (FlashList, expo-image). 6 benchmarks (since removed). 7 lock `docs/architecture.md`, `docs/data-fetching.md`, README note, AGENTS.md rules; Opus review. 8 persistence decision from numbers.
 
 ## Sources
 

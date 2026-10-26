@@ -53,9 +53,9 @@ describe('feature boundaries', () => {
 
   test('a feature whose name prefixes another is not that other feature', async () => {
     const messages = await lint(
-      ['lab', 'lab2'],
-      'src/features/lab/api.ts',
-      imp('@/features/lab2/x'),
+      ['alpha', 'alpha2'],
+      'src/features/alpha/api.ts',
+      imp('@/features/alpha2/x'),
     );
     expect(messages).toHaveLength(1);
   });

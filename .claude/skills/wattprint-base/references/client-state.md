@@ -5,13 +5,13 @@ Use when state is needed beyond one component, or a store, persistence, logout o
 
 ## Decision matrix (first row that fits)
 
-| State is                                            | Home                                                     |
-| --------------------------------------------------- | -------------------------------------------------------- |
-| Backend data                                        | TanStack Query cache; never copied into a store          |
-| Which item or filter a screen shows (deep-linkable) | Route params (strings; parse at the screen edge)         |
-| Draft or toggle for one component tree              | `useState` / `useReducer`; TanStack Form for form fields |
-| Preference that survives restarts, read by screens  | Zustand + MMKV in `src/stores/<name>-store.ts`           |
-| Secret (refresh token, API key)                     | `expo-secure-store`, small values only; never MMKV       |
+| State is                                            | Home                                                                                                                                                 |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend data                                        | TanStack Query cache; never copied into a store                                                                                                      |
+| Which item or filter a screen shows (deep-linkable) | Route params (strings; parse at the screen edge)                                                                                                     |
+| Draft or toggle for one component tree              | `useState` / `useReducer`; TanStack Form for form fields; shared by two tabs: a lifted provider (`DeviceStatesProvider`, mounted above `NativeTabs`) |
+| Preference that survives restarts, read by screens  | Zustand + MMKV in `src/stores/<name>-store.ts`                                                                                                       |
+| Secret (refresh token, API key)                     | `expo-secure-store`, small values only; never MMKV                                                                                                   |
 
 ## Store recipe
 
@@ -30,4 +30,4 @@ Model: `src/stores/preferences-store.ts`. Curried `create<State>()(persist(...))
 ## Tests
 
 Reset both `storage.clearAll()` and `setState(initial)` in `beforeEach`; assert the persisted `{ state, version }` envelope; RNTL 14 is async.
-After a persisted shape change, force-stop and relaunch on the emulator and read logcat.
+After a persisted shape change, force-stop and relaunch on the phone and read logcat.

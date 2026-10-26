@@ -17,7 +17,7 @@ Opened: date. Source: where it came from (a doc, a measurement, a review).
 One or two sentences.
 
 ## Facts (measured or verified)
-Each line says how it was checked: a file, a command, a benchmark section, a URL. Include the caveats.
+Each line says how it was checked: a file, a command, a measurement record, a URL. Include the caveats.
 
 ## Ideas (not verified)
 Each line starts with "idea" or "unverified". Never repeat an idea as a fact in another document.

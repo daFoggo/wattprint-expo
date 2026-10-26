@@ -28,6 +28,30 @@ describe('documented token pairs', () => {
   });
 });
 
+const hasRow = (id: string) => rows.some((r) => r.id === id);
+
+describe('switch thumb token', () => {
+  it('exists in both themes and is covered by the pairs that hold', () => {
+    expect(readTheme('light')['switch-thumb']).toEqual([255, 255, 255]);
+    expect(readTheme('dark')['switch-thumb']).toEqual([125, 125, 125]);
+    const rowIds = rows.map((r) => r.id);
+    expect(rowIds).toEqual(
+      expect.arrayContaining([
+        'light:switch-thumb on primary',
+        'dark:switch-thumb on primary',
+        'dark:switch-thumb on card',
+        'light:switch-thumb on input',
+      ]),
+    );
+  });
+
+  it('documents the dark thumb on the off track as a limit, not a pair', () => {
+    expect(hasRow('dark:switch-thumb on input')).toBe(false);
+    const dark = readTheme('dark');
+    expect(ratio(dark['switch-thumb'], dark.input)).toBeLessThan(3);
+  });
+});
+
 describe('control boundary tokens', () => {
   it('uses the 3:1 greys from the design-system findings', () => {
     expect(readTheme('light').input[0]).toBeLessThanOrEqual(148);

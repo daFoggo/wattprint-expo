@@ -36,8 +36,18 @@ export const GENERATED = new Set([
 export const ABSENT_ON_PURPOSE = new Set(['babel.config.js']);
 
 // Backticked words that look like paths but are not (or name a file that a record says was removed).
-export const NOT_PATHS = new Set([
-  'src/lib/bench-flags.ts', // removed after the benchmark run; docs/benchmarks records it
+export const NOT_PATHS = new Set<string>([
+  // Role names used by the 2026-10-25 data-architecture spec, a point-in-time record. Live docs use `<feature>/api.ts`.
+  'api.ts',
+  'queries.ts',
+  // Files of the `lab` example feature, named by records (spec, audit report) that predate its removal on 2026-10-26.
+  'src/features/lab',
+  'hooks/use-product-search.ts',
+  'use-product-search.ts',
+  'products-screen.tsx',
+  'product-detail-screen.tsx',
+  'product-row.tsx',
+  'quote-row.tsx',
 ]);
 
 // Skills that are installed globally (~/.claude/skills), not in this repo. Anything else named in the
@@ -349,9 +359,8 @@ describe('docs link checker self-tests', () => {
     expect(checkDoc('docs/x.md', md, all)).toEqual([]);
   });
 
-  test('skips a span right after the word branch, and the NOT_PATHS list', () => {
+  test('skips a span right after the word branch', () => {
     expect(checkDoc('docs/x.md', 'On branch `docs/some-branch` we ran it.', all)).toEqual([]);
-    expect(checkDoc('docs/x.md', 'The `src/lib/bench-flags.ts` file.', all)).toEqual([]);
     expect(checkDoc('docs/x.md', 'The file `src/some-branch.ts` exists.', all)).toHaveLength(1);
   });
 

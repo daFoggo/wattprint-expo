@@ -24,11 +24,10 @@ other sessions' worktrees) is now ignored by git, ESLint, Prettier, Jest and the
 - Client state: `src/stores/preferences-store.ts` (Zustand + MMKV through `src/lib/storage.ts`), SecureStore base check,
   i18n en and vi (`src/i18n`), validated env (`src/env.ts`).
 - Architecture: feature slices (`docs/architecture.md`), boundary lint (`eslint.boundaries.js`, proved by
-  `scripts/boundaries.test.ts`), the `lab` trial feature (`src/features/lab`: products list and detail, list benchmark).
+  `scripts/boundaries.test.ts`), the `lab` trial feature (`src/features/lab`: products list and detail; the whole feature was removed on 2026-10-26).
 - Tooling: lint with zero warnings, `no-deprecated` in `src`, typecheck, jest-expo and RNTL, Husky, lint-staged,
   commitlint, EAS config with three application ids (`scripts/app-identity.js`), GitHub Actions CI.
-- Docs: `README.md`, `AGENTS.md`, `docs/architecture.md`, `docs/data-fetching.md`, `docs/benchmarks/` (baseline, raw data,
-  `scripts/bench/`), `docs/superpowers/` (specs, plans, this report, backlog, HANDOFF).
+- Docs: `README.md`, `AGENTS.md`, `docs/architecture.md`, `docs/data-fetching.md`, `docs/superpowers/` (specs, plans, this report, backlog, HANDOFF).
 
 ## Review outcome
 
@@ -63,7 +62,6 @@ other sessions' worktrees) is now ignored by git, ESLint, Prettier, Jest and the
 - [Chat streaming](../backlog/2026-10-25-chat-streaming.md)
 - [Per-tab ErrorBoundary](../backlog/2026-10-25-per-tab-error-boundary.md)
 - [Production-env build check](../backlog/2026-10-25-production-env-build-check.md)
-- [Image-row list performance on a device](../backlog/2026-10-25-image-row-perf-on-device.md)
 - [First-frame theme flash in a release build](../backlog/2026-10-25-release-first-frame-theme-flash.md)
 - [Design-system findings](../backlog/2026-10-25-design-system-findings.md) (contrast and Input touch target, found while
   documenting)

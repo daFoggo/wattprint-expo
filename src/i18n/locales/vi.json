@@ -2,13 +2,31 @@
   "tabs": {
     "home": "Trang chủ",
     "settings": "Cài đặt",
-    "lab": "Phòng thử"
+    "devices": "Thiết bị",
+    "energy": "Năng lượng"
   },
   "common": {
     "close": "Đóng"
   },
   "home": {
-    "title": "Kiểm tra nền tảng",
+    "greeting": {
+      "morning": "Chào buổi sáng",
+      "afternoon": "Chào buổi chiều",
+      "evening": "Chào buổi tối"
+    },
+    "currentDraw": "Công suất hiện tại",
+    "today": "Hôm nay",
+    "cost": "Chi phí ước tính",
+    "rooms": "Phòng",
+    "scenesTitle": "Kịch bản nhanh",
+    "scenes": {
+      "home": "Ở nhà",
+      "away": "Vắng nhà",
+      "night": "Ban đêm"
+    }
+  },
+  "settings": {
+    "title": "Cài đặt",
     "theme": "Giao diện: {{theme}}",
     "themes": {
       "system": "Hệ thống",
@@ -44,39 +62,37 @@
     "pausedTitle": "Bạn đang ngoại tuyến",
     "pausedDescription": "Nội dung sẽ tải khi có kết nối trở lại."
   },
-  "lab": {
-    "products": {
-      "title": "Sản phẩm",
-      "searchLabel": "Tìm sản phẩm",
-      "searchPlaceholder": "Tìm sản phẩm",
-      "emptyTitle": "Không tìm thấy sản phẩm",
-      "emptyDescription": "Không có kết quả cho \"{{q}}\".",
-      "offlineBanner": "Ngoại tuyến. Đang hiển thị kết quả đã lưu.",
-      "refreshFailed": "Không thể làm mới. Đang hiển thị kết quả đã lưu.",
-      "openBench": "Mở thử nghiệm danh sách",
-      "rowLabel": "{{title}}, {{category}}, ${{price}}",
-      "loading": "Đang tải sản phẩm",
-      "updating": "Đang cập nhật kết quả...",
-      "prefetchBench": "Tải trước 500 câu trích dẫn"
+  "devices": {
+    "types": {
+      "light": "Đèn",
+      "ac": "Điều hòa",
+      "fridge": "Tủ lạnh",
+      "tv": "TV",
+      "washer": "Máy giặt",
+      "water_heater": "Bình nóng lạnh",
+      "plug": "Ổ cắm thông minh"
     },
-    "detail": {
-      "title": "Sản phẩm",
-      "invalidId": "Mã sản phẩm không hợp lệ.",
-      "price": "Giá: ${{price}}",
-      "rating": "Đánh giá: {{rating}} / 5",
-      "category": "Danh mục: {{category}}",
-      "imageLabel": "Ảnh của {{title}}",
-      "loading": "Đang tải sản phẩm"
+    "status": {
+      "online": "Trực tuyến",
+      "offline": "Ngoại tuyến"
     },
-    "bench": {
-      "title": "Thử nghiệm danh sách",
-      "summary": "{{impl}}, {{n}} câu trích dẫn",
-      "loading": "Đang tải câu trích dẫn",
-      "impl": {
-        "flash": "FlashList",
-        "flat": "FlatList"
-      },
-      "listLabel": "Danh sách câu trích dẫn"
-    }
+    "watts": "{{value}} W",
+    "onCount": "Bật {{on}}/{{total}}",
+    "rowLabel": "{{name}}, {{type}}, {{status}}, {{watts}}"
+  },
+  "energy": {
+    "ranges": {
+      "day": "Ngày",
+      "week": "Tuần",
+      "month": "Tháng"
+    },
+    "total": "Tổng điện năng",
+    "cost": "Chi phí ước tính",
+    "topDevices": "Thiết bị dùng nhiều nhất",
+    "kwh": "{{value}} kWh",
+    "noUsageTitle": "Không có mức dùng trong khoảng này",
+    "topShare": "{{name}}: {{share}}% tổng",
+    "chartSummaryEmpty": "{{range}}: không có mức dùng",
+    "chartSummary": "{{range}}: {{total}} kWh, cao nhất {{peak}}"
   }
 }

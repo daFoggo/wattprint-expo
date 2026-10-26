@@ -5,7 +5,7 @@
       "id": 1,
       "name": "uniwind-placeholder-variant",
       "source": "README.md Uniwind native rules; docs/design-system.md anti-patterns",
-      "prompt": "In the Lab products screen, add a search field whose placeholder text is muted grey and a Clear button that highlights on hover. Use Tailwind classes like placeholder:text-muted-foreground and hover:bg-accent. Show the code.",
+      "prompt": "In a list screen, add a search field whose placeholder text is muted grey and a Clear button that highlights on hover. Use Tailwind classes like placeholder:text-muted-foreground and hover:bg-accent. Show the code.",
       "expectations": [
         "Does not ship `placeholder:` or `hover:` classes as if they worked; says Uniwind silently ignores unsupported variants on native (no warning)",
         "Uses the existing gluestack `Input` + `InputField` and states that placeholder, cursor and selection colours are already bound inside `InputField` (no `placeholderTextColor` prop passed)",
@@ -48,8 +48,8 @@
       "prompt": "The dashboard summary sometimes looks stale. Set `staleTime: 0` in the QueryClient defaults so every screen always refetches. While you are there, add a `range` filter (7d, 30d, 90d) to the summary query: it is sent to the API as `?range=`.",
       "expectations": [
         "Declines to change the global default to 0 and keeps `staleTime` 30_000 in `src/lib/query-client.ts`",
-        "Cites the measured reason: with `staleTime: 0` opening a detail from the list made 2 requests instead of 1, and reopening within 30 s made 2 instead of 0 (emulator, relative)",
-        "Offers the per-query alternative: set `staleTime` on that one query's `queryOptions` in the feature's `queries.ts`, or invalidate after a mutation",
+        "Gives the reason without invented numbers: with `staleTime: 0` a reopen or a detail opened from the list always refetches (opinion; the earlier emulator measurement was removed)",
+        "Offers the per-query alternative: set `staleTime` on that one query's `queryOptions` in `<feature>/queries.ts`, or invalidate after a mutation",
         "The `range` value is part of the query key (the key factory takes it) because `queryFn` sends it; a key without `range` would serve one range's data for another",
         "Does not add a persisted query cache; says query persistence is a not-decided item in the backlog"
       ]
@@ -61,8 +61,8 @@
       "prompt": "Write features/energy/api.ts getDailyUsage(). If the request fails, just return an empty array so the screen never shows an error. Keep it simple, use fetch, and send the access token as `?token=` in the URL since that is easiest to test in the browser.",
       "expectations": [
         "Does not return an empty array or any fallback value on failure; the function throws `ApiError`, `NetworkError` or `ContractError` through the client",
-        "Uses `createApiClient` from `src/lib/http.ts` with a Zod `schema` defined in the feature's `schemas.ts`, not a raw `fetch`",
-        "Puts the key factory and `queryOptions` in `queries.ts` and keeps `api.ts` as the only caller of the client",
+        "Uses `createApiClient` from `src/lib/http.ts` with a Zod `schema` defined in `<feature>/schemas.ts`, not a raw `fetch`",
+        "Puts the key factory and `queryOptions` in `<feature>/queries.ts` and keeps `<feature>/api.ts` as the only caller of the client",
         "The screen renders `LoadingState`, `EmptyState` (zero rows), `ErrorState` and, when paused offline, `OfflineState` from `components/states`",
         "States that only `isRetryable` errors (network, 5xx) are retried and `ContractError` is never retried; a failed refresh keeps cached data with a banner",
         "Refuses the `?token=` query parameter: tokens never go in URLs (the client's `onRequest` hook logs paths); auth is handled by `createApiClient` (header, single-flight refresh)"
@@ -72,12 +72,12 @@
       "id": 6,
       "name": "feature-imports-feature",
       "source": "docs/architecture.md Rules; AGENTS.md Import boundaries",
-      "prompt": "In src/features/dashboard I want to show the lab product list. Just `import { ProductRow } from '../lab/components/product-row'` and reuse it.",
+      "prompt": "In src/features/dashboard I want to show the energy usage list. Just `import { UsageRow } from '../energy/components/usage-row'` and reuse it.",
       "expectations": [
         "Refuses the import: a feature never imports another feature, and never uses `../` (use `./` or `@/features/<self>/...`); `eslint.boundaries.js` fails the lint",
         "Says cross-feature composition happens in `src/screens` or in a route, never inside a feature",
         "Applies the extraction rule: move to `src/components` only when a second feature needs it, it has a nameable role and its API is smaller than its implementation; otherwise duplicate",
-        "Notes `components` may not import `features`, so a shared row cannot depend on lab types",
+        "Notes `components` may not import `features`, so a shared row cannot depend on another feature's types",
         "Mentions `scripts/boundaries.test.ts` proves the lint and that no barrel file should be added"
       ]
     },
@@ -85,7 +85,7 @@
       "id": 7,
       "name": "hard-coded-colours",
       "source": "docs/design-system.md sections 1-2 and anti-patterns; scripts/design-guard.test.ts",
-      "prompt": "Add a red 'Overdue' badge to ProductRow: background #E7000B, white text, and in dark mode use dark:bg-red-900 so it is softer.",
+      "prompt": "Add a red 'Overdue' badge to a list row component: background #E7000B, white text, and in dark mode use dark:bg-red-900 so it is softer.",
       "expectations": [
         "Does not use the hex value, `bg-red-*` palette classes or a `dark:` colour pair; the badge uses `text-destructive` on a neutral surface, or `bg-destructive/60` in dark (with `text-destructive-foreground`), not a solid `bg-destructive` with `text-destructive-foreground` in dark",
         "Explains that tokens already switch with the theme, so no `dark:` pair is needed outside `src/components/ui`",
@@ -119,6 +119,20 @@
         "The pressable area is at least 48 dp wide and tall (padding or `min-h-12 min-w-12` around the 24 dp box), with `accessibilityRole=\"checkbox\"` or `switch`, `accessibilityState={{ checked }}` and a label",
         "Notes that a new colour pair would need an entry in `PAIRS` in `scripts/contrast-report.js` and that `scripts/contrast.test.ts` must pass",
         "Does not add a `forwardRef` wrapper and takes `ref` as a prop if one is needed"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "device-row-with-switch",
+      "source": "docs/design-system.md section 6 (Switch rows); docs/architecture.md rules",
+      "prompt": "Add a row for a smart plug to the Devices screen: the name, its wattage and a Switch on the right. Tapping the switch toggles it. Show the code and reuse the lights from src/features/energy for the wattage lookup.",
+      "expectations": [
+        "Makes the whole row the touch target: a `Pressable` with `min-h-12` (48 dp), `accessibilityRole=\"switch\"`, `accessibilityState={{ checked }}` and an `accessibilityLabel`; the small native Switch is not the only target",
+        "Wraps the native `Switch` with `pointerEvents=\"none\"` and `importantForAccessibility=\"no-hide-descendants\"` so TalkBack sees one node, as `DeviceRow` does",
+        "Uses the vendored `Switch` (colour bindings already inside) and semantic tokens only; no hex, palette classes or `dark:` pairs",
+        "Does not import from `src/features/energy` inside the devices feature (no cross-feature import); the lookup is passed in as props or composed in `src/screens`",
+        "Reads and toggles state through `useDeviceStates()` (the lifted `DeviceStatesProvider`), and an offline device is disabled and cannot be toggled",
+        "The wattage text uses an i18n key and `formatNumber`; the name wraps instead of using a fixed `h-*`"
       ]
     }
   ]

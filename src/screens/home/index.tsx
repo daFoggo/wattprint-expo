@@ -1,109 +1,86 @@
-import * as SecureStore from 'expo-secure-store';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { Button, ButtonText } from '@/components/ui/button';
-import { CloseIcon, Icon } from '@/components/ui/icon';
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@/components/ui/modal';
-import { usePreferencesStore, type ThemePreference } from '@/stores/preferences-store';
+import { Card } from '@/components/ui/card';
+import { Heading } from '@/components/ui/heading';
+import { Text } from '@/components/ui/text';
+import { RoomSummaryCard } from '@/features/devices/components/room-summary-card';
+import { currentWatts, groupByRoom } from '@/features/devices/device-selectors';
+import { useDeviceStates } from '@/features/devices/device-states';
+import { costOf, totalKwh } from '@/features/energy/energy-selectors';
+import { useEnergySummary } from '@/features/energy/hooks/use-energy-summary';
+import { formatCurrency, formatNumber } from '@/lib/format';
 
-import { SampleForm } from './sample-form';
+import { greetingKey } from './greeting';
 
-const THEMES: ThemePreference[] = ['system', 'light', 'dark'];
+const SCENES = ['home', 'away', 'night'] as const;
+type Scene = (typeof SCENES)[number];
 
 export function Home() {
-  const { t } = useTranslation();
-  const theme = usePreferencesStore((s) => s.theme);
-  const setTheme = usePreferencesStore((s) => s.setTheme);
-  const [showModal, setShowModal] = useState(false);
-  const [submitted, setSubmitted] = useState<string | null>(null);
-  const [secureStatus, setSecureStatus] = useState<string | null>(null);
-
-  async function checkSecureStore() {
-    try {
-      await SecureStore.setItemAsync('base-check', 'ok');
-      setSecureStatus(
-        t('home.secureStoreOk', { value: await SecureStore.getItemAsync('base-check') }),
-      );
-    } catch (error) {
-      setSecureStatus(t('home.secureStoreError', { message: String(error) }));
-    }
-  }
+  const { t, i18n } = useTranslation();
+  const { state } = useDeviceStates();
+  const today = useEnergySummary('day');
+  const [scene, setScene] = useState<Scene>('home');
+  const todayKwh = totalKwh(today.points);
 
   return (
-    <ScrollView
-      className="bg-background flex-1"
-      contentContainerClassName="items-center gap-4 px-6 py-12"
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text accessibilityRole="header" className="text-foreground text-3xl font-bold">
-        {t('home.title')}
-      </Text>
+    <ScrollView className="bg-background flex-1" contentContainerClassName="gap-4 p-4">
+      <Heading size="2xl" accessibilityRole="header">
+        {t(greetingKey(new Date().getHours()))}
+      </Heading>
 
-      <Text className="text-muted-foreground text-sm">
-        {t('home.theme', { theme: t(`home.themes.${theme}`) })}
-      </Text>
-      {THEMES.map((item) => (
-        <Button
-          key={item}
-          variant={theme === item ? 'default' : 'outline'}
-          accessibilityState={{ selected: theme === item }}
-          onPress={() => setTheme(item)}
-        >
-          <ButtonText>{t(`home.themes.${item}`)}</ButtonText>
-        </Button>
-      ))}
-
-      <SampleForm onSubmit={(v) => setSubmitted(v.email)} />
-      {submitted !== null && (
-        <Text className="text-foreground">{t('form.submitted', { email: submitted })}</Text>
-      )}
-
-      <Button onPress={checkSecureStore}>
-        <ButtonText>{t('home.secureStore')}</ButtonText>
-      </Button>
-      {secureStatus !== null && (
-        <Text selectable className="text-foreground">
-          {secureStatus}
+      <Card size="sm">
+        <Text size="sm" className="text-muted-foreground">
+          {t('home.currentDraw')}
         </Text>
-      )}
+        <Text size="2xl" bold>
+          {t('devices.watts', { value: formatNumber(currentWatts(state.devices), i18n.language) })}
+        </Text>
+      </Card>
 
-      <Button onPress={() => setShowModal(true)}>
-        <ButtonText>{t('home.openModal')}</ButtonText>
-      </Button>
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-        <ModalBackdrop />
-        <ModalContent>
-          <ModalHeader>
-            <Text accessibilityRole="header" className="text-foreground text-lg font-semibold">
-              {t('home.modalTitle')}
-            </Text>
-            <ModalCloseButton
-              accessibilityLabel={t('common.close')}
-              className="min-h-12 min-w-12 items-center justify-center"
-            >
-              <Icon as={CloseIcon} size="md" />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody>
-            <Text className="text-foreground">{t('home.modalBody')}</Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button onPress={() => setShowModal(false)}>
-              <ButtonText>{t('common.close')}</ButtonText>
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <Card size="sm">
+        <Text size="sm" className="text-muted-foreground">
+          {t('home.today')}
+        </Text>
+        <Text size="xl" bold>
+          {t('energy.kwh', {
+            value: formatNumber(todayKwh, i18n.language, { maximumFractionDigits: 1 }),
+          })}
+        </Text>
+        <Text size="sm" className="text-muted-foreground">
+          {t('home.cost')}
+        </Text>
+        <Text size="lg" bold>
+          {formatCurrency(costOf(todayKwh, today.pricePerKwh), i18n.language, today.currency)}
+        </Text>
+      </Card>
+
+      <Heading size="md" accessibilityRole="header">
+        {t('home.scenesTitle')}
+      </Heading>
+      <View className="flex-row flex-wrap gap-2">
+        {SCENES.map((item) => (
+          <Button
+            key={item}
+            variant={item === scene ? 'default' : 'outline'}
+            accessibilityState={{ selected: item === scene }}
+            onPress={() => setScene(item)}
+          >
+            <ButtonText>{t(`home.scenes.${item}`)}</ButtonText>
+          </Button>
+        ))}
+      </View>
+
+      <Heading size="md" accessibilityRole="header">
+        {t('home.rooms')}
+      </Heading>
+      {groupByRoom(state.rooms, state.devices)
+        .slice(0, 3)
+        .map(({ room, devices }) => (
+          <RoomSummaryCard key={room.id} room={room} devices={devices} />
+        ))}
     </ScrollView>
   );
 }

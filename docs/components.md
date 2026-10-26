@@ -26,9 +26,11 @@ eight rules; the skill's examples use `TextInput`, so it covers React Native, an
 | 7   | `patterns-children-over-render-props` | `children` for structure, render props only when data flows back          | 4, 5    |
 | 8   | `react19-no-forwardref`               | `ref` is a prop and `use()` replaces `useContext()` in our own code       | 7       |
 
-Our state-rule examples are not in the code base yet: `grep -rn createContext src` finds no match; the vendored parts share
-state through gluestack's `withStyleContext`/`useStyleContext`. Sections 6 and 7 are therefore the rule for the first compound
-component we write, not a description of existing code.
+Our own state-rule examples now exist (verified: `grep -rn createContext src` finds two files): the lifted
+`DeviceStatesProvider` in `src/features/devices/device-states.tsx` (`{ state, actions }`, state in `useState`, read with
+`use()`) and the `EnergyChart` compound parts in `src/features/energy/components/energy-chart.tsx` (`{ state }`; the card
+root reads the bar colour once and the parts read it with `use()`). The vendored parts still share state through gluestack's
+`withStyleContext`/`useStyleContext`. Neither of our contexts has a `meta` member, which the rule allows when empty.
 
 ## 2. Compound parts
 
@@ -40,11 +42,11 @@ prop per part. Existing examples, all vendored gluestack (verified: `src/compone
   `withStyleContext(Pressable, 'BUTTON')` and passes `context={{ variant, size }}`; each part reads it with
   `useStyleContext('BUTTON')` and styles itself through a `tva` `parentVariants` block.
 - `Modal` + `ModalBackdrop` + `ModalContent` + `ModalHeader` + `ModalBody` + `ModalFooter` + `ModalCloseButton`
-  (used in `src/screens/home/index.tsx`).
+  (used in `src/screens/settings/index.tsx`).
 - `Input` + `InputField` + `InputIcon` + `InputSlot`.
 
 ```tsx
-// src/screens/home/sample-form.tsx (verified): the caller composes the parts, no label/handler props.
+// src/screens/settings/sample-form.tsx (verified): the caller composes the parts, no label/handler props.
 <Button onPress={() => form.handleSubmit()}>
   <ButtonText>{t('form.submit')}</ButtonText>
 </Button>
@@ -90,8 +92,7 @@ Choose a `variant` or `size`; do not fight a component with `className="h-8 px-2
 and a passed `class` replaces conflicting utilities instead of stacking
 (verified: `tv({ base: 'bg-background flex-1 p-6' })({ class: 'flex-none p-2' })` returned
 `bg-background flex-none p-2` when run in this repo). That is the escape hatch for **layout** the caller owns (`flex-1`,
-`w-full`, margins, `self-*`); the repo uses it that way, for example `className="flex-1"` on a `Button` inside a row in
-`products-screen.tsx` and `className` on the state components, whose base is full screen
+`w-full`, margins, `self-*`); the repo uses it that way, for example `className` on the state components, whose base is full screen
 (`src/components/states/state-style.ts`). Not allowed at a call site: changing height, padding, text size or colour
 of a component that has `variant`/`size` for it (opinion; the touch-target rule makes it enforceable in review).
 
@@ -135,12 +136,12 @@ In this repo (verified in the files named):
 
 | Place                                                                     | Why a render prop is correct                       |
 | ------------------------------------------------------------------------- | -------------------------------------------------- |
-| FlashList / FlatList `renderItem` (`products-screen.tsx`, `list-bench-*`) | the list supplies `item` and `index` per row       |
+| FlashList / FlatList `renderItem`                                         | the list supplies `item` and `index` per row       |
 | `<form.Field name="email">{(field) => ...}</form.Field>` (`sample-form`)  | TanStack Form supplies `field` state and handlers  |
+| victory-native `<CartesianChart>{({ points, chartBounds }) => <Bar ... />}</CartesianChart>` (`energy-chart.tsx`) | the chart computes the scaled `points` and `chartBounds` per render; the library dictates the render prop (verified: `src/features/energy/components/energy-chart.tsx`) |
 
-Do not add `renderHeader`, `renderFooter`, `renderIcon` to our own components; accept children. `SearchField`
-(`src/features/lab/components/search-field.tsx`) is a value-in, value-out wrapper (`value`, `onChangeText`, `label`,
-`placeholder`); it has no slots because it has one job.
+Do not add `renderHeader`, `renderFooter`, `renderIcon` to our own components; accept children. A value-in, value-out wrapper
+(`value`, `onChangeText`, `label`, `placeholder`) has no slots because it has one job.
 
 ## 6. Context interface and state placement
 
@@ -184,16 +185,28 @@ function useFilter() {
 
 `src/components/ui/**` is hand-copied from the gluestack-ui Uniwind template and is exempt from the no-`forwardRef`
 rule and from the `no-deprecated` lint rule (verified: `ignores: ['src/components/ui/**']` in `eslint.config.js`).
-Exactly these files use `React.forwardRef` today (verified: `grep -rl forwardRef src`):
+Exactly these files use `forwardRef` today, all under `src/components/ui` (verified: `grep -rl forwardRef src` on
+2026-10-26 lists 12 files, and no file outside `src/components/ui`):
 
-| File                                | Components using `forwardRef`                                                             |
-| ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| `src/components/ui/button/index.tsx` | `Button`, `ButtonText`, `ButtonSpinner`, `ButtonIcon`, `ButtonGroup`                      |
-| `src/components/ui/input/index.tsx`  | `Input`, `InputIcon`, `InputSlot`, `InputField`                                           |
-| `src/components/ui/modal/index.tsx`  | `Modal`, `ModalBackdrop`, `ModalContent`, `ModalHeader`, `ModalBody`, `ModalFooter`, `ModalCloseButton` |
-| `src/components/ui/icon/index.tsx`   | `Icon`, the icon created by `createIconUI`                                               |
+| File                                  | Components using `forwardRef`                                                                         |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `src/components/ui/badge/index.tsx`   | `BadgeText`, `BadgeIcon` (`Badge` is a plain function)                                                |
+| `src/components/ui/button/index.tsx`  | `Button`, `ButtonText`, `ButtonSpinner`, `ButtonIcon`, `ButtonGroup`                                  |
+| `src/components/ui/card/index.tsx`    | `Card`                                                                                                |
+| `src/components/ui/divider/index.tsx` | `Divider`                                                                                             |
+| `src/components/ui/heading/index.tsx` | `Heading`, `MappedHeading` (both also wrapped in `memo`)                                              |
+| `src/components/ui/icon/index.tsx`    | `Icon`, the icon created by `createIconUI`                                                            |
+| `src/components/ui/input/index.tsx`   | `Input`, `InputIcon`, `InputSlot`, `InputField`                                                       |
+| `src/components/ui/modal/index.tsx`   | `Modal`, `ModalBackdrop`, `ModalContent`, `ModalHeader`, `ModalBody`, `ModalFooter`, `ModalCloseButton` |
+| `src/components/ui/pressable/index.tsx` | `Pressable`                                                                                         |
+| `src/components/ui/progress/index.tsx` | `Progress`, `ProgressFilledTrack`                                                                    |
+| `src/components/ui/switch/index.tsx`  | `Switch`                                                                                              |
+| `src/components/ui/text/index.tsx`    | `Text`                                                                                                |
 
-`gluestack-ui-provider/index.tsx` does not use it. Keep these as upstream so a later re-copy diffs cleanly; do not
+`gluestack-ui-provider/index.tsx` does not use it. Several vendored parts also expose boolean look props (`Text` and `Heading`:
+`bold`, `italic`, `underline`, `isTruncated`, ...). Our code passes only `bold` (`Text` in `home/index.tsx` and `usage-summary-card.tsx`); it
+never passes `italic`, `underline`, `isTruncated` or `strikeThrough` (verified: grep of `src` outside `components/ui`, 2026-10-26).
+`bold` is a weight toggle, not a layout mode (opinion: tolerated; a new look should be a `size` or class instead). Keep these as upstream so a later re-copy diffs cleanly; do not
 convert them piecemeal. Add new components next to them only when they are gluestack parts; everything else is ours.
 
 ## 8. When to extract a component
@@ -208,12 +221,12 @@ duplicate. `components` never imports `features`, `screens` or `app` (enforced b
 | Used by several screens of **one** feature                                         | `src/features/<name>/components/<name>-thing.tsx`       |
 | Needed by a second feature and has a role name (`EmptyState`)                      | `src/components/<group>/`                               |
 | Only style repeated (a container class string)                                     | A `tva` next to the components (`state-style.ts`)       |
-| Wrapper around a third-party component that needs Uniwind                          | `withUniwind` once in one file, reuse (`StyledImage` in `features/lab/components/styled-image.tsx`, `StyledUIIcon`) |
+| Wrapper around a third-party component that needs Uniwind                          | `withUniwind` once in one file, reuse (`StyledUIIcon`) |
 | Needs a visual change that `variant`/`size` cannot express                         | Add a variant (section 3), not a call-site override     |
 
-Naming: kebab-case files, feature-prefixed component files (`product-row.tsx`), tests colocated. `StyledImage = withUniwind(Image)` was defined twice in the lab feature
-(`product-row.tsx` and `product-detail-screen.tsx`) and now lives once in `src/features/lab/components/styled-image.tsx`. A second
-feature using `expo-image` is the signal to move it to `src/components` (opinion; not yet needed).
+Naming: kebab-case files, feature-prefixed component files (`<feature>-row.tsx`), tests colocated. A wrapper such as `withUniwind(Image)` is defined once;
+a second feature using it is the signal to move it to `src/components` (opinion). The example feature that held `StyledImage`
+was removed 2026-10-26.
 
 ## Checklist
 
@@ -242,4 +255,5 @@ feature using `expo-image` is the signal to move it to `src/components` (opinion
   (local copy `~/.claude/skills/vercel-composition-patterns`).
 - React `forwardRef`: <https://react.dev/reference/react/forwardRef>; React `use`: <https://react.dev/reference/react/use>.
 - gluestack-ui v5 / Uniwind (project decisions): `README.md` "Decisions and recorded deviations".
-- Our code: `src/components/ui/**`, `src/components/states/**`, `src/screens/home/**`, `src/features/lab/**`.
+- Our code: `src/components/ui/**`, `src/components/states/**`, `src/screens/settings/**`, `src/features/devices/device-states.tsx`,
+  `src/features/energy/components/energy-chart.tsx`.
