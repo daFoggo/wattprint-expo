@@ -5,7 +5,7 @@
       "id": 1,
       "name": "uniwind-placeholder-variant",
       "source": "README.md Uniwind native rules; docs/design-system.md anti-patterns",
-      "prompt": "In the Lab products screen, add a search field whose placeholder text is muted grey and a Clear button that highlights on hover. Use Tailwind classes like placeholder:text-muted-foreground and hover:bg-accent. Show the code.",
+      "prompt": "In a list screen, add a search field whose placeholder text is muted grey and a Clear button that highlights on hover. Use Tailwind classes like placeholder:text-muted-foreground and hover:bg-accent. Show the code.",
       "expectations": [
         "Does not ship `placeholder:` or `hover:` classes as if they worked; says Uniwind silently ignores unsupported variants on native (no warning)",
         "Uses the existing gluestack `Input` + `InputField` and states that placeholder, cursor and selection colours are already bound inside `InputField` (no `placeholderTextColor` prop passed)",
@@ -48,7 +48,7 @@
       "prompt": "The dashboard summary sometimes looks stale. Set `staleTime: 0` in the QueryClient defaults so every screen always refetches. While you are there, add a `range` filter (7d, 30d, 90d) to the summary query: it is sent to the API as `?range=`.",
       "expectations": [
         "Declines to change the global default to 0 and keeps `staleTime` 30_000 in `src/lib/query-client.ts`",
-        "Cites the measured reason: with `staleTime: 0` opening a detail from the list made 2 requests instead of 1, and reopening within 30 s made 2 instead of 0 (emulator, relative)",
+        "Gives the reason without invented numbers: with `staleTime: 0` a reopen or a detail opened from the list always refetches (opinion; the earlier emulator measurement was removed)",
         "Offers the per-query alternative: set `staleTime` on that one query's `queryOptions` in the feature's `queries.ts`, or invalidate after a mutation",
         "The `range` value is part of the query key (the key factory takes it) because `queryFn` sends it; a key without `range` would serve one range's data for another",
         "Does not add a persisted query cache; says query persistence is a not-decided item in the backlog"
@@ -72,12 +72,12 @@
       "id": 6,
       "name": "feature-imports-feature",
       "source": "docs/architecture.md Rules; AGENTS.md Import boundaries",
-      "prompt": "In src/features/dashboard I want to show the lab product list. Just `import { ProductRow } from '../lab/components/product-row'` and reuse it.",
+      "prompt": "In src/features/dashboard I want to show the energy usage list. Just `import { UsageRow } from '../energy/components/usage-row'` and reuse it.",
       "expectations": [
         "Refuses the import: a feature never imports another feature, and never uses `../` (use `./` or `@/features/<self>/...`); `eslint.boundaries.js` fails the lint",
         "Says cross-feature composition happens in `src/screens` or in a route, never inside a feature",
         "Applies the extraction rule: move to `src/components` only when a second feature needs it, it has a nameable role and its API is smaller than its implementation; otherwise duplicate",
-        "Notes `components` may not import `features`, so a shared row cannot depend on lab types",
+        "Notes `components` may not import `features`, so a shared row cannot depend on another feature's types",
         "Mentions `scripts/boundaries.test.ts` proves the lint and that no barrel file should be added"
       ]
     },
@@ -85,7 +85,7 @@
       "id": 7,
       "name": "hard-coded-colours",
       "source": "docs/design-system.md sections 1-2 and anti-patterns; scripts/design-guard.test.ts",
-      "prompt": "Add a red 'Overdue' badge to ProductRow: background #E7000B, white text, and in dark mode use dark:bg-red-900 so it is softer.",
+      "prompt": "Add a red 'Overdue' badge to a list row component: background #E7000B, white text, and in dark mode use dark:bg-red-900 so it is softer.",
       "expectations": [
         "Does not use the hex value, `bg-red-*` palette classes or a `dark:` colour pair; the badge uses `text-destructive` on a neutral surface, or `bg-destructive/60` in dark (with `text-destructive-foreground`), not a solid `bg-destructive` with `text-destructive-foreground` in dark",
         "Explains that tokens already switch with the theme, so no `dark:` pair is needed outside `src/components/ui`",

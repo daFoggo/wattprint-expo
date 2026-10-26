@@ -2,7 +2,7 @@
 
 A report records what a finished chunk of work left behind: what exists, how it was reviewed, what was decided or
 deviated from, what was deferred. Specs say what we intend (`../specs/`), plans say how (`../plans/`), reports say what is
-true afterwards. Measurements live in `docs/benchmarks/`; a report links to them instead of copying numbers.
+true afterwards. A report does not copy numbers from measurement records; the old benchmark records were removed on 2026-10-26.
 
 File name: `YYYY-MM-DD-<topic>.md`, one per chunk (a merged goal, a phase). Header: date, branch or commit range, the specs
 and plans it closes. Every statement is checked against code, a command result or a URL, or labelled as an opinion.

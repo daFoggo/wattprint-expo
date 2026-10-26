@@ -21,7 +21,7 @@ Use for any request to the FastAPI backend, query keys, cache timing, or a data 
 ## Never do
 
 - Return `[]`, `null` or a default object from `api.ts` when the request fails.
-- Set `staleTime: 0` as a default (measured: opening a detail made 2 requests instead of 1).
+- Set `staleTime: 0` as a default (opinion: a reopen or detail always refetches; the old measurement was removed).
 - Put a token in a URL (the `onRequest` hook logs paths) or call `fetch` outside the client.
 - Mirror query data into a Zustand store.
 

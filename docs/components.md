@@ -90,8 +90,7 @@ Choose a `variant` or `size`; do not fight a component with `className="h-8 px-2
 and a passed `class` replaces conflicting utilities instead of stacking
 (verified: `tv({ base: 'bg-background flex-1 p-6' })({ class: 'flex-none p-2' })` returned
 `bg-background flex-none p-2` when run in this repo). That is the escape hatch for **layout** the caller owns (`flex-1`,
-`w-full`, margins, `self-*`); the repo uses it that way, for example `className="flex-1"` on a `Button` inside a row in
-`products-screen.tsx` and `className` on the state components, whose base is full screen
+`w-full`, margins, `self-*`); the repo uses it that way, for example `className` on the state components, whose base is full screen
 (`src/components/states/state-style.ts`). Not allowed at a call site: changing height, padding, text size or colour
 of a component that has `variant`/`size` for it (opinion; the touch-target rule makes it enforceable in review).
 
@@ -135,12 +134,11 @@ In this repo (verified in the files named):
 
 | Place                                                                     | Why a render prop is correct                       |
 | ------------------------------------------------------------------------- | -------------------------------------------------- |
-| FlashList / FlatList `renderItem` (`products-screen.tsx`, `list-bench-*`) | the list supplies `item` and `index` per row       |
+| FlashList / FlatList `renderItem`                                         | the list supplies `item` and `index` per row       |
 | `<form.Field name="email">{(field) => ...}</form.Field>` (`sample-form`)  | TanStack Form supplies `field` state and handlers  |
 
-Do not add `renderHeader`, `renderFooter`, `renderIcon` to our own components; accept children. `SearchField`
-(`src/features/lab/components/search-field.tsx`) is a value-in, value-out wrapper (`value`, `onChangeText`, `label`,
-`placeholder`); it has no slots because it has one job.
+Do not add `renderHeader`, `renderFooter`, `renderIcon` to our own components; accept children. A value-in, value-out wrapper
+(`value`, `onChangeText`, `label`, `placeholder`) has no slots because it has one job.
 
 ## 6. Context interface and state placement
 
@@ -208,12 +206,12 @@ duplicate. `components` never imports `features`, `screens` or `app` (enforced b
 | Used by several screens of **one** feature                                         | `src/features/<name>/components/<name>-thing.tsx`       |
 | Needed by a second feature and has a role name (`EmptyState`)                      | `src/components/<group>/`                               |
 | Only style repeated (a container class string)                                     | A `tva` next to the components (`state-style.ts`)       |
-| Wrapper around a third-party component that needs Uniwind                          | `withUniwind` once in one file, reuse (`StyledImage` in `features/lab/components/styled-image.tsx`, `StyledUIIcon`) |
+| Wrapper around a third-party component that needs Uniwind                          | `withUniwind` once in one file, reuse (`StyledUIIcon`) |
 | Needs a visual change that `variant`/`size` cannot express                         | Add a variant (section 3), not a call-site override     |
 
-Naming: kebab-case files, feature-prefixed component files (`product-row.tsx`), tests colocated. `StyledImage = withUniwind(Image)` was defined twice in the lab feature
-(`product-row.tsx` and `product-detail-screen.tsx`) and now lives once in `src/features/lab/components/styled-image.tsx`. A second
-feature using `expo-image` is the signal to move it to `src/components` (opinion; not yet needed).
+Naming: kebab-case files, feature-prefixed component files (`<feature>-row.tsx`), tests colocated. A wrapper such as `withUniwind(Image)` is defined once;
+a second feature using it is the signal to move it to `src/components` (opinion). The example feature that held `StyledImage`
+was removed 2026-10-26.
 
 ## Checklist
 
@@ -242,4 +240,4 @@ feature using `expo-image` is the signal to move it to `src/components` (opinion
   (local copy `~/.claude/skills/vercel-composition-patterns`).
 - React `forwardRef`: <https://react.dev/reference/react/forwardRef>; React `use`: <https://react.dev/reference/react/use>.
 - gluestack-ui v5 / Uniwind (project decisions): `README.md` "Decisions and recorded deviations".
-- Our code: `src/components/ui/**`, `src/components/states/**`, `src/screens/home/**`, `src/features/lab/**`.
+- Our code: `src/components/ui/**`, `src/components/states/**`, `src/screens/home/**`.

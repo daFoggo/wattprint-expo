@@ -1,6 +1,6 @@
 # Architecture
 
-Decision (2026-10-25): **feature slices with thin routes**. Rationale and research: `docs/superpowers/specs/2026-10-25-data-architecture-design.md`. Trial: the `lab` feature (`src/features/lab`, dummyjson) was built in this layout; boundary lint, colocated tests, thin routes and the benchmark screens all worked without friction. Numbers: `docs/benchmarks/2026-10-25-baseline.md`.
+Decision (2026-10-25): **feature slices with thin routes**. Rationale and research: `docs/superpowers/specs/2026-10-25-data-architecture-design.md`. An example feature (`lab`, dummyjson) was built in this layout as a trial; boundary lint, colocated tests and thin routes worked without friction (opinion). The example feature was removed 2026-10-26.
 
 Expo has no official feature-based standard (its guidance is type-based, routes only in `src/app`). Feature slices are our choice: one domain's api, schemas, queries, hooks, UI and tests live together, so a new domain (energy, dashboard, chat, auth) is one folder.
 
@@ -16,10 +16,10 @@ src/
                       components/     feature UI
                       screens/        *-screen.tsx rendered by routes
                       store.ts        feature Zustand store, only if needed
-                      *.test.ts(x)    colocated (feature-specific extra folders, e.g. lab/bench, are allowed)
+                      *.test.ts(x)    colocated (feature-specific extra folders are allowed)
   screens/            only screens that compose 2+ features
   components/ui/      gluestack (hand-copied)        components/states/  loading, empty, error
-  lib/                http, errors, query-client, online-manager, nav-theme, storage, bench-log
+  lib/                http, errors, query-client, online-manager, nav-theme, storage
   stores/             app-wide stores (preferences; session planned)      hooks/  i18n/  env.ts
 ```
 
@@ -33,12 +33,13 @@ The first three are enforced by `eslint.boundaries.js` (proved by `scripts/bound
 - No barrel files in features (Metro evaluates every re-export at startup; unverified, but free to avoid). A component folder's `index.tsx` is a component root, not a barrel.
 - Routes are thin: params in, screen out. Screen logic never lives in `src/app`.
 - Extract to shared (`components/`, `lib/`) only when a second feature needs it, it has a nameable role, and its API is smaller than its implementation. Until then duplicate.
-- Naming: kebab-case; `use-*.ts` hooks; `*-screen.tsx`; feature-prefixed components (`product-row.tsx`).
+- Naming: kebab-case; `use-*.ts` hooks; `*-screen.tsx`; feature-prefixed components (`<feature>-row.tsx`).
 - Cross-feature composition happens in `src/screens` or in routes, never inside a feature.
 
-## Lab feature
+## Example feature
 
-`src/features/lab` is a throwaway trial and benchmark harness. Its tab trigger is hidden when `EXPO_PUBLIC_APP_ENV=production` (not yet checked in a production build); the routes in `src/app/lab` are still bundled and reachable by deep link. Only its routes, the root layout's `lab` tab trigger and its i18n keys reference it; delete them together when the first real feature exists, or keep it only as a dev tool.
+The throwaway `lab` example feature (routes, tab trigger, i18n keys) was removed 2026-10-26. The first real feature
+follows the layout above.
 
 ## Open
 

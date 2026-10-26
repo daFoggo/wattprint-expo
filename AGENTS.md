@@ -13,7 +13,7 @@ Before calling work done, run and report real results:
 
 ## Read the doc before changing the area
 
-Open the matching doc first; it holds the rules and the measured reasons. The project skill `wattprint-base`
+Open the matching doc first; it holds the rules and the reasons. The project skill `wattprint-base`
 (`.claude/skills/wattprint-base`, tracked in git) is a router and digest of these docs with evals; use it to find the right doc
 fast. The skill column names the other skills to consult after the doc (global ones, installed in `~/.claude/skills`); the doc wins
 when they differ.
@@ -37,7 +37,7 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   it (this file, the doc, `README.md`) in that commit, and update the global skill in the same change.
 - A spec lists the docs it touches; the plan's last task updates them; a report says which ones changed.
 - Doc conventions: header with the versions it was written against and links to related docs; claims labelled
-  `(verified: <file, command or URL>)` or `(opinion)`; measured numbers keep their caveats and come from `docs/benchmarks/` or a committed script;
+  `(verified: <file, command or URL>)` or `(opinion)`; measured numbers keep their caveats and come from a committed script or a dated record (never from memory);
   no invented numbers; end with Checklist, Anti-patterns, Sources. Lines near 110 characters (`docs/` is not checked by Prettier).
 - `scripts/docs-links.test.ts` fails on a broken relative link, a backticked repo path that does not exist, or a skill in the
   routing table above that is neither under `.claude/skills` nor listed as global in that test. Fenced code blocks, URLs, globs and
@@ -75,7 +75,7 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   `features`, `screens`, `app`; `screens` never imports `app`. Per-feature rules are generated from the folders in `src/features`.
 - Architecture: feature slices with thin routes (`docs/architecture.md`): per feature `api.ts`, `schemas.ts`,
   `queries.ts` (key factory + `queryOptions`), `hooks/`, `components/`, `screens/`, colocated tests; no barrel
-  files; extract to shared only when a second feature needs it. Data rules and measured choices (staleTime,
+  files; extract to shared only when a second feature needs it. Data rules and choices (staleTime,
   FlashList for a few hundred rows or more, placeholder from list rows): `docs/data-fetching.md`.
 - Routes: one folder per tab under `src/app` with its own `_layout.tsx` Stack; the root layout exports
   `ErrorBoundary`; `+not-found.tsx` exists. User-visible strings use i18n keys (en and vi, same keys); error

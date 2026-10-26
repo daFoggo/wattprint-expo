@@ -17,7 +17,7 @@ Pick the first row that fits.
 | State is...                                                       | Home                                 | In this repo                                                                  |
 | ----------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------- |
 | Data owned by the FastAPI backend                                 | TanStack Query cache                 | `src/features/*/queries.ts` (verified); never copy it into a store           |
-| Which item or filter a screen shows, and must survive a deep link | Route params, `useLocalSearchParams` | `src/app/lab/[id].tsx`, `src/app/lab/bench.tsx` (verified)                   |
+| Which item or filter a screen shows, and must survive a deep link | Route params, `useLocalSearchParams` | a `[id]` route reading `useLocalSearchParams` (no example in the repo since 2026-10-26) |
 | Draft or toggle used by one component tree                        | `useState` / `useReducer`            | `showModal` and `submitted` in `src/screens/home/index.tsx`; TanStack Form for form fields (`sample-form.tsx`) |
 | Client preference that must survive app restarts, read by several screens | Zustand + MMKV              | `src/stores/preferences-store.ts` (theme)                                    |
 | Secret (refresh token, API key)                                   | `expo-secure-store`                  | base-check in `src/screens/home/index.tsx` only; the session design is in the spec |
@@ -26,8 +26,8 @@ Notes:
 
 - **Query data is not store state.** The cache is the cache; a store that mirrors a query goes stale and doubles
   memory (opinion; consistent with [data-fetching.md](data-fetching.md)).
-- **Route params are strings** (or string arrays); parse them at the screen edge, as `parseBenchParams` does in
-  `src/features/lab/screens/list-bench-screen.tsx` (verified).
+- **Route params are strings** (or string arrays); parse them at the screen edge, for example with `Number(id)` and an
+  invalid-id state (the removed example feature did this).
 - **SecureStore** keeps values in Android `SharedPreferences` encrypted with the Keystore; Android data is not
   preserved on uninstall; `getItem`/`setItem` (sync) block the JS thread, `*Async` do not; Expo sets no size limit but
   some iOS releases rejected values above about 2048 bytes
@@ -162,8 +162,8 @@ the default".
   store-per-request provider does not apply (opinion, from the platform: the app is a single JS runtime per process).
 - **Screens stay mounted.** React Navigation does not unmount screens when you navigate away, in stack and tab navigators;
   only a popped stack screen unmounts (verified: <https://reactnavigation.org/docs/navigation-lifecycle/>). A
-  `useState` on a tab screen therefore survives switching tabs (also measured: switching Settings and back caused 0 renders
-  of the products screen, `docs/benchmarks/2026-10-25-baseline.md`, scenario 5). State is lost when the screen is popped,
+  `useState` on a tab screen therefore survives switching tabs (an earlier emulator measurement of 0 renders on switching
+  back was removed and not repeated). State is lost when the screen is popped,
   on `router.replace`, or when the process dies. If it must outlive that, it is a route param or a persisted store.
 - **MMKV under Jest** is an in-memory implementation chosen by the library, with `react-native-nitro-modules` mocked in
   `jest.setup.ts` (verified: `jest.setup.ts`, `src/lib/storage.test.ts`).

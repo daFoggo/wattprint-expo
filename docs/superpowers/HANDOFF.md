@@ -31,7 +31,7 @@ Repo: `D:\Dev_Projects\wattprint-expo`, origin `https://github.com/daFoggo/wattp
 - Progress rule: if a subagent task runs longer than about 5 to 10 minutes, check real evidence (git log, newest files, processes,
   adb) instead of waiting. `expo run:android` and `expo start` never exit (Metro); an agent "waiting on background work" for that is
   stuck. Tell it to proceed and kill Metro (listener on :8081). Never block on non-terminating processes.
-- Evidence over claims: run commands, show results; benchmark before claiming "fast" (method: `docs/performance.md` section 8).
+- Evidence over claims: run commands, show results; measure before claiming "fast" (method: `docs/performance.md` section 8).
 - Documentation rule (`AGENTS.md`): change the rule, the doc and the skill in one commit; a spec lists the docs it touches.
 - Commits: conventional (commitlint), hooks run (lint-staged, commitlint), never bypass them.
 
@@ -72,7 +72,7 @@ item), Next. Reference report: `reports/2026-10-25-base-and-data-layer.md`.
 ## Goals and status
 
 - **G1 to G5 done and merged to `main`** (Uniwind native compatibility, data-fetching research, validation with the Expo skills,
-  benchmarks, architecture). Details: `reports/2026-10-25-base-and-data-layer.md`.
+  benchmarks (data removed on 2026-10-26), architecture). Details: `reports/2026-10-25-base-and-data-layer.md`.
 - **Documentation pass** (branch `docs/base-documentation`): `docs/components.md`, `design-system.md`, `client-state.md`,
   `performance.md`, the routing table in `AGENTS.md`, `scripts/design-guard.test.ts`, reports and backlog folders.
 - **Open items** (each a file in `backlog/`): query persistence spike, auth and session store, chat streaming, per-tab

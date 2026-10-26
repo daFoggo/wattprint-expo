@@ -1,21 +1,21 @@
 # Performance digest
 
-Use for lists, images, startup, re-renders, bundle size, or any claim that something is faster. Full rules and the measured tables:
-[docs/performance.md](../../../../docs/performance.md); raw data in [docs/benchmarks](../../../../docs/benchmarks/2026-10-25-baseline.md).
+Use for lists, images, startup, re-renders, bundle size, or any claim that something is faster. Full rules:
+[docs/performance.md](../../../../docs/performance.md) (the old benchmark data was removed on 2026-10-26).
 
 ## Decision matrix
 
-| Need                               | Pattern                                                                                                                                |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| List of a few hundred rows or more | FlashList v2; hoist `keyExtractor`, stable `renderItem`; no `key` inside rows; `getItemType` for mixed rows                            |
-| List around 100 rows               | FlatList is acceptable (no measurable difference on the emulator)                                                                      |
-| Row images                         | `expo-image`, `recyclingKey` = stable id, fixed size through classes, state `cachePolicy`                                              |
-| Lists with inputs                  | `keyboardShouldPersistTaps="handled"`                                                                                                  |
-| Re-renders                         | No manual `memo`/`useCallback` by habit (React Compiler is on); add only after a Profiler measurement                                  |
-| Startup                            | No awaiting work or new startup request in the root layout; re-run `scripts/bench/cold-start.sh` in a release build                    |
-| Logging                            | `benchLog` only; no new `console.*`                                                                                                    |
-| A new dependency                   | Check size with Expo Atlas (relative) and justify it                                                                                   |
-| A "faster" claim                   | Release build, emulator `Medium_Phone_API_37.0`, n >= 5 (10 cold start), median with range, caveats, raw CSV in `docs/benchmarks/raw/` |
+| Need                               | Pattern                                                                                                        |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| List of a few hundred rows or more | FlashList v2; hoist `keyExtractor`, stable `renderItem`; no `key` inside rows; `getItemType` for mixed rows    |
+| List around 100 rows               | FlatList is acceptable (opinion; the old comparison was removed)                                               |
+| Row images                         | `expo-image`, `recyclingKey` = stable id, fixed size through classes, state `cachePolicy`                      |
+| Lists with inputs                  | `keyboardShouldPersistTaps="handled"`                                                                          |
+| Re-renders                         | No manual `memo`/`useCallback` by habit (React Compiler is on); add only after a Profiler measurement          |
+| Startup                            | No awaiting work or new startup request in the root layout; measure a release build before adding startup work |
+| Logging                            | No new `console.*` in `src`                                                                                    |
+| A new dependency                   | Check size with Expo Atlas (relative) and justify it                                                           |
+| A "faster" claim                   | Release build, emulator `Medium_Phone_API_37.0`, n >= 5 (10 cold start), median with range, caveats            |
 
 ## Never do
 

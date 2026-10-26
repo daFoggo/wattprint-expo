@@ -51,13 +51,11 @@ Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch t
 .husky/                         pre-commit (lint-staged), commit-msg (commitlint)
 .claude/skills/wattprint-base/  project skill (tracked): SKILL.md router, references/ digests of docs/, evals/evals.json
 docs/architecture.md            feature-slice architecture and import rules
-docs/data-fetching.md           data layer rules, measured choices, open decisions
+docs/data-fetching.md           data layer rules, choices, open decisions
 docs/components.md              composition rules, variants, vendored UI exceptions
 docs/design-system.md           tokens, contrast, type, spacing, Android and accessibility rules
 docs/client-state.md            homes of state, Zustand + MMKV stores, persist, logout, tests
 docs/performance.md             lists, images, startup, Hermes/React Compiler, bundle, measuring
-docs/benchmarks/                emulator benchmark baseline and raw data
-scripts/bench/                  benchmark scripts (adb, stats.js)
 docs/superpowers/               HANDOFF.md (gates, standing rules), specs/, plans/, reports/, backlog/
 plugins/with-android-cmake-dir.js   config plugin, see Windows long-path workaround
 scripts/boundaries.test.ts       proves the import-boundary lint (eslint.boundaries.js)
@@ -68,9 +66,9 @@ scripts/contrast-report.js      prints WCAG contrast ratios for the tokens in sr
 scripts/docs-links.test.ts      guards docs: relative links, backticked repo paths, skills named in AGENTS.md
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
-src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), lab, (settings)
+src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), (settings)
 src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider
-src/features/<name>/             feature slices (docs/architecture.md); `lab` = trial and benchmark harness
+src/features/<name>/             feature slices (docs/architecture.md); none yet (the example feature was removed 2026-10-26)
 src/screens/home/               base-check screen and its sample form
 src/screens/settings/           settings screen (placeholder)
 src/screens/not-found/          not-found screen (used by +not-found.tsx)

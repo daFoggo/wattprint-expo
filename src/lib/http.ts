@@ -11,7 +11,7 @@ export type ApiClientOptions = {
   onSessionExpired?: () => void;
   timeoutMs?: number;
   // Called once per HTTP attempt (a retry after a refresh is a second call), `status` 0 when no
-  // response arrived. For logging and benchmarks; an exception from the hook is swallowed.
+  // response arrived. An exception from the hook is swallowed.
   // The hook sees the path including its query string: never put tokens or secrets in URLs.
   onRequest?: (info: RequestLog) => void;
 };

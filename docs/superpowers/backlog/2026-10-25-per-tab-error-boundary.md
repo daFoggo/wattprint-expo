@@ -8,7 +8,7 @@ Only the root layout exports `ErrorBoundary`, so a render error in one tab repla
 
 ## Facts (measured or verified)
 
-- `src/app/_layout.tsx` exports `ErrorBoundary` rendering `RouteError` (verified: file); the tab folders `(home)`, `lab` and
+- `src/app/_layout.tsx` exports `ErrorBoundary` rendering `RouteError` (verified: file); the tab folders `(home)` and
   `(settings)` each have a `_layout.tsx` Stack without one (verified: `src/app`).
 - `RouteError` takes `{ error, retry }` from `ErrorBoundaryProps` and renders `ErrorState` (verified: file).
 

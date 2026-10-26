@@ -18,7 +18,7 @@ single-flight refresh and `onSessionExpired`, but nothing provides the tokens.
 
 ## Ideas (not verified)
 
-- Idea: the dummyjson `/auth/login|me|refresh` endpoints can exercise the flow in the lab before FastAPI is ready.
+- Idea: the dummyjson `/auth/login|me|refresh` endpoints can exercise the flow before FastAPI is ready (the lab example feature that used dummyjson was removed 2026-10-26).
 - Unverified: the exact FastAPI auth contract. Read `/openapi.json` of the backend first; do not guess endpoints.
 
 ## Start when

@@ -22,7 +22,7 @@ and `bg-overlay/50` all exist (verified: `src/global.css`). `Uniwind.setTheme` s
 | ------------------------ | --------------- | --------------- | ------------------------------------------------------------------------------ |
 | `background`             | 255 255 255     | 10 10 10        | Screen and page background (`bg-background` on every screen root, states)      |
 | `foreground`             | 10 10 10        | 250 250 250     | Primary text (`text-foreground`)                                               |
-| `card`                   | 255 255 255     | 23 23 23        | List rows and raised surfaces (`bg-card` in `ProductRow`)                      |
+| `card`                   | 255 255 255     | 23 23 23        | List rows and raised surfaces (`bg-card`)                      |
 | `card-foreground`        | 10 10 10        | 250 250 250     | Text on `card` (defined; no class uses it yet, `text-foreground` is equal)     |
 | `popover`                | 255 255 255     | 23 23 23        | Menus and popovers (defined; unused)                                           |
 | `popover-foreground`     | 10 10 10        | 250 250 250     | Text on `popover` (defined; unused)                                            |
@@ -143,7 +143,7 @@ Swap the pattern for `font-(medium|semibold|bold)`, `gap-[0-9]+`, `(p|px|py)-[0-
 | --------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
 | Screen title          | `text-foreground text-3xl font-bold`, `text-2xl font-bold`   | `screens/home`, `screens/not-found`, detail    |
 | Section or card title | `text-foreground text-lg font-semibold`                      | state titles, modal title, detail price        |
-| Row title, list body  | `text-foreground text-base font-semibold`, `text-base`       | `ProductRow`, `QuoteRow`, detail description   |
+| Row title, list body  | `text-foreground text-base font-semibold`, `text-base`       | list rows, detail description                   |
 | Secondary text        | `text-muted-foreground text-sm` (`text-center` in states)    | descriptions, banners, row category            |
 | Button label          | `text-sm` (`text-xs` for `size="sm"`), colour from variant   | `ButtonText`                                   |
 | Error or helper       | `text-destructive text-sm` with `accessibilityLiveRegion`    | `sample-form` email error                      |
@@ -174,8 +174,7 @@ Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do no
   (verified: <https://support.google.com/accessibility/android/answer/7101858>: "a width and height of at least 48dp").
   `Button` enforces it: `default` `min-h-12`, `sm` `min-h-12`, `lg` `min-h-14`, `icon` `min-h-12 min-w-12`; Tailwind `h-12` is
   48 dp (verified: `button/index.tsx`, `button.test.tsx`). The modal close button adds `min-h-12 min-w-12`
-  (verified: `screens/home/index.tsx`). A pressable row is tall enough through `py-3` plus content (`ProductRow` has a
-  64 dp image, `size-16`). `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
+  (verified: `screens/home/index.tsx`). A pressable row is tall enough through `py-3` plus content. `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
   **Known gap:** `InputSlot` has no minimum size (verified: `input/index.tsx`); no screen uses a slot yet.
 - **Dark mode:** the preference is `system | light | dark` in `usePreferencesStore`; the root layout calls
   `Uniwind.setTheme(usePreferencesStore.getState().theme)` at module load, before the first render (comment in
@@ -190,7 +189,7 @@ Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do no
   `react-native-safe-area-context` (a dependency).
 - **Predictive back** is off (`predictiveBackGestureEnabled: false`, verified: `app.json`).
 - **Keyboard:** lists and scroll views with inputs set `keyboardShouldPersistTaps="handled"`
-  (verified: `home/index.tsx`, `products-screen.tsx`).
+  (verified: `home/index.tsx`).
 
 ## 6. Component usage
 
@@ -215,7 +214,7 @@ Disabled looks like `opacity-40` through `data-[disabled=true]`. Label text is a
 
 `Input` (frame) + `InputField` (the `TextInput`) + optional `InputIcon`/`InputSlot`. Pass `isInvalid` for the error border
 and render the error text below with `selectable` and `accessibilityLiveRegion="polite"` (verified: `sample-form.tsx`).
-Always set `accessibilityLabel` or `aria-label` on `InputField` (verified: `sample-form.tsx`, `search-field.tsx`).
+Always set `accessibilityLabel` or `aria-label` on `InputField` (verified: `sample-form.tsx`).
 Placeholder, cursor and selection colours come from `*ClassName` bindings already inside `InputField`; do not pass
 `placeholderTextColor`.
 
@@ -240,7 +239,7 @@ a `ModalCloseButton` with `accessibilityLabel`, 48 dp) + `ModalBody` + `ModalFoo
 | Loaded, zero rows                      | `EmptyState` (+ children)    | title, optional description, action as children                 |
 | Failed, nothing cached                 | `ErrorState`                 | message from `errorMessage`, `selectable`, polite live region, retry |
 | Query paused offline, nothing cached   | `OfflineState`               | variant of `EmptyState`                                         |
-| Failed or paused refresh with cached data | banner text, not a state  | `staleBanner` in the lab feature, `accessibilityLiveRegion="polite"` |
+| Failed or paused refresh with cached data | banner text, not a state  | a text banner with `accessibilityLiveRegion="polite"` (example feature removed 2026-10-26) |
 
 Full screen by default; pass `className="flex-none p-2"` to embed (verified: `state-style.ts`). Data rules:
 [data-fetching.md](data-fetching.md).
@@ -265,11 +264,11 @@ Full screen by default; pass `className="flex-none p-2"` to embed (verified: `st
 ## 8. Accessibility
 
 - **Roles:** `accessibilityRole="header"` on titles, `button` on pressable rows, `progressbar` on the loading indicator
-  (verified: states, `ProductRow`). `accessibilityRole` values `button`, `header`, `link` (external only; use `button` for
+  (verified: states). `accessibilityRole` values `button`, `header`, `link` (external only; use `button` for
   in-app navigation), `tab`, `switch` are valid; `role` takes precedence if both are set
   (verified: <https://reactnative.dev/docs/accessibility>).
 - **Labels:** if a touchable has no `accessibilityLabel`, TalkBack reads its child text; icon-only controls and images that
-  are decoration need one or `accessible={false}` (`ProductRow` sets a full row label and hides the thumbnail).
+  are decoration need one or `accessible={false}` (give the row one full label and hide the thumbnail).
 - **Live regions:** `accessibilityLiveRegion` `polite` for changing status and errors; `assertive` interrupts and is for
   urgent cases only (verified: <https://reactnative.dev/docs/accessibility>; used in `error-state.tsx`, `sample-form.tsx`).
 - **State:** expose selection with `accessibilityState={{ selected }}`, disabled with `accessibilityState`/`isDisabled`.
