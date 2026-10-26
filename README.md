@@ -67,7 +67,7 @@ scripts/docs-links.test.ts      guards docs: relative links, backticked repo pat
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
 src/app/                        routes only: _layout.tsx (ErrorBoundary), +not-found.tsx, one folder with a Stack per tab: (home), (settings)
-src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider
+src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider, card, switch, badge, progress, heading, text, pressable, divider
 src/features/<name>/             feature slices (docs/architecture.md); none yet (the example feature was removed 2026-10-26)
 src/screens/home/               base-check screen and its sample form
 src/screens/settings/           settings screen (placeholder)
@@ -117,6 +117,8 @@ Resolved from `pnpm-lock.yaml` (`pnpm list --depth 0`).
 | prettier                       | 3.9.10  | jest / jest-expo           | 30.5.2 / 58.0.12 |
 | @testing-library/react-native  | 14.1.0  | husky / lint-staged        | 9.1.7 / 17.6.0   |
 | @commitlint/cli                | 21.2.4  | eas-cli (global)           | 25.3.0           |
+| @shopify/react-native-skia     | 2.14.0  | victory-native             | 42.0.1           |
+| @expo/html-elements            | 58.0.3  |                            |                  |
 
 ## Uniwind native rules
 
@@ -162,7 +164,7 @@ Expect API changes.
 `android/` exists (it then classifies the app as a library) and installs alpha `core`/`utils`, downgrades
 uniwind, tailwindcss and safe-area-context, and rewrites Metro/Babel config. All of that was reverted. The
 components (provider, icon, button, input, modal) were hand-copied from the CLI's cached Uniwind template with
-stable `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6; web variants were not copied. Three edits: `Input` is `min-h-12` (upstream `min-h-9`) and draws its border with `border-input` (upstream `border-border`; `--input` was darkened to reach 3:1, see `docs/design-system.md`); every `Button` size has at least `min-h-12` (48 dp Android touch target; upstream uses `min-h-8`/`min-h-9`/`min-h-10`/none, see the
+stable `@gluestack-ui/core` 5.0.15 and `@gluestack-ui/utils` 5.0.6; web variants were not copied. Later added from the same template: card, switch, badge, progress, heading, text, pressable, divider (`heading` needs `@expo/html-elements`; `box`, `hstack`, `vstack`, `avatar` and alpha parts were not copied; the copied files were converted from CRLF to LF and formatted with Prettier; duplicate imports from `@gluestack-ui/utils/nativewind-utils` were merged for lint). Deviations from upstream: `switch` drops `web:cursor-pointer`, `disabled:cursor-not-allowed` and the `ring-indicator-primary` class (no such token) and binds `trackColorOnClassName="accent-primary"`, `trackColorOffClassName="accent-input"`, `thumbColorClassName="accent-primary-foreground"` on the native Switch (Uniwind types it as `className?: never`); `badge` destructive text and icon use `text-destructive-foreground` (upstream `text-white`) and reuse `StyledUIIcon` from `@/components/ui/icon`; `heading` and `text` drop the `highlight` variant (`bg-yellow-500`, a palette class) and `text` `isTruncated` uses `truncate` (upstream `web:truncate`); `pressable` base is `data-[disabled=true]:opacity-40` only (`data-[focus-visible=true]` classes are banned by `scripts/uniwind-guard.test.ts`). `card`, `progress` and `divider` are unchanged. Our code never passes the vendored boolean props (`bold`, `italic`, `underline`, `isTruncated`, ...). Three edits: `Input` is `min-h-12` (upstream `min-h-9`) and draws its border with `border-input` (upstream `border-border`; `--input` was darkened to reach 3:1, see `docs/design-system.md`); every `Button` size has at least `min-h-12` (48 dp Android touch target; upstream uses `min-h-8`/`min-h-9`/`min-h-10`/none, see the
 comment in `src/components/ui/button/index.tsx`); and `opacity: 0` removed from the modal `ZoomIn` `withInitialValues`: Reanimated builds ZoomIn's initial values from transform keys only, so the `opacity` key was ignored (and `tsc` rejected the type); removing it is a runtime no-op. Do not run
 `gluestack-ui add` or `init` blindly, and use no alpha components (Tabs, Table, BottomSheet, Calendar,
 DateTimePicker, Skeleton, Grid, Liquid Glass, Image Viewer).

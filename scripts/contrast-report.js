@@ -61,6 +61,10 @@ const PAIRS = [
   ['foreground', 'input/4.5@background', 'text', 'dark'],
   ['foreground', 'input/7.5@background', 'text', 'dark'],
   ['primary', 'background', 'ui'],
+  // Switch track, Progress fill and chart bars on a Card; Progress track (`bg-primary/20`) on a Card.
+  ['primary', 'card', 'ui'],
+  ['primary', 'primary/20@card', 'ui'],
+  ['muted-foreground', 'card', 'text'],
   // `border` is for dividers: decorative, so it is not a pair. The Input boundary is `border-input`.
   ['input', 'background', 'ui'],
   ['input', 'card', 'ui'],

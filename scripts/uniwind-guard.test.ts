@@ -65,6 +65,7 @@ const REQUIRED_BINDINGS: { tag: string; binding: string }[] = [
   { tag: 'UIButton.Spinner', binding: 'colorClassName' },
   { tag: 'TextInput', binding: 'placeholderTextColorClassName' },
   { tag: 'UIInput.Input', binding: 'placeholderTextColorClassName' },
+  { tag: 'UISwitch', binding: 'trackColorOnClassName' },
 ];
 
 export const findViolations = (file: string, source: string): string[] => {
@@ -135,6 +136,13 @@ describe('findViolations (self-test)', () => {
     expect(
       findViolations('x.tsx', '<UIInput.Input placeholderTextColorClassName="accent-muted" />'),
     ).toEqual([]);
+  });
+
+  test('requires the track colour binding on UISwitch', () => {
+    expect(findViolations('x.tsx', '<UISwitch value />')).not.toEqual([]);
+    expect(findViolations('x.tsx', '<UISwitch trackColorOnClassName="accent-primary" />')).toEqual(
+      [],
+    );
   });
 
   test('generics and type positions are not JSX tags', () => {
