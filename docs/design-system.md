@@ -97,12 +97,18 @@ WCAG 2.x relative luminance, ratio `(L1 + 0.05) / (L2 + 0.05)`). Thresholds: 4.5
 | `primary` on `primary/20` over `card` (Progress track) | ui | 11.69 pass | 9.13 pass |
 | `input` on `background` (Input border) | ui   | 3.03 pass   | 3.35 pass   |
 | `input` on `card`                     | ui   | 3.03 pass   | 3.03 pass   |
-| `card` on `input` (Switch thumb on the off track) | ui | 3.03 pass | 3.03 pass |
-| `card` on `primary` (Switch thumb on the on track) | ui | 17.93 pass | 16.76 pass |
+| `switch-thumb` on `primary` (Switch thumb on the on track) | ui | 17.93 pass | 3.85 pass |
+| `switch-thumb` on `card` (thumb next to its card, dark only) | ui | n/a | 4.36 pass |
+| `switch-thumb` on `input` (thumb on the off track, light only) | ui | 3.03 pass | n/a (1.44, see below) |
 | `ring` on `background` (focused Input border) | ui | 10.37 pass | 13.36 pass |
 | `ring` on `card`                      | ui   | 10.37 pass  | 12.09 pass  |
 | `ring` on `input` (focus step from the unfocused border) | ui | 3.42 pass | 3.99 pass |
 | `destructive/40` over `background` (invalid Input border) | ui | **2.11 fail** | **1.95 fail** |
+
+**Known limit (dark Switch):** the thumb on the off track (`input`) is 1.44:1 in dark, below 3:1, and is not in `PAIRS` or
+`KNOWN_FAILURES` (it is documented here instead). The state is carried by the thumb position and by the track against the card
+(`input` on `card` 3.03), not by thumb colour alone; light thumb on `card` is 1.00 (white on white) for the same reason
+(verified: `node scripts/contrast-report.js`; opinion: acceptable for a switch that also moves).
 
 Before the fix (same script): `input` on `background` was 1.26 light / 1.46 dark (the Input used `border-border`, and `--input`
 equalled `--border`); light `ring` was 2.52. The first fix left dark `ring` (115) barely above dark `input` (100); `ring` is
@@ -148,7 +154,7 @@ Swap the pattern for `font-(medium|semibold|bold)`, `gap-[0-9]+`, `(p|px|py)-[0-
 
 | Role                  | Classes in use                                               | Seen in                                        |
 | --------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| Screen title          | `text-foreground text-3xl font-bold`, `text-2xl font-bold`   | `screens/home`, `screens/settings`, `screens/not-found` |
+| Screen title          | `text-foreground text-3xl font-bold`, `text-2xl font-bold`   | `screens/home` (`Heading size="2xl"`), `screens/settings`, `screens/not-found` |
 | Section or card title | `text-foreground text-lg font-semibold`                      | state titles, modal title, detail price        |
 | Row title, list body  | `text-foreground text-base font-semibold`, `text-base`       | list rows, detail description                   |
 | Secondary text        | `text-muted-foreground text-sm` (`text-center` in states)    | descriptions, banners, row category            |
@@ -181,7 +187,7 @@ Radius: `rounded-md` for controls and image thumbnails; `rounded-lg` once. Do no
   (verified: <https://support.google.com/accessibility/android/answer/7101858>: "a width and height of at least 48dp").
   `Button` enforces it: `default` `min-h-12`, `sm` `min-h-12`, `lg` `min-h-14`, `icon` `min-h-12 min-w-12`; Tailwind `h-12` is
   48 dp (verified: `button/index.tsx`, `button.test.tsx`). The modal close button adds `min-h-12 min-w-12`
-  (verified: `screens/settings/index.tsx`). A pressable row is tall enough through `py-3` plus content. `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
+  (verified: `screens/settings/index.tsx`). A pressable row sets its own `min-h-12`; do not rely on content height (see Pressable). `Input` is `min-h-12` (48 dp; tested in `input.test.tsx`).
   **Known gap:** `InputSlot` has no minimum size (verified: `input/index.tsx`); no screen uses a slot yet.
 - **Dark mode:** the preference is `system | light | dark` in `usePreferencesStore`; the root layout calls
   `Uniwind.setTheme(usePreferencesStore.getState().theme)` at module load, before the first render (comment in
@@ -266,9 +272,10 @@ The whole row is the control: a `Pressable` with `accessibilityRole="switch"`, `
 `accessibilityLabel` and `min-h-12`, containing a `Switch` wrapped in a `View` with `pointerEvents="none"` and
 `importantForAccessibility="no-hide-descendants"`, so TalkBack sees one node and the small native Switch is only an indicator
 (verified: `src/features/devices/components/device-row.tsx`, `device-row.test.tsx`). Colour bindings are inside `Switch`:
-`trackColorOnClassName="accent-primary"`, `trackColorOffClassName="accent-input"`, `thumbColorClassName="accent-card"`
-(verified: `src/components/ui/switch/index.tsx`); the contrast pairs are in section 2. An offline device sets `disabled`, which
-dims the row (`opacity-40` through `data-[disabled=true]`) and blocks the press.
+`trackColorOnClassName="accent-primary"`, `trackColorOffClassName="accent-input"`, `thumbColorClassName="accent-switch-thumb"`
+(verified: `src/components/ui/switch/index.tsx`); the contrast pairs and the dark thumb-on-off-track limit are in section 2. An
+offline device sets `disabled` on the row `Pressable`, which dims the row once (`opacity-40` through `data-[disabled=true]`) and
+blocks the press; the inner `Switch` is not given `disabled`, so it does not dim a second time.
 
 ### Badge
 

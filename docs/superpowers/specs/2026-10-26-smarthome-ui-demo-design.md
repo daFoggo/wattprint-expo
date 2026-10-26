@@ -10,6 +10,8 @@ A pure-UI demo of a smart-home dashboard with energy tracking, to exercise the b
 composition, native tabs, dark mode, i18n en/vi) on the Android emulator before real features and the FastAPI backend.
 No network, no backend. Data is static mock data validated by Zod so the shapes can later be swapped for API responses.
 
+Note 2026-10-26: device verification moved from the emulator to the physical phone (`3C081JEKB17021`); see the report and `AGENTS.md`.
+
 ## Goals
 
 - Tabs: **Home**, **Devices**, **Energy**, plus the existing **Settings** (theme and language stay).
