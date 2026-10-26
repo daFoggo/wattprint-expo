@@ -2,44 +2,50 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import '@/i18n';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
+import { DeviceRow } from '@/features/devices/components/device-row';
+import { DeviceStatesProvider, useDeviceStates } from '@/features/devices/device-states';
+import type { DevicesResponse } from '@/features/devices/schemas';
 import en from '@/i18n/locales/en.json';
 
 import { Home } from '.';
 
-// The Modal animates with Reanimated, whose native worklets runtime does not exist under Jest.
-jest.mock('react-native-reanimated', () => {
-  const chain: object = new Proxy(() => chain, { get: () => () => chain });
-  return {
-    __esModule: true,
-    default: { createAnimatedComponent: <T,>(component: T) => component },
-    Easing: { linear: 'linear' },
-    FadeIn: chain,
-    FadeOut: chain,
-    ZoomIn: chain,
-  };
+const fixture: DevicesResponse = {
+  rooms: [{ id: 'r1', name: 'Hall' }],
+  devices: [
+    { id: 'a', roomId: 'r1', name: 'Lamp', type: 'light', on: true, watts: 10, status: 'online' },
+    { id: 'b', roomId: 'r1', name: 'Heater', type: 'ac', on: true, watts: 90, status: 'online' },
+  ],
+};
+
+function Rows() {
+  const { state, actions } = useDeviceStates();
+  return state.devices.map((d) => <DeviceRow key={d.id} device={d} onToggle={actions.toggle} />);
+}
+
+async function renderHome() {
+  await render(
+    <GluestackUIProvider>
+      <DeviceStatesProvider initial={fixture}>
+        <Home />
+        <Rows />
+      </DeviceStatesProvider>
+    </GluestackUIProvider>,
+  );
+}
+
+test('current draw follows the provider state', async () => {
+  await renderHome();
+  expect(screen.getByText('100 W')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Heater'));
+  // The lamp row also reads 10 W, so the draw card makes two matches.
+  expect(screen.getAllByText('10 W')).toHaveLength(2);
+  expect(screen.queryByText('100 W')).toBeNull();
 });
 
-describe('Home modal', () => {
-  async function openModal() {
-    await render(
-      <GluestackUIProvider>
-        <Home />
-      </GluestackUIProvider>,
-    );
-    await fireEvent.press(screen.getByText(en.home.openModal));
-    await screen.findByText(en.home.modalBody);
-  }
-
-  it('marks the modal title as a header', async () => {
-    await openModal();
-    // The page title has the same text, so expect both the page header and the modal header.
-    expect(screen.getAllByRole('header', { name: en.home.modalTitle })).toHaveLength(2);
-  });
-
-  it('closes from the labelled icon close button, which renders an icon instead of an X', async () => {
-    await openModal();
-    expect(screen.queryByText('X')).toBeNull();
-    await fireEvent.press(screen.getByLabelText(en.common.close));
-    expect(screen.queryByText(en.home.modalBody)).toBeNull();
-  });
+test('selecting a scene marks it selected', async () => {
+  await renderHome();
+  const scene = () => screen.getByRole('button', { name: en.home.scenes.away });
+  expect(scene().props.accessibilityState).toMatchObject({ selected: false });
+  await fireEvent.press(scene());
+  expect(scene().props.accessibilityState).toMatchObject({ selected: true });
 });

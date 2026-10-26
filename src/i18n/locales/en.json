@@ -1,13 +1,32 @@
 {
   "tabs": {
     "home": "Home",
-    "settings": "Settings"
+    "settings": "Settings",
+    "devices": "Devices",
+    "energy": "Energy"
   },
   "common": {
     "close": "Close"
   },
   "home": {
-    "title": "Base check",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "currentDraw": "Current draw",
+    "today": "Today",
+    "cost": "Estimated cost",
+    "rooms": "Rooms",
+    "scenesTitle": "Quick scenes",
+    "scenes": {
+      "home": "At home",
+      "away": "Away",
+      "night": "Night"
+    }
+  },
+  "settings": {
+    "title": "Settings",
     "theme": "Theme: {{theme}}",
     "themes": {
       "system": "System",
