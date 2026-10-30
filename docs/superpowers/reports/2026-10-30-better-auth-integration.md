@@ -21,7 +21,7 @@ Date: 2026-10-30. Spec: `docs/superpowers/specs/2026-10-30-better-auth-integrati
   `/api/auth/sign-up/email`, then `GET /api/auth/token` with the session token returned a JWT whose claims were `sub`, `name`,
   `email`, `emailVerified`, `iss=http://localhost:3000`, `aud=wattprint-api`; `GET /api/v1/me` with it returned 200 and the user,
   and without a token 401. The `jwks` table was created by the existing `npm run migrate` on start.
-- App: `pnpm check` (eslint 0 warnings, tsc, jest 56 suites / 459 tests) and `pnpm format:check` pass.
+- App: `pnpm check` (eslint 0 warnings, tsc, jest 57 suites / 470 tests) and `pnpm format:check` pass.
 - `npx expo-doctor`: 19/20; the failing check (11 packages out of date) also fails without these changes.
 
 ## Review fixes (Opus whole-branch review)
@@ -38,8 +38,8 @@ failure while refreshing the JWT surfaces as a non-retried 401 (the user stays s
 - **Nothing was run on the phone.** `adb devices` listed no device when this was attempted, so sign-up on the device, relaunch
   while signed in, offline launch, wrong-password message, sign-out and user switch, and the logcat check are still to do
   (see "Device verification" in `AGENTS.md`).
-- Whether `authClient.useSession()` stops reporting `isPending` quickly when the app launches offline (the splash is held until
-  it does) is unverified.
+- Whether `authClient.useSession()` stops reporting `isPending` quickly when the app launches offline (the splash now waits at most 3 s, see
+  `useSessionGate`) is unverified.
 - `@better-auth/expo` 1.7.14 on Expo SDK 58 compiles and unit tests pass, but its runtime behaviour on a device is unverified.
 - Cleartext `http://localhost` from the dev build through `adb reverse` is unverified.
 
