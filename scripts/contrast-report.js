@@ -43,7 +43,10 @@ const PAIRS = [
   ['foreground', 'background', 'text'],
   ['card-foreground', 'card', 'text'],
   ['popover-foreground', 'popover', 'text'],
-  ['primary-foreground', 'primary', 'text'],
+  ['primary-foreground', 'primary-strong', 'text'],
+  // `primary-strong` is the small-text and Button fill; `primary` is the brighter token for shapes (3:1 only).
+  ['primary-strong', 'background', 'text'],
+  ['primary-strong', 'card', 'text'],
   ['secondary-foreground', 'secondary', 'text'],
   ['accent-foreground', 'accent', 'text'],
   // Solid destructive is never rendered in dark (the Button uses `dark:bg-destructive/60`), so only light is checked.
@@ -63,32 +66,28 @@ const PAIRS = [
   ['primary', 'background', 'ui'],
   // Switch track, Progress fill and chart bars on a Card.
   ['primary', 'card', 'ui'],
-  // Progress fill (`bg-primary`) on its track (`bg-primary/20`) on a Card.
-  ['primary', 'primary/20@card', 'ui'],
+  // Progress fill (`bg-primary-strong`) on its track (`bg-primary/20`) on a Card.
+  ['primary-strong', 'primary/20@card', 'ui'],
   // Switch thumb (`accent-switch-thumb`) on the on track (`accent-primary`), and next to the card around it.
   // Thumb vs card is dark only (light is white on white; the track carries it there). Thumb vs off track
-  // (`accent-input`) is light only: dark is 1.44 by design, the thumb position and track vs card carry the state.
+  // (`accent-input`) is checked in both themes.
   ['switch-thumb', 'primary', 'ui'],
   ['switch-thumb', 'card', 'ui', 'dark'],
-  ['switch-thumb', 'input', 'ui', 'light'],
+  ['switch-thumb', 'input', 'ui'],
   ['muted-foreground', 'card', 'text'],
   // `border` is for dividers: decorative, so it is not a pair. The Input boundary is `border-input`.
   ['input', 'background', 'ui'],
   ['input', 'card', 'ui'],
   ['ring', 'background', 'ui'],
   ['ring', 'card', 'ui'],
-  // Focus must be a visible step from the unfocused Input boundary (`border-input`).
-  ['ring', 'input', 'ui'],
-  // Invalid Input border (`data-[invalid=true]:border-destructive/40`).
-  ['destructive/40@background', 'background', 'ui'],
+  // The Input is a filled field without a border (like Sense), so focus (`border-ring`) is checked against the fill
+  // (`bg-secondary`), and the invalid border (`border-destructive`) against it too.
+  ['ring', 'secondary', 'ui'],
+  ['destructive', 'secondary', 'ui'],
 ];
 
 // Pairs that fail on purpose, as "theme:fg on bg". A test fails if one of these starts passing (stale entry).
-const KNOWN_FAILURES = [
-  'light:muted-foreground on muted', // pressed row only (`active:bg-muted`), low priority
-  'light:destructive/40@background on background', // invalid border; the error text below the field is the cue
-  'dark:destructive/40@background on background',
-];
+const KNOWN_FAILURES = [];
 
 const MIN = { text: 4.5, ui: 3 };
 

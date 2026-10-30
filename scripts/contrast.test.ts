@@ -28,12 +28,10 @@ describe('documented token pairs', () => {
   });
 });
 
-const hasRow = (id: string) => rows.some((r) => r.id === id);
-
 describe('switch thumb token', () => {
   it('exists in both themes and is covered by the pairs that hold', () => {
     expect(readTheme('light')['switch-thumb']).toEqual([255, 255, 255]);
-    expect(readTheme('dark')['switch-thumb']).toEqual([125, 125, 125]);
+    expect(readTheme('dark')['switch-thumb']).toEqual([255, 255, 255]);
     const rowIds = rows.map((r) => r.id);
     expect(rowIds).toEqual(
       expect.arrayContaining([
@@ -45,10 +43,9 @@ describe('switch thumb token', () => {
     );
   });
 
-  it('documents the dark thumb on the off track as a limit, not a pair', () => {
-    expect(hasRow('dark:switch-thumb on input')).toBe(false);
+  it('keeps the dark thumb readable on the off track', () => {
     const dark = readTheme('dark');
-    expect(ratio(dark['switch-thumb'], dark.input)).toBeLessThan(3);
+    expect(ratio(dark['switch-thumb'], dark.input)).toBeGreaterThanOrEqual(3);
   });
 });
 

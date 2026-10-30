@@ -26,11 +26,12 @@ Read the digest for the pattern, then the doc section for the rule and the reaso
 | Lint forbids an import | Fix the layer; compose features in `src/screens` | [digest][arch] / [doc][arch-rules] |
 | Call the backend, query keys, `staleTime` | `<feature>/api.ts`, `createApiClient`, Zod; typed errors | [digest][data] / [doc][data-rules] |
 | Loading, empty, error, offline UI | `components/states/*`; keep cached data on refresh error | [digest][data] / [doc][ds-states] |
-| Query persistence, auth store, chat streaming | Not decided: read the backlog first | [digest][data] / [doc][data-open] |
+| Query persistence, chat streaming (auth is decided: Better Auth, `docs/data-fetching.md`) | Not decided: read the backlog first | [digest][data] / [doc][data-open] |
 | Build or extend a component | Compound parts, `variant`/`size`, `ref` as a prop | [digest][comp] / [doc][comp-variants] |
 | Edit or add a gluestack part | Hand-copy, stable pins, note deviation; never the CLI | [digest][tool] / [doc][comp-vendored], [README][decisions] |
 | Move a component to shared | Only when a second feature needs it | [digest][comp] / [doc][comp-extract] |
-| Colour, dark mode, spacing, type | Tokens from `src/global.css`; `border-input` on controls | [digest][ds] / [doc][ds-tokens] |
+| Colour, dark mode, spacing, type | Tokens from `src/global.css`; green text and Button fills use `primary-strong`; Input is a filled field | [digest][ds] / [doc][ds-tokens] |
+| Page header, back button, tab bar | `CollapsingScrollView` (large title to compact bar) / `DetailHeader` with `headerShown: false`; `useTabBarTheme`; Settings still native | [digest][ds] / [doc][ds-headers] |
 | Class has no effect on device | Unsupported variant, or `*ClassName` binding missing | [digest][ds] / [README][uniwind] |
 | Third-party component needs `className` | `withUniwind` once in one file | [digest][ds] / [doc][comp-extract] |
 | Touch targets, labels, live regions | 48 dp minimum; roles and labels; `min-h-*` on text | [digest][ds] / [doc][ds-android] |
@@ -52,7 +53,7 @@ Read the digest for the pattern, then the doc section for the rule and the reaso
 3. **Throw, never fake.** HTTP only through `createApiClient` with a Zod schema; failures are `ApiError`, `NetworkError` or
    `ContractError`, never fallback data. Default `staleTime` is 30 s; never default it to 0.
 4. **Tokens only.** Colour from semantic tokens; Uniwind silently drops unsupported variants (`placeholder:`, `hover:`,
-   `focus-visible:`, `web:`, `group-*`). Control boundaries use `border-input`, `border-border` is for dividers
+   `focus-visible:`, `web:`, `group-*`). Custom bordered controls use `border-input`, `border-border` is for dividers; green text and Button fills use `primary-strong` (`primary` is for shapes)
    (`scripts/design-guard.test.ts`, `scripts/uniwind-guard.test.ts`, `scripts/contrast.test.ts`).
 5. **Own components take `ref` as a prop**, never `forwardRef` or `useContext`; vendored `src/components/ui/**` keeps upstream.
    Use `variant` or `size`, never call-site size or colour overrides, never boolean look props.
@@ -96,6 +97,7 @@ open items). Evals: [evals/evals.json](evals/evals.json).
 [ds-tokens]: ../../../docs/design-system.md#1-tokens
 [ds-android]: ../../../docs/design-system.md#5-android-rules
 [ds-states]: ../../../docs/design-system.md#state-components
+[ds-headers]: ../../../docs/design-system.md#headers-and-tab-bar
 [ds-motion]: ../../../docs/design-system.md#7-motion
 [state-homes]: ../../../docs/client-state.md#1-the-homes-of-state
 [state-persist]: ../../../docs/client-state.md#4-persistence

@@ -1,5 +1,8 @@
 # Auth and session store
 
+Status 2026-10-30: implemented with Better Auth (no custom session store), see
+`docs/superpowers/reports/2026-10-30-better-auth-integration.md`. Open: the phone verification listed there.
+
 Opened: 2026-10-25. Source: `docs/superpowers/specs/2026-10-25-data-architecture-design.md`, `docs/data-fetching.md`.
 
 ## Why it matters

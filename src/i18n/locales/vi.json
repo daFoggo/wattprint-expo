@@ -38,7 +38,8 @@
     "secureStoreError": "secure-store: lỗi {{message}}",
     "openModal": "Mở hộp thoại",
     "modalTitle": "Kiểm tra nền tảng",
-    "modalBody": "gluestack-ui v5 với Uniwind hoạt động."
+    "modalBody": "gluestack-ui v5 với Uniwind hoạt động.",
+    "signOut": "Đăng xuất"
   },
   "form": {
     "email": "Email",
@@ -94,5 +95,32 @@
     "topShare": "{{name}}: {{share}}% tổng",
     "chartSummaryEmpty": "{{range}}: không có mức dùng",
     "chartSummary": "{{range}}: {{total}} kWh, cao nhất {{peak}}"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "name": "Tên",
+    "validation": {
+      "emailInvalid": "Nhập địa chỉ email hợp lệ",
+      "passwordShort": "Mật khẩu phải có ít nhất 8 ký tự",
+      "nameRequired": "Nhập tên của bạn",
+      "nameTooLong": "Tên tối đa 64 ký tự"
+    },
+    "errors": {
+      "invalidCredentials": "Sai email hoặc mật khẩu",
+      "emailTaken": "Email này đã có tài khoản"
+    },
+    "signIn": {
+      "title": "Đăng nhập",
+      "subtitle": "Chào mừng bạn quay lại Wattprint",
+      "submit": "Đăng nhập",
+      "toSignUp": "Chưa có tài khoản? Tạo tài khoản"
+    },
+    "signUp": {
+      "title": "Tạo tài khoản",
+      "subtitle": "Bắt đầu theo dõi điện năng trong nhà",
+      "submit": "Tạo tài khoản",
+      "toSignIn": "Đã có tài khoản? Đăng nhập"
+    }
   }
 }

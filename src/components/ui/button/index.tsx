@@ -19,31 +19,31 @@ const UIButton = createButton({
   Icon: StyledUIIcon,
 });
 const buttonStyle = tva({
-  base: 'rounded-md flex-row items-center justify-center data-[disabled=true]:opacity-40 gap-2 h-fit',
+  base: 'rounded-2xl flex-row items-center justify-center data-[disabled=true]:opacity-40 gap-2 h-fit',
   variants: {
     variant: {
-      default: 'bg-primary data-[active=true]:bg-primary/90',
+      default: 'bg-primary-strong data-[active=true]:bg-primary-strong/90',
       destructive:
         'bg-destructive data-[active=true]:bg-destructive/90 dark:bg-destructive/60 dark:data-[active=true]:bg-destructive/50',
       outline:
         'border border-border bg-background data-[active=true]:bg-accent dark:bg-input/[0.045] dark:border-border/90 dark:data-[active=true]:bg-input/[0.075]',
       secondary: 'bg-secondary text-secondary-foreground data-[active=true]:bg-secondary/80',
       ghost: 'data-[active=true]:bg-accent dark:data-[active=true]:bg-accent/50',
-      link: 'text-primary underline-offset-4 data-[active=true]:underline',
+      link: 'text-primary-strong underline-offset-4 data-[active=true]:underline',
     },
     // Deviation from upstream gluestack: every size is at least 48dp (min-h-12) tall, the Android
     // touch target minimum; lg is min-h-14 so it stays larger than default. Upstream uses min-h-8
     // (sm), min-h-10 (lg), min-h-9 (icon), none (default).
     size: {
       default: 'min-h-12 px-4 py-2',
-      sm: 'min-h-12 rounded-md px-3 text-xs',
-      lg: 'min-h-14 rounded-md px-8',
+      sm: 'min-h-12 rounded-2xl px-3 text-xs',
+      lg: 'min-h-14 rounded-2xl px-8',
       icon: 'min-h-12 min-w-12',
     },
   },
 });
 const buttonTextStyle = tva({
-  base: '',
+  base: 'font-semibold',
   parentVariants: {
     variant: {
       default: 'text-primary-foreground',
@@ -51,13 +51,13 @@ const buttonTextStyle = tva({
       outline: 'text-foreground data-[active=true]:text-accent-foreground',
       secondary: 'text-secondary-foreground',
       ghost: 'text-foreground ',
-      link: 'text-primary data-[active=true]:underline',
+      link: 'text-primary-strong data-[active=true]:underline',
     },
     size: {
-      default: 'text-sm',
+      default: 'text-base',
       sm: 'text-xs',
-      lg: 'text-sm',
-      icon: 'text-sm',
+      lg: 'text-base',
+      icon: 'text-base',
     },
   },
 });
@@ -84,7 +84,7 @@ const buttonSpinnerColorStyle = tva({
       outline: 'accent-foreground',
       secondary: 'accent-secondary-foreground',
       ghost: 'accent-foreground',
-      link: 'accent-primary',
+      link: 'accent-primary-strong',
     },
   },
 });
@@ -98,7 +98,7 @@ const buttonIconStyle = tva({
       outline: 'text-foreground',
       secondary: 'text-secondary-foreground',
       ghost: 'text-foreground',
-      link: 'text-primary',
+      link: 'text-primary-strong',
     },
     size: {
       default: 'h-4 w-4',

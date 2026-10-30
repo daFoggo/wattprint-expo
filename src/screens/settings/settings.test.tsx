@@ -19,6 +19,23 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+const mockSignOut = jest.fn();
+jest.mock('@/features/auth/hooks/use-sign-out', () => ({
+  useSignOut: () => ({ mutate: mockSignOut, isPending: false }),
+}));
+
+describe('Settings sign-out', () => {
+  it('signs the user out from the sign-out button', async () => {
+    await render(
+      <GluestackUIProvider>
+        <Settings />
+      </GluestackUIProvider>,
+    );
+    await fireEvent.press(screen.getByText(en.settings.signOut));
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('Settings modal', () => {
   async function openModal() {
     await render(

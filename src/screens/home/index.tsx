@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
+import { CollapsingScrollView } from '@/components/collapsing-scroll-view';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
@@ -26,11 +27,10 @@ export function Home() {
   const todayKwh = totalKwh(today.points);
 
   return (
-    <ScrollView className="bg-background flex-1" contentContainerClassName="gap-4 p-4">
-      <Heading size="2xl" accessibilityRole="header">
-        {t(greetingKey(new Date().getHours()))}
-      </Heading>
-
+    <CollapsingScrollView
+      title={t(greetingKey(new Date().getHours()))}
+      contentContainerClassName="gap-4 p-4"
+    >
       <Card size="sm">
         <Text size="sm" className="text-muted-foreground">
           {t('home.currentDraw')}
@@ -81,6 +81,6 @@ export function Home() {
         .map(({ room, devices }) => (
           <RoomSummaryCard key={room.id} room={room} devices={devices} />
         ))}
-    </ScrollView>
+    </CollapsingScrollView>
   );
 }

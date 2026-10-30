@@ -100,7 +100,7 @@ describe('shared layers', () => {
     ['src/components/states/error-state.tsx', '@/components/ui/button'],
     ['src/components/states/error-state.tsx', '@/lib/errors'],
     ['src/screens/home/index.tsx', '@/features/alpha/screens/a-screen'],
-    ['src/app/(home)/index.tsx', '@/screens/home'],
+    ['src/app/(app)/(home)/index.tsx', '@/screens/home'],
     ['src/features/alpha/api.ts', '@/stores/preferences-store'],
   ])('%s may import %s', async (file, source) => {
     expect(await lint(features, file, imp(source))).toEqual([]);
