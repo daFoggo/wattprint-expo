@@ -121,8 +121,8 @@ In `wattprint-fastapi`: `README.md` (env, JWT flow).
 
 1. **Expired JWT vs dead session.** `refreshAccessToken` calls `authClient.token()`. Only an auth rejection (401) from it
    counts as a dead session: then `onSessionExpired` fires, the local session is cleared and the user lands on sign-in.
-   A network failure or timeout is a `NetworkError`; the user stays signed in (offline launch must keep working) and the
-   request fails as retryable. An unknown `kid` after key rotation is handled by the FastAPI JWKS refetch, not the app.
+   A network failure or timeout keeps the user signed in (offline launch must keep working); the failed API request is
+   reported as a 401 and is not retried (accepted after review: `createApiClient` turns a failed refresh into a 401). An unknown `kid` after key rotation is handled by the FastAPI JWKS refetch, not the app.
 2. **User data in FastAPI.** This work covers `/me` only. No `users` table and no foreign key into the `auth` schema;
    future user-scoped tables key on the JWT `sub` (opinion, revisit with the first such table).
 3. **Stale claims.** Name, email and `emailVerified` in the JWT can lag by up to 15 minutes; accepted.

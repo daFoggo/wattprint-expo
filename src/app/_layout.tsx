@@ -4,7 +4,7 @@ import '@/i18n';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { useAppStateFocus } from '@/hooks/use-app-state-focus';
 import { useNavTheme } from '@/hooks/use-nav-theme';
-import { authClient } from '@/lib/auth-client';
+import { useSessionGate } from '@/hooks/use-session-gate';
 import { initOnlineManager } from '@/lib/online-manager';
 import { queryClient } from '@/lib/query-client';
 import { RouteError } from '@/screens/route-error';
@@ -32,28 +32,28 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   const theme = usePreferencesStore((s) => s.theme);
   const navTheme = useNavTheme();
-  const { data: session, isPending } = authClient.useSession();
+  const { ready, signedIn } = useSessionGate();
   useAppStateFocus();
 
   useEffect(() => {
-    if (!isPending) void SplashScreen.hideAsync();
-  }, [isPending]);
+    if (ready) void SplashScreen.hideAsync();
+  }, [ready]);
 
   return (
     <GluestackUIProvider mode={theme}>
       <StatusBar style="auto" />
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={navTheme}>
-          {isPending ? null : (
+          {ready ? (
             <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Protected guard={!!session}>
+              <Stack.Protected guard={signedIn}>
                 <Stack.Screen name="(app)" />
               </Stack.Protected>
-              <Stack.Protected guard={!session}>
+              <Stack.Protected guard={!signedIn}>
                 <Stack.Screen name="(auth)" />
               </Stack.Protected>
             </Stack>
-          )}
+          ) : null}
         </ThemeProvider>
       </QueryClientProvider>
     </GluestackUIProvider>

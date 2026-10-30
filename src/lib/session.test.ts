@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { authClient, fetchApiToken } from '@/lib/auth-client';
 
-import { apiClient, handleSessionExpired, signOutAndClear } from './session';
+import { apiClient, clearUserScope, handleSessionExpired, signOutAndClear } from './session';
 
 jest.mock('@/lib/auth-client', () => ({
   authClient: { signOut: jest.fn(), getSession: jest.fn() },
@@ -141,5 +141,57 @@ describe('apiClient', () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(signOut).not.toHaveBeenCalled();
+  });
+});
+
+describe('user scope', () => {
+  const schema = z.object({ id: z.string() });
+  const fetchMock = jest.fn();
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    mockFetchApiToken.mockReset();
+    getSession.mockReset();
+    signOut.mockReset().mockResolvedValue({ data: null, error: null });
+    global.fetch = fetchMock as unknown as typeof fetch;
+    jest.spyOn(queryClient, 'clear').mockImplementation(() => undefined);
+    clearUserScope();
+    (queryClient.clear as jest.Mock).mockClear();
+  });
+  afterEach(() => jest.restoreAllMocks());
+
+  it('clears the token and the query cache before the remote sign-out finishes', async () => {
+    let finish!: () => void;
+    signOut.mockReturnValue(new Promise<void>((resolve) => (finish = resolve)));
+
+    const pending = signOutAndClear();
+    expect(queryClient.clear).toHaveBeenCalledTimes(1);
+
+    finish();
+    await pending;
+  });
+
+  it('clearUserScope drops the cached token and the query cache', async () => {
+    mockFetchApiToken.mockResolvedValue(jwt(900));
+    fetchMock.mockImplementation(() => ok({ id: 'u1' }));
+    await apiClient.request('/me', { schema });
+    const fetched = mockFetchApiToken.mock.calls.length;
+
+    clearUserScope();
+    await apiClient.request('/me', { schema });
+
+    expect(queryClient.clear).toHaveBeenCalledTimes(1);
+    expect(mockFetchApiToken.mock.calls.length).toBe(fetched + 1);
+  });
+
+  it('signs the user out when the auth service says the session is gone while fetching a token', async () => {
+    mockFetchApiToken.mockResolvedValue(null);
+    getSession.mockResolvedValue({ data: null, error: null });
+    fetchMock.mockImplementation(() => ok({ detail: 'Not authenticated' }, 401));
+
+    await expect(apiClient.request('/me', { schema })).rejects.toMatchObject({ status: 401 });
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(signOut).toHaveBeenCalledTimes(1);
   });
 });

@@ -24,6 +24,15 @@ Date: 2026-10-30. Spec: `docs/superpowers/specs/2026-10-30-better-auth-integrati
 - App: `pnpm check` (eslint 0 warnings, tsc, jest 56 suites / 459 tests) and `pnpm format:check` pass.
 - `npx expo-doctor`: 19/20; the failing check (11 packages out of date) also fails without these changes.
 
+## Review fixes (Opus whole-branch review)
+
+Fixed with a failing test first: the already-used email code (`USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`, checked against the
+running service); the navigator no longer unmounts on a session refetch and the splash no longer waits on a slow auth host
+(`useSessionGate`, 3 s cap); a `/token` 401 now signs out; the previous user's JWT and queries are cleared before the remote
+sign-out and whenever the user id changes. Deferred minors: offline sign-in shows the raw English fetch error, a sign-out
+failure is not shown, the FastAPI key cache has no TTL, and `API_AUDIENCE` has no default outside compose. Accepted: a network
+failure while refreshing the JWT surfaces as a non-retried 401 (the user stays signed in).
+
 ## Not verified
 
 - **Nothing was run on the phone.** `adb devices` listed no device when this was attempted, so sign-up on the device, relaunch

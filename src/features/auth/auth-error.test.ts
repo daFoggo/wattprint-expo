@@ -10,8 +10,14 @@ describe('toAuthError', () => {
   });
 
   it('keeps the error code in the body', () => {
-    const error = toAuthError({ status: 422, code: 'USER_ALREADY_EXISTS', message: 'taken' });
-    expect((error as ApiError).body).toMatchObject({ code: 'USER_ALREADY_EXISTS' });
+    const error = toAuthError({
+      status: 422,
+      code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL',
+      message: 'taken',
+    });
+    expect((error as ApiError).body).toMatchObject({
+      code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL',
+    });
   });
 
   it('falls back to the HTTP status text when there is no message', () => {
@@ -31,7 +37,7 @@ describe('authErrorKey', () => {
   });
 
   it('maps an already-used email to the email-taken key', () => {
-    const body = { status: 422, code: 'USER_ALREADY_EXISTS' };
+    const body = { status: 422, code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL' };
     expect(authErrorKey(new ApiError(422, 'User already exists', body))).toBe(
       'auth.errors.emailTaken',
     );

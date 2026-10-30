@@ -8,7 +8,10 @@ export function authErrorKey(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
   if (error.status === 401) return 'auth.errors.invalidCredentials';
   const code = (error.body as { code?: unknown } | null)?.code;
-  if (code === 'USER_ALREADY_EXISTS') return 'auth.errors.emailTaken';
+  // Better Auth 1.7 sends USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL (verified against the running service).
+  if (typeof code === 'string' && code.startsWith('USER_ALREADY_EXISTS')) {
+    return 'auth.errors.emailTaken';
+  }
   return null;
 }
 

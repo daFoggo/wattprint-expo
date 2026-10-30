@@ -70,7 +70,11 @@ describe('useSignUp', () => {
   it('surfaces an already-used email as an ApiError', async () => {
     signUpEmail.mockResolvedValue({
       data: null,
-      error: { status: 422, code: 'USER_ALREADY_EXISTS', message: 'User already exists' },
+      error: {
+        status: 422,
+        code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL',
+        message: 'User already exists',
+      },
     });
     const { result } = await renderHook(() => useSignUp(), { wrapper });
 

@@ -176,9 +176,10 @@ the default".
 Auth is Better Auth (spec `docs/superpowers/specs/2026-10-30-better-auth-integration-design.md`). The session lives in
 SecureStore, written by `expoClient` (`src/lib/auth-client.ts`); there is no Zustand session store, the route guard reads
 `authClient.useSession()` in `src/app/_layout.tsx`. The JWT for FastAPI is held in memory only by `createTokenProvider`
-(`src/lib/auth-token.ts`) and is never persisted or logged. Sign-out is `signOutAndClear` (`src/lib/session.ts`): remote
-sign-out, drop the cached JWT and `queryClient.clear()`, the last two even when the remote call fails (verified:
-`src/lib/session.test.ts`). No user-scoped Zustand store exists yet. The rule for any store added later:
+(`src/lib/auth-token.ts`) and is never persisted or logged. Sign-out is `signOutAndClear` (`src/lib/session.ts`): drop the
+cached JWT and `queryClient.clear()` first, then the remote sign-out, so a slow or failing remote call cannot leave the
+previous user's data behind (verified: `src/lib/session.test.ts`). `useSessionGate` (`src/hooks/use-session-gate.ts`) repeats
+that cleanup whenever the signed-in user id changes (for example a session that ended on the server). No user-scoped Zustand store exists yet. The rule for any store added later:
 
 | Store scope                     | On logout                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------- |

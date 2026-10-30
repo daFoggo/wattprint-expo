@@ -4,17 +4,27 @@ import { createTokenProvider } from '@/lib/auth-token';
 import { createApiClient } from '@/lib/http';
 import { queryClient } from '@/lib/query-client';
 
-const tokens = createTokenProvider({ fetchToken: fetchApiToken });
+const tokens = createTokenProvider({
+  fetchToken: async () => {
+    const token = await fetchApiToken();
+    // The auth service rejected the session: confirm it and sign out, instead of sending
+    // token-less requests that FastAPI answers with 401 forever.
+    if (!token) void handleSessionExpired();
+    return token;
+  },
+});
 
-// Local sign-out cleanup runs even when the remote call fails, so the next user never sees the
-// previous user's token or cached data. The remote failure still reaches the caller.
+// Forget everything that belongs to the current user: the cached JWT and the query cache.
+export function clearUserScope(): void {
+  tokens.clear();
+  queryClient.clear();
+}
+
+// The local cleanup runs before the remote call, so a slow or failing sign-out can never leave the
+// previous user's token or data for the next user. A remote failure still reaches the caller.
 export async function signOutAndClear(): Promise<void> {
-  try {
-    await authClient.signOut();
-  } finally {
-    tokens.clear();
-    queryClient.clear();
-  }
+  clearUserScope();
+  await authClient.signOut();
 }
 
 // Called when the API rejected a fresh token. Only a server that says "no session" signs the user
