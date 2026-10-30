@@ -14,6 +14,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from '@/components/ui/modal';
+import { useSignOut } from '@/features/auth/hooks/use-sign-out';
 import { usePreferencesStore, type ThemePreference } from '@/stores/preferences-store';
 
 import { SampleForm } from './sample-form';
@@ -24,6 +25,7 @@ export function Settings() {
   const { t } = useTranslation();
   const theme = usePreferencesStore((s) => s.theme);
   const setTheme = usePreferencesStore((s) => s.setTheme);
+  const signOut = useSignOut();
   const [showModal, setShowModal] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [secureStatus, setSecureStatus] = useState<string | null>(null);
@@ -76,6 +78,10 @@ export function Settings() {
           {secureStatus}
         </Text>
       )}
+
+      <Button variant="outline" disabled={signOut.isPending} onPress={() => signOut.mutate()}>
+        <ButtonText>{t('settings.signOut')}</ButtonText>
+      </Button>
 
       <Button onPress={() => setShowModal(true)}>
         <ButtonText>{t('settings.openModal')}</ButtonText>

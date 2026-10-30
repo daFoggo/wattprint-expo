@@ -1,6 +1,6 @@
 import { ApiError, NetworkError } from '@/lib/errors';
 
-import { toAuthError } from './auth-error';
+import { authErrorKey, toAuthError } from './auth-error';
 
 describe('toAuthError', () => {
   it('turns a Better Auth rejection into an ApiError with its message', () => {
@@ -20,5 +20,25 @@ describe('toAuthError', () => {
 
   it('treats status 0 (no response) as a NetworkError', () => {
     expect(toAuthError({ status: 0, message: 'Failed to fetch' })).toBeInstanceOf(NetworkError);
+  });
+});
+
+describe('authErrorKey', () => {
+  it('maps wrong credentials to the invalid-credentials key', () => {
+    expect(authErrorKey(new ApiError(401, 'Invalid email or password', {}))).toBe(
+      'auth.errors.invalidCredentials',
+    );
+  });
+
+  it('maps an already-used email to the email-taken key', () => {
+    const body = { status: 422, code: 'USER_ALREADY_EXISTS' };
+    expect(authErrorKey(new ApiError(422, 'User already exists', body))).toBe(
+      'auth.errors.emailTaken',
+    );
+  });
+
+  it('has no key for other errors, so the caller shows the raw message', () => {
+    expect(authErrorKey(new ApiError(500, 'boom', {}))).toBeNull();
+    expect(authErrorKey(new Error('x'))).toBeNull();
   });
 });

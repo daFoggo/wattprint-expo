@@ -38,7 +38,8 @@
     "secureStoreError": "secure-store: error {{message}}",
     "openModal": "Open modal",
     "modalTitle": "Base check",
-    "modalBody": "gluestack-ui v5 with Uniwind works."
+    "modalBody": "gluestack-ui v5 with Uniwind works.",
+    "signOut": "Sign out"
   },
   "form": {
     "email": "Email",
@@ -94,5 +95,32 @@
     "topShare": "{{name}}: {{share}}% of total",
     "chartSummaryEmpty": "{{range}}: no usage",
     "chartSummary": "{{range}}: {{total}} kWh, peak {{peak}}"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "validation": {
+      "emailInvalid": "Enter a valid email address",
+      "passwordShort": "Password must be at least 8 characters",
+      "nameRequired": "Enter your name",
+      "nameTooLong": "Name must be at most 64 characters"
+    },
+    "errors": {
+      "invalidCredentials": "Wrong email or password",
+      "emailTaken": "An account with this email already exists"
+    },
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Welcome back to Wattprint",
+      "submit": "Sign in",
+      "toSignUp": "No account yet? Create one"
+    },
+    "signUp": {
+      "title": "Create account",
+      "subtitle": "Start tracking your home energy",
+      "submit": "Create account",
+      "toSignIn": "Already have an account? Sign in"
+    }
   }
 }
