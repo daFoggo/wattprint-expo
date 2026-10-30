@@ -26,7 +26,7 @@ Read the digest for the pattern, then the doc section for the rule and the reaso
 | Lint forbids an import | Fix the layer; compose features in `src/screens` | [digest][arch] / [doc][arch-rules] |
 | Call the backend, query keys, `staleTime` | `<feature>/api.ts`, `createApiClient`, Zod; typed errors | [digest][data] / [doc][data-rules] |
 | Loading, empty, error, offline UI | `components/states/*`; keep cached data on refresh error | [digest][data] / [doc][ds-states] |
-| Query persistence, auth store, chat streaming | Not decided: read the backlog first | [digest][data] / [doc][data-open] |
+| Query persistence, chat streaming (auth is decided: Better Auth, `docs/data-fetching.md`) | Not decided: read the backlog first | [digest][data] / [doc][data-open] |
 | Build or extend a component | Compound parts, `variant`/`size`, `ref` as a prop | [digest][comp] / [doc][comp-variants] |
 | Edit or add a gluestack part | Hand-copy, stable pins, note deviation; never the CLI | [digest][tool] / [doc][comp-vendored], [README][decisions] |
 | Move a component to shared | Only when a second feature needs it | [digest][comp] / [doc][comp-extract] |

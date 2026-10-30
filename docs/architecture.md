@@ -42,9 +42,9 @@ The first three are enforced by `eslint.boundaries.js` (proved by `scripts/bound
 (`device-selectors.ts`, `energy-selectors.ts`), `hooks/`, `components/`, `screens/` and tests. They have no `<feature>/api.ts` and
 no `<feature>/queries.ts` yet, because no backend contract exists; `mock-data.ts` and `*-selectors.ts` are allowed extra files
 (opinion: they are feature-specific; a feature-specific extra file is allowed by the layout above). The device on/off state is
-`DeviceStatesProvider` (`src/features/devices/device-states.tsx`), mounted in `src/app/_layout.tsx` above `NativeTabs` so
+`DeviceStatesProvider` (`src/features/devices/device-states.tsx`), mounted in `src/app/(app)/_layout.tsx` above `NativeTabs` so
 Home and Devices share it; the root layout may import it because `src/app` is allowed to import features
-(verified: `src/features/devices/device-states.tsx`, `src/app/_layout.tsx`, `eslint.boundaries.js`). `src/screens/home` is the only
+(verified: `src/features/devices/device-states.tsx`, `src/app/(app)/_layout.tsx`, `eslint.boundaries.js`). `src/screens/home` is the only
 screen composing two features; `src/screens/settings` holds the base checks. When a backend contract exists, add
 `<feature>/api.ts` and `<feature>/queries.ts` and make the provider read from them.
 

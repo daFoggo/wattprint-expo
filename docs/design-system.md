@@ -239,7 +239,7 @@ Placeholder, cursor and selection colours come from `*ClassName` bindings alread
 ### Headers and tab bar
 
 The Home and Devices tabs hide the native header (`<Stack screenOptions={{ headerShown: false }}>`, verified:
-`src/app/(home)/_layout.tsx`, `src/app/(devices)/_layout.tsx`) and render their scroll content in
+`src/app/(app)/(home)/_layout.tsx`, `src/app/(app)/(devices)/_layout.tsx`) and render their scroll content in
 `CollapsingScrollView` (`src/components/collapsing-scroll-view.tsx`), the Sense pattern: a large title (`ScreenHeader`,
 `src/components/screen-header.tsx`: `text-3xl` bold, optional subtitle and action) at the top of the content that scrolls away,
 and a flat compact bar (`bg-background`, no blur, border or shadow) with the centred title that fades in between 16 and 48 dp of
