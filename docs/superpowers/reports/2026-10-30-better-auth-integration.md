@@ -33,17 +33,25 @@ sign-out and whenever the user id changes. Deferred minors: offline sign-in show
 failure is not shown, the FastAPI key cache has no TTL, and `API_AUDIENCE` has no default outside compose. Accepted: a network
 failure while refreshing the JWT surfaces as a non-retried 401 (the user stays signed in).
 
+## Emulator verification (2026-10-30, `Medium_Phone_API_37.0`, user chose it instead of the phone)
+
+Dev build `com.dafoggo.wattprint.dev` already installed, Metro `--dev-client`, `adb reverse` for 8081, 3000 and 8000, docker
+stack running. Observed:
+
+- Cold start signed out: first showed "Page not found" (a signed-out `/` matched only the guarded tab). Fixed by
+  `src/app/(auth)/index.tsx` redirecting to sign-in; relaunch then showed the sign-in screen.
+- Sign-up with name, email and password: landed on the Home tab; the user exists in `auth."user"`.
+- `adb shell am force-stop` and relaunch: still signed in. Same with the auth container stopped (connection refused): tabs
+  shown, no sign-in flash.
+- A temporary `apiClient.request('/me')` call on Home (removed, not committed) returned the signed-in user, and the FastAPI log
+  showed `GET /api/v1/me 200`.
+- Settings, Sign out: back on the sign-in screen. Wrong password: "Wrong email or password". Correct password: Home again.
+- `logcat ReactNativeJS` had no `E` lines.
+
 ## Not verified
 
-- **Nothing was run on the phone.** `adb devices` listed no device when this was attempted, so sign-up on the device, relaunch
-  while signed in, offline launch, wrong-password message, sign-out and user switch, and the logcat check are still to do
-  (see "Device verification" in `AGENTS.md`).
-- Whether `authClient.useSession()` stops reporting `isPending` quickly when the app launches offline (the splash now waits at most 3 s, see
-  `useSessionGate`) is unverified.
-- `@better-auth/expo` 1.7.14 on Expo SDK 58 compiles and unit tests pass, but its runtime behaviour on a device is unverified.
-- Cleartext `http://localhost` from the dev build through `adb reverse` is unverified.
-
-## Docs changed
-
-`docs/client-state.md`, `docs/data-fetching.md`, `docs/architecture.md`, `docs/design-system.md` (route paths), `README.md`,
-`AGENTS.md`, and the `wattprint-base` skill. The FastAPI `README.md` was updated in its own repo.
+- **Not run on the physical phone** (not connected). The emulator is x86; behaviour on the Pixel 8a (ARM) is unchecked.
+- Already-used email and offline sign-in on the device (the duplicate code was checked against the service with `curl`, the
+  messages are unit-tested).
+- A launch where the auth host accepts the connection but never answers (the splash cap is 3 s, unit-tested only).
+- Cleartext `http://localhost` worked on the emulator through `adb reverse`; the phone is unchecked.
