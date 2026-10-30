@@ -5,7 +5,7 @@ Date: 2026-10-30. Status: draft, awaiting approval. Written against Expo SDK 58 
 Related: `docs/superpowers/backlog/2026-10-25-auth-session-store.md`, `docs/client-state.md`, `docs/data-fetching.md`,
 `docs/architecture.md`.
 
-`docs/backend/` (untracked, 2026-10-28) proposes hand-written `/auth/*` endpoints with a refresh-token pair. It is
+docs/backend/ (a local draft, not in git, 2026-10-28) proposes hand-written `/auth/*` endpoints with a refresh-token pair. It is
 **superseded** by this design: Better Auth is the only auth system. Do not read its auth section as a contract.
 
 ## Intent
