@@ -38,7 +38,7 @@ token-themed screens only).
 ## Constraints
 
 - Better Auth is TypeScript only; it stays the separate Node/Hono service in `wattprint-fastapi/auth/` (verified:
-  `auth/src/auth.ts`, `auth/src/index.ts`). It already has `expo()`, `bearer()`, email/password, schema `auth`.
+  auth/src/auth.ts (FastAPI repo), auth/src/index.ts). It already has `expo()`, `bearer()`, email/password, schema `auth`.
 - `better-auth` and `@better-auth/expo` must be the same version in the app and the service. The service has `^1.4`;
   `next-mono-base` runs 1.7.11. Pin one version on both sides after checking it supports the Expo SDK 58 setup.
 - Install in the app with `npx expo install` (AGENTS.md); no `expo-web-browser` (only needed for social login).
@@ -95,7 +95,7 @@ Chosen by the user: **B**. (Chosen over A because it matches Better Auth's own g
 - Session state: `authClient.useSession()` drives gating (it is cached in SecureStore, so launch works offline). Root layout
   holds the splash until `isPending` is false and uses `Stack.Protected` with an `(auth)` group (sign-in, sign-up) and the
   existing tabs behind the guard.
-- Screens in `src/screens/auth/` (sign-in, sign-up) with feature code in `src/features/auth/` (schemas with Zod, hooks);
+- Screens in src/screens/auth (sign-in, sign-up) with feature code in src/features/auth (schemas with Zod, hooks);
   strings in `en.json` and `vi.json`; settings screen gets a sign-out row.
 - Sign-out: `authClient.signOut()`, clear the in-memory token, `queryClient.clear()`, reset user-scoped stores
   (`docs/client-state.md` section 6). Device-scoped preferences stay.
@@ -113,7 +113,7 @@ Chosen by the user: **B**. (Chosen over A because it matches Better Auth's own g
 ## Docs touched (Expo repo)
 
 `docs/client-state.md` (session and token rules), `docs/data-fetching.md` (auth client and token source),
-`docs/architecture.md` (`features/auth`), `README.md` and `.env.example` (`EXPO_PUBLIC_AUTH_URL`), `AGENTS.md` Device
+`docs/architecture.md` (features/auth), `README.md` and `.env.example` (`EXPO_PUBLIC_AUTH_URL`), `AGENTS.md` Device
 verification (`adb reverse` for auth and API), the `wattprint-base` skill, and the auth backlog item is closed in a report.
 In `wattprint-fastapi`: `README.md` (env, JWT flow).
 
@@ -128,7 +128,7 @@ In `wattprint-fastapi`: `README.md` (env, JWT flow).
 3. **Stale claims.** Name, email and `emailVerified` in the JWT can lag by up to 15 minutes; accepted.
 4. **Versions.** No upgrade of the auth service: the app pins the exact `better-auth` and `@better-auth/expo` versions the
    service already resolves, so existing dev data is untouched. Only the `jwks` table is added.
-5. **Migration.** The `auth` container already runs `npm run migrate` on start (verified: `docker-compose.yml`) with the
+5. **Migration.** The `auth` container already runs `npm run migrate` on start (verified: docker-compose.yml (FastAPI repo)) with the
    `POSTGRES_USER` role, so the `jwks` table appears on the next `docker compose up`.
 6. **Issuer.** One issuer only: `BETTER_AUTH_URL`, `http://localhost:3000` in dev. The emulator and phone both use
    `adb reverse`, so there is no second origin.
