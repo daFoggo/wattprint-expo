@@ -8,7 +8,19 @@ describe('env', () => {
     expect(parseEnv({})).toEqual({
       EXPO_PUBLIC_APP_ENV: 'development',
       EXPO_PUBLIC_API_URL: undefined,
+      EXPO_PUBLIC_AUTH_URL: undefined,
     });
+  });
+
+  it('accepts an auth url and treats an empty one as undefined', () => {
+    expect(parseEnv({ EXPO_PUBLIC_AUTH_URL: 'http://localhost:3000' }).EXPO_PUBLIC_AUTH_URL).toBe(
+      'http://localhost:3000',
+    );
+    expect(parseEnv({ EXPO_PUBLIC_AUTH_URL: '' }).EXPO_PUBLIC_AUTH_URL).toBeUndefined();
+  });
+
+  it('rejects an invalid auth url', () => {
+    expect(() => parseEnv({ EXPO_PUBLIC_AUTH_URL: 'not-a-url' })).toThrow(/EXPO_PUBLIC_AUTH_URL/);
   });
 
   it('rejects an unknown app env', () => {

@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const envSchema = z.object({
   EXPO_PUBLIC_APP_ENV: z.enum(['development', 'preview', 'production']).default('development'),
   EXPO_PUBLIC_API_URL: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
+  EXPO_PUBLIC_AUTH_URL: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -20,4 +21,5 @@ export function parseEnv(raw: Record<string, string | undefined>): Env {
 export const env: Env = parseEnv({
   EXPO_PUBLIC_APP_ENV: process.env.EXPO_PUBLIC_APP_ENV,
   EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+  EXPO_PUBLIC_AUTH_URL: process.env.EXPO_PUBLIC_AUTH_URL,
 });
