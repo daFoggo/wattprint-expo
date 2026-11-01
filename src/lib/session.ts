@@ -1,7 +1,9 @@
 import { env } from '@/env';
-import { authService, fetchApiToken } from '@/lib/auth-client';
+import { authService, fetchApiToken, secureStorage } from '@/lib/auth-client';
 import { createTokenProvider } from '@/lib/auth-token';
+import { NetworkError } from '@/lib/errors';
 import { createApiClient } from '@/lib/http';
+import { removeLegacyAuthKeys } from '@/lib/legacy-auth-storage';
 import { queryClient } from '@/lib/query-client';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -51,8 +53,13 @@ export async function handleSessionExpired(): Promise<void> {
   try {
     if (await tokens.refresh()) return;
     await signOutAndClear().catch(() => undefined);
-  } catch {
-    // Network or server failure: keep the user signed in.
+  } catch (error) {
+    // Offline: keep the user signed in. Anything else (storage, contract) leaves no way to get a
+    // token, so sign out locally instead of a "signed in" app where every request fails.
+    if (!(error instanceof NetworkError)) {
+      clearUserScope();
+      useAuthStore.getState().setSignedOut();
+    }
   } finally {
     expiring = false;
   }
@@ -64,6 +71,7 @@ export async function handleSessionExpired(): Promise<void> {
 export async function bootstrapAuth(): Promise<void> {
   const { status, setSignedIn, setSignedOut } = useAuthStore.getState();
   if (status !== 'unknown') return;
+  void removeLegacyAuthKeys(secureStorage);
   const stored = await authService.hasStoredSession().catch(() => false);
   // A sign-in or sign-out that finished while the store was being read wins.
   if (useAuthStore.getState().status !== 'unknown') return;

@@ -465,3 +465,52 @@ describe('signOut with a failing store', () => {
     expect(calls.map((c) => c.route)).toEqual(['POST /auth/logout']);
   });
 });
+
+describe('when storage fails after a successful rotation', () => {
+  const credentials = { email: 'a@example.com', password: 'password123' };
+
+  it('keeps the new token in memory and never replays the spent one', async () => {
+    const { storage, data } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    (storage.set as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
+    expect(data.get(KEY)).toBe('r1');
+
+    // The next refresh presents r2 (not the spent r1) and writes it back first.
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
+    expect(server.log).toEqual(['refresh:r1', 'refresh:r2']);
+    expect(data.get(KEY)).toBe('r3');
+  });
+
+  it('keeps the session alive for the app run when storage never works again', async () => {
+    const { storage } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    (storage.set as jest.Mock).mockRejectedValue(new Error('keystore locked'));
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r4');
+    expect(server.log).toEqual(['refresh:r1', 'refresh:r2', 'refresh:r3']);
+    expect(await service.hasStoredSession()).toBe(true);
+  });
+
+  it('signs out with the unsaved token', async () => {
+    const { storage } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    (storage.set as jest.Mock).mockRejectedValue(new Error('keystore locked'));
+    await service.refreshAccessToken();
+    await service.signOut();
+
+    expect(server.log).toEqual(['refresh:r1', 'logout:r2']);
+    expect(server.live()).toEqual([]);
+    expect(await service.hasStoredSession()).toBe(false);
+  });
+});

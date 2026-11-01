@@ -73,6 +73,28 @@ export function createAuthService(options: AuthServiceOptions) {
   let refreshing: Promise<string | null> | null = null;
   // Bumped by sign-in and sign-out: a refresh that started before must not write the old session back.
   let epoch = 0;
+  // A rotated refresh token that could not be written to storage. The old one is spent on the server,
+  // so this one is the only valid token: it is the source of truth until storage accepts it.
+  let unsaved: string | null = null;
+
+  async function persist(token: string): Promise<void> {
+    unsaved = token;
+    try {
+      await storage.set(key, token);
+      if (unsaved === token) unsaved = null;
+    } catch {
+      // Kept in memory and written again on the next call; the session works for this app run.
+    }
+  }
+
+  async function currentToken(): Promise<string | null> {
+    if (unsaved !== null) {
+      const token = unsaved;
+      await persist(token);
+      return token;
+    }
+    return storage.get(key);
+  }
 
   async function call(path: string, init: RequestInit, limitMs = timeoutMs): Promise<Reply> {
     const controller = new AbortController();
@@ -121,11 +143,13 @@ export function createAuthService(options: AuthServiceOptions) {
     const tokens = parse(tokenPairSchema, reply.body, '/auth/token');
 
     epoch += 1;
-    await storage.set(key, tokens.refresh_token);
+    unsaved = null;
+    await persist(tokens.refresh_token);
 
     // No half session: when the profile cannot be loaded, give the new token back to the server.
     const abandon = async () => {
       await json('/auth/logout', { refresh_token: tokens.refresh_token }).catch(() => undefined);
+      unsaved = null;
       await storage.remove(key);
     };
     let me: Reply;
@@ -163,7 +187,7 @@ export function createAuthService(options: AuthServiceOptions) {
 
   async function rotate(): Promise<string | null | typeof STALE> {
     const startedIn = epoch;
-    const stored = await storage.get(key);
+    const stored = await currentToken();
     if (!stored) return null;
 
     const reply = await json('/auth/refresh', { refresh_token: stored }, REFRESH_TIMEOUT_MS);
@@ -179,6 +203,7 @@ export function createAuthService(options: AuthServiceOptions) {
       return STALE;
     }
     if (reply.status === 401) {
+      unsaved = null;
       await storage.remove(key);
       return null;
     }
@@ -187,7 +212,7 @@ export function createAuthService(options: AuthServiceOptions) {
     }
     const tokens = parse(tokenPairSchema, reply.body, '/auth/refresh');
     // The old token is spent now: persist the new one before anything else can fail or return.
-    await storage.set(key, tokens.refresh_token);
+    await persist(tokens.refresh_token);
     return tokens.access_token;
   }
 
@@ -214,7 +239,8 @@ export function createAuthService(options: AuthServiceOptions) {
     // spent token is never presented (a reused refresh token revokes the whole chain).
     await refreshing?.catch(() => undefined);
     epoch += 1;
-    const stored = await storage.get(key).catch(() => null);
+    const stored = unsaved ?? (await storage.get(key).catch(() => null));
+    unsaved = null;
     let removeError: unknown;
     let removeFailed = false;
     try {
@@ -235,7 +261,7 @@ export function createAuthService(options: AuthServiceOptions) {
   }
 
   async function hasStoredSession(): Promise<boolean> {
-    return (await storage.get(key)) !== null;
+    return unsaved !== null || (await storage.get(key)) !== null;
   }
 
   return { signUp, signIn, refreshAccessToken, signOut, hasStoredSession };

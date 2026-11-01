@@ -3,6 +3,7 @@ import { queryClient } from '@/lib/query-client';
 import { z } from 'zod';
 
 import { authService, fetchApiToken } from '@/lib/auth-client';
+import { removeLegacyAuthKeys } from '@/lib/legacy-auth-storage';
 import { useAuthStore } from '@/stores/auth-store';
 
 import {
@@ -16,10 +17,13 @@ import {
 
 jest.mock('@/lib/auth-client', () => ({
   authService: { signOut: jest.fn(), hasStoredSession: jest.fn() },
+  secureStorage: { marker: 'secure-storage' },
   fetchApiToken: jest.fn(),
 }));
 
 const signOut = authService.signOut as unknown as jest.Mock;
+jest.mock('@/lib/legacy-auth-storage', () => ({ removeLegacyAuthKeys: jest.fn() }));
+
 const hasStoredSession = authService.hasStoredSession as unknown as jest.Mock;
 const mockFetchApiToken = fetchApiToken as unknown as jest.Mock;
 // handleSessionExpired refreshes through the token provider, which calls fetchApiToken.
@@ -92,6 +96,14 @@ describe('handleSessionExpired', () => {
     expect(useAuthStore.getState().status).toBe('signedIn');
   });
 
+  it('signs out locally, without a server call, on an unexpected error (storage, contract)', async () => {
+    refresh.mockRejectedValue(new Error('keystore unreadable'));
+    await handleSessionExpired();
+    expect(signOut).not.toHaveBeenCalled();
+    expect(queryClient.clear).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState()).toMatchObject({ status: 'signedOut', user: null });
+  });
+
   it('does not loop: a null refresh asks the server once, then signs out once', async () => {
     refresh.mockResolvedValue(null);
     await handleSessionExpired();
@@ -144,6 +156,12 @@ describe('bootstrapAuth', () => {
     hasStoredSession.mockReset();
     refresh.mockReset();
     useAuthStore.setState({ status: 'unknown', user: null });
+  });
+
+  it('removes the legacy keys once at start', async () => {
+    hasStoredSession.mockResolvedValue(false);
+    await bootstrapAuth();
+    expect(removeLegacyAuthKeys).toHaveBeenCalledWith({ marker: 'secure-storage' });
   });
 
   it('is signed in when a refresh token is stored, without calling the server', async () => {
