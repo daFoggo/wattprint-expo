@@ -96,8 +96,8 @@ app.config.ts, app.json, eas.json, metro.config.js, eslint.config.js, jest.setup
 ## Environment
 
 `src/env.ts` validates `EXPO_PUBLIC_APP_ENV` (`development` | `preview` | `production`, default
-`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) and `EXPO_PUBLIC_AUTH_URL` (Better Auth service)
-at startup. `EXPO_PUBLIC_*` values are inlined into the
+`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) (also the auth base URL: register, token, refresh and logout live under it; default `http://localhost:8000/api/v1`, use the LAN IP on a
+physical phone without `adb reverse`) at startup. `EXPO_PUBLIC_*` values are inlined into the
 bundle and are never secret. Read them only through static dot access (`process.env.EXPO_PUBLIC_X`),
 as `src/env.ts` does; destructuring or bracket access is not inlined.
 

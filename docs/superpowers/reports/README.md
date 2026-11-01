@@ -41,3 +41,4 @@ Do not edit a report after the fact except to fix a factual error; write a new r
 - [2026-10-25-vercel-rn-audit](2026-10-25-vercel-rn-audit.md): React Native best-practice audit.
 - [2026-10-25-wave-c](2026-10-25-wave-c.md): contrast, Input 48 dp, project skill, docs-links guard.
 - [2026-10-26-smarthome-ui-demo](2026-10-26-smarthome-ui-demo.md): Home, Devices, Energy and Settings tabs on mock data.
+- [2026-11-01-fastapi-jwt-auth](2026-11-01-fastapi-jwt-auth.md): auth moved from Better Auth to the FastAPI-native JWT backend.

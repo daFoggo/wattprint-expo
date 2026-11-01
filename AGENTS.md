@@ -89,8 +89,9 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 - No Expo Go. Use the dev build on the physical phone (Pixel 8a, adb serial `3C081JEKB17021`; always
   `adb -s 3C081JEKB17021 ...`): `pnpm android` for native changes, `npx expo start --dev-client` for JS-only changes.
   Metro is reached through `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, so the deep link uses `localhost:8081`.
-  The auth service and FastAPI (docker compose in `wattprint-fastapi`) are reached the same way:
-  `adb -s 3C081JEKB17021 reverse tcp:3000 tcp:3000` and `tcp:8000 tcp:8000` (the app defaults to `localhost` for both).
+  FastAPI (docker compose in `wattprint-fastapi`, auth included) is reached the same way:
+  `adb -s 3C081JEKB17021 reverse tcp:8000 tcp:8000` (the app defaults `EXPO_PUBLIC_API_URL` to `http://localhost:8000/api/v1`; without
+  `adb reverse`, set it to the LAN IP of the machine).
 - Fallback (optional): the emulator `Medium_Phone_API_37.0` (`emulator-5554`). Its builds are x86 and the phone is ARM, so an
   x86 apk does not install on the phone; use the matching device for each build and use `10.0.2.2:8081` in the deep link there.
 - Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S`: no `E` lines.

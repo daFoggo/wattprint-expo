@@ -19,8 +19,8 @@ src/
                       *.test.ts(x)    colocated (feature-specific extra folders are allowed)
   screens/            only screens that compose 2+ features
   components/ui/      gluestack (hand-copied)        components/states/  loading, empty, error
-  lib/                http, errors, query-client, online-manager, nav-theme, storage
-  stores/             app-wide stores (preferences; session planned)      hooks/  i18n/  env.ts
+  lib/                http, errors, auth-service, query-client, online-manager, nav-theme, storage
+  stores/             app-wide stores (preferences, auth status)      hooks/  i18n/  env.ts
 ```
 
 ## Rules
