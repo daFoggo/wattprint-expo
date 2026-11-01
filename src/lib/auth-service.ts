@@ -84,6 +84,9 @@ export function createAuthService(options: AuthServiceOptions) {
       if (unsaved === token) unsaved = null;
     } catch {
       // Kept in memory and written again on the next call; the session works for this app run.
+      // The previous token on disk is spent (or belongs to the last user): drop it, so a restart
+      // lands signed out instead of replaying it, which the server answers by revoking everything.
+      await storage.remove(key).catch(() => undefined);
     }
   }
 

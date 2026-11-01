@@ -2,7 +2,7 @@ import { NetworkError } from '@/lib/errors';
 import { queryClient } from '@/lib/query-client';
 import { z } from 'zod';
 
-import { authService, fetchApiToken } from '@/lib/auth-client';
+import { authService, fetchApiToken, secureStorage } from '@/lib/auth-client';
 import { removeLegacyAuthKeys } from '@/lib/legacy-auth-storage';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -17,13 +17,15 @@ import {
 
 jest.mock('@/lib/auth-client', () => ({
   authService: { signOut: jest.fn(), hasStoredSession: jest.fn() },
-  secureStorage: { marker: 'secure-storage' },
+  secureStorage: { marker: 'secure-storage', remove: jest.fn() },
+  REFRESH_TOKEN_KEY: 'wattprint.refresh-token',
   fetchApiToken: jest.fn(),
 }));
 
 const signOut = authService.signOut as unknown as jest.Mock;
 jest.mock('@/lib/legacy-auth-storage', () => ({ removeLegacyAuthKeys: jest.fn() }));
 
+const removeStored = secureStorage.remove as unknown as jest.Mock;
 const hasStoredSession = authService.hasStoredSession as unknown as jest.Mock;
 const mockFetchApiToken = fetchApiToken as unknown as jest.Mock;
 // handleSessionExpired refreshes through the token provider, which calls fetchApiToken.
@@ -69,6 +71,7 @@ describe('handleSessionExpired', () => {
   beforeEach(() => {
     signOut.mockReset().mockResolvedValue(undefined);
     refresh.mockReset();
+    removeStored.mockReset().mockResolvedValue(undefined);
     useAuthStore.setState({ status: 'signedIn', user: null });
     jest.spyOn(queryClient, 'clear').mockImplementation(() => undefined);
   });
@@ -102,6 +105,20 @@ describe('handleSessionExpired', () => {
     expect(signOut).not.toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState()).toMatchObject({ status: 'signedOut', user: null });
+    expect(removeStored).toHaveBeenCalledWith('wattprint.refresh-token');
+  });
+
+  it('still signs out locally when the stored token cannot be removed', async () => {
+    refresh.mockRejectedValue(new Error('keystore unreadable'));
+    removeStored.mockRejectedValue(new Error('keystore locked'));
+    await expect(handleSessionExpired()).resolves.toBeUndefined();
+    expect(useAuthStore.getState().status).toBe('signedOut');
+  });
+
+  it('does not remove the stored token on a network failure', async () => {
+    refresh.mockRejectedValue(new NetworkError('offline'));
+    await handleSessionExpired();
+    expect(removeStored).not.toHaveBeenCalled();
   });
 
   it('does not loop: a null refresh asks the server once, then signs out once', async () => {
@@ -155,13 +172,16 @@ describe('bootstrapAuth', () => {
   beforeEach(() => {
     hasStoredSession.mockReset();
     refresh.mockReset();
+    (removeLegacyAuthKeys as jest.Mock).mockClear();
     useAuthStore.setState({ status: 'unknown', user: null });
   });
 
   it('removes the legacy keys once at start', async () => {
     hasStoredSession.mockResolvedValue(false);
     await bootstrapAuth();
-    expect(removeLegacyAuthKeys).toHaveBeenCalledWith({ marker: 'secure-storage' });
+    await bootstrapAuth();
+    expect(removeLegacyAuthKeys).toHaveBeenCalledTimes(1);
+    expect(removeLegacyAuthKeys).toHaveBeenCalledWith(secureStorage);
   });
 
   it('is signed in when a refresh token is stored, without calling the server', async () => {

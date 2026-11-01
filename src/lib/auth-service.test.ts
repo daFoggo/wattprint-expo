@@ -477,12 +477,31 @@ describe('when storage fails after a successful rotation', () => {
 
     (storage.set as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
     await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
-    expect(data.get(KEY)).toBe('r1');
+    // The spent r1 must not stay on disk: a restart would replay it and revoke the chain.
+    expect(data.has(KEY)).toBe(false);
 
     // The next refresh presents r2 (not the spent r1) and writes it back first.
     await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
     expect(server.log).toEqual(['refresh:r1', 'refresh:r2']);
     expect(data.get(KEY)).toBe('r3');
+  });
+
+  it('does not leave the previous user token on disk when a later sign-in cannot save', async () => {
+    const { storage, data } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    // A's sign-out cannot delete the token: it stays on disk.
+    (storage.remove as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
+    await expect(service.signOut()).rejects.toThrow('keystore locked');
+    expect(data.get(KEY)).toBe('r1');
+
+    // B signs in but the store refuses the write: A's token must go, B works from memory.
+    (storage.set as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
+    await service.signIn({ email: 'b@example.com', password: 'password123' });
+    expect(data.has(KEY)).toBe(false);
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
   });
 
   it('keeps the session alive for the app run when storage never works again', async () => {

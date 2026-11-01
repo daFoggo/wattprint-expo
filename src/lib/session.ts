@@ -1,5 +1,5 @@
 import { env } from '@/env';
-import { authService, fetchApiToken, secureStorage } from '@/lib/auth-client';
+import { authService, fetchApiToken, REFRESH_TOKEN_KEY, secureStorage } from '@/lib/auth-client';
 import { createTokenProvider } from '@/lib/auth-token';
 import { NetworkError } from '@/lib/errors';
 import { createApiClient } from '@/lib/http';
@@ -59,6 +59,12 @@ export async function handleSessionExpired(): Promise<void> {
     if (!(error instanceof NetworkError)) {
       clearUserScope();
       useAuthStore.getState().setSignedOut();
+      // Also forget the stored token, so the next launch does not start signed in with a dead token.
+      try {
+        await secureStorage.remove(REFRESH_TOKEN_KEY);
+      } catch {
+        // Best effort.
+      }
     }
   } finally {
     expiring = false;
