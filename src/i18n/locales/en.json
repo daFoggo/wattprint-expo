@@ -108,7 +108,8 @@
     },
     "errors": {
       "invalidCredentials": "Wrong email or password",
-      "emailTaken": "An account with this email already exists"
+      "emailTaken": "An account with this email already exists",
+      "inactiveUser": "This account is disabled"
     },
     "signIn": {
       "title": "Sign in",

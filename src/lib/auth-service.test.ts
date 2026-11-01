@@ -96,17 +96,38 @@ describe('signIn', () => {
     ).rejects.toBeInstanceOf(NetworkError);
   });
 
-  it('does not keep a refresh token when loading the user fails', async () => {
+  it('hands the new token back and keeps nothing when loading the user fails', async () => {
     const { storage, data } = memoryStorage();
-    const { fn } = fakeFetch({
+    const { fn, calls } = fakeFetch({
       'POST /auth/token': () => tokens('access-1', 'refresh-1'),
       'GET /users/me': () => reply(500, { detail: 'boom' }),
+      'POST /auth/logout': () => reply(204),
     });
     const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
 
     await expect(
       service.signIn({ email: 'a@example.com', password: 'password123' }),
-    ).rejects.toMatchObject({ status: 500 });
+    ).rejects.toThrow(/Could not load the signed-in user/);
+
+    expect(data.size).toBe(0);
+    const logout = calls.find((c) => c.route === 'POST /auth/logout');
+    expect(JSON.parse(logout?.init.body as string)).toEqual({ refresh_token: 'refresh-1' });
+  });
+
+  it('does not report a /users/me 401 as wrong credentials', async () => {
+    const { storage, data } = memoryStorage();
+    const { fn } = fakeFetch({
+      'POST /auth/token': () => tokens('access-1', 'refresh-1'),
+      'GET /users/me': () => reply(401, { detail: 'Invalid or expired token' }),
+      'POST /auth/logout': () => Promise.reject(new TypeError('offline')),
+    });
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+
+    const error = await service
+      .signIn({ email: 'a@example.com', password: 'password123' })
+      .catch((e: unknown) => e);
+
+    expect(error).not.toBeInstanceOf(ApiError);
     expect(data.size).toBe(0);
   });
 });
@@ -256,28 +277,6 @@ describe('refreshAccessToken', () => {
     expect(JSON.parse(calls[1].init.body as string)).toEqual({ refresh_token: 'refresh-2' });
     expect(data.get(KEY)).toBe('refresh-3');
   });
-
-  it('does not write a session back when the user signed out during the refresh', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    let release!: () => void;
-    const gate = new Promise<void>((resolve) => (release = resolve));
-    const { fn } = fakeFetch({
-      'POST /auth/refresh': async () => {
-        await gate;
-        return tokens('access-2', 'refresh-2');
-      },
-      'POST /auth/logout': () => reply(204),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    const pending = service.refreshAccessToken();
-    await new Promise((resolve) => setImmediate(resolve));
-    await service.signOut();
-    release();
-
-    await expect(pending).resolves.toBeNull();
-    expect(data.has(KEY)).toBe(false);
-  });
 });
 
 describe('signOut', () => {
@@ -329,5 +328,140 @@ describe('hasStoredSession', () => {
     expect(await service.hasStoredSession()).toBe(false);
     await storage.set(KEY, 'refresh-1');
     expect(await service.hasStoredSession()).toBe(true);
+  });
+});
+
+// A server with the real replay rules: a refresh token works once; presenting a spent or revoked one
+// fails with 401 and revokes the whole family (every token issued from the same sign-in).
+function replayServer() {
+  let counter = 0;
+  let families = 0;
+  const issued = new Map<string, { family: number; used: boolean }>();
+  const revoked = new Set<number>();
+  const log: string[] = [];
+  let gate: Promise<void> | null = null;
+
+  const issue = (family: number) => {
+    counter += 1;
+    const token = `r${counter}`;
+    issued.set(token, { family, used: false });
+    return token;
+  };
+  const pair = (refresh: string) => tokens(`access-for-${refresh}`, refresh);
+  const bodyOf = (init: RequestInit) =>
+    JSON.parse(init.body as string) as { refresh_token: string };
+
+  const routes: Record<string, Route> = {
+    'POST /auth/token': () => {
+      families += 1;
+      return pair(issue(families));
+    },
+    'GET /users/me': () => reply(200, user),
+    'POST /auth/refresh': async (init) => {
+      const presented = bodyOf(init).refresh_token;
+      log.push(`refresh:${presented}`);
+      const info = issued.get(presented);
+      let answer: Promise<unknown>;
+      if (!info || revoked.has(info.family)) {
+        answer = reply(401, { detail: 'Invalid refresh token' });
+      } else if (info.used) {
+        revoked.add(info.family);
+        answer = reply(401, { detail: 'Refresh token reuse detected' });
+      } else {
+        info.used = true;
+        answer = pair(issue(info.family));
+      }
+      if (gate) await gate;
+      return answer;
+    },
+    'POST /auth/logout': (init) => {
+      const presented = bodyOf(init).refresh_token;
+      log.push(`logout:${presented}`);
+      const info = issued.get(presented);
+      if (info) revoked.add(info.family);
+      return reply(204);
+    },
+  };
+
+  return {
+    ...fakeFetch(routes),
+    log,
+    // Holds the answer of every /auth/refresh (after the server processed it) until released.
+    hold: () => {
+      let release!: () => void;
+      gate = new Promise<void>((resolve) => (release = resolve));
+      return () => {
+        gate = null;
+        release();
+      };
+    },
+    live: () => [...issued].filter(([, i]) => !i.used && !revoked.has(i.family)).map(([t]) => t),
+  };
+}
+
+describe('against a server that enforces single-use refresh tokens', () => {
+  const credentials = { email: 'a@example.com', password: 'password123' };
+  const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+  it('signs out with the newest token when a refresh is in flight', async () => {
+    const { storage, data } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    const release = server.hold();
+    const pending = service.refreshAccessToken();
+    await tick();
+    const signedOut = service.signOut();
+    await tick();
+    release();
+
+    await expect(pending).resolves.toBe('access-for-r2');
+    await signedOut;
+    expect(server.log).toEqual(['refresh:r1', 'logout:r2']);
+    expect(server.live()).toEqual([]);
+    expect(data.has(KEY)).toBe(false);
+  });
+
+  it('gives a caller that joined a refresh across a sign-in a token for the new session', async () => {
+    const { storage, data } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    const release = server.hold();
+    const pending = service.refreshAccessToken();
+    await tick();
+    await service.signIn({ email: 'b@example.com', password: 'password123' });
+    release();
+
+    // The first answer belongs to the old session; the retry uses what is stored now (r3, user B).
+    await expect(pending).resolves.toBe('access-for-r4');
+    expect(data.get(KEY)).toBe('r4');
+    expect(server.log).toContain('refresh:r3');
+    expect(server.log).toContain('logout:r2');
+  });
+
+  it('never presents a spent token: sequential refreshes keep working', async () => {
+    const { storage } = memoryStorage();
+    const server = replayServer();
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
+    await service.signIn(credentials);
+
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
+    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
+    expect(server.log).toEqual(['refresh:r1', 'refresh:r2']);
+  });
+});
+
+describe('signOut with a failing store', () => {
+  it('still logs out on the server, then surfaces the storage error', async () => {
+    const { storage } = memoryStorage({ [KEY]: 'refresh-1' });
+    (storage.remove as jest.Mock).mockRejectedValue(new Error('keystore locked'));
+    const { fn, calls } = fakeFetch({ 'POST /auth/logout': () => reply(204) });
+    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+
+    await expect(service.signOut()).rejects.toThrow('keystore locked');
+    expect(calls.map((c) => c.route)).toEqual(['POST /auth/logout']);
   });
 });

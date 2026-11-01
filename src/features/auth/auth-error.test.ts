@@ -15,6 +15,12 @@ describe('authErrorKey', () => {
     );
   });
 
+  it('maps the backend inactive-user answer (400) to the inactive-user key', () => {
+    expect(authErrorKey(new ApiError(400, 'Inactive user', { detail: 'Inactive user' }))).toBe(
+      'auth.errors.inactiveUser',
+    );
+  });
+
   it('has no key for a 422 validation error, so the caller shows its message', () => {
     expect(
       authErrorKey(new ApiError(422, [{ msg: 'value is not a valid email address' }], {})),

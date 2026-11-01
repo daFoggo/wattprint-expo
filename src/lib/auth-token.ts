@@ -58,6 +58,13 @@ export function createTokenProvider(options: TokenProviderOptions) {
       cached = null;
       return load();
     },
+    // Seeds the cache with a token that was just issued (sign-in), so the first request does not
+    // fetch another one.
+    prime(token: string): void {
+      generation += 1;
+      pending = null;
+      cached = { token, expiresAt: expiryMs(token) };
+    },
     clear(): void {
       generation += 1;
       cached = null;

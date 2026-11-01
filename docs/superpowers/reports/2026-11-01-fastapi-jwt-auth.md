@@ -40,6 +40,21 @@ No reviewer run is recorded for this change.
 On a device or emulator: sign-up, sign-in, relaunch (stored session), token expiry after 15 min, sign-out, offline start, `adb reverse tcp:8000`
 or LAN IP reachability, SecureStore on Android. No run against the live FastAPI stack was done from the app.
 
+## Fixes after review (2026-11-01)
+
+- `signOut` waits for an in-flight refresh and logs out with the newest token; a throwing `storage.remove` still lets the server logout
+  run, then the error is rethrown. A refresh that finishes after a sign-in or sign-out is discarded (its spare token is logged out)
+  and retried once with the stored token, so a caller that joined the old request gets a token for the current session.
+- A refresh that throws (offline, 30 s timeout) no longer fires `onSessionExpired` (`http.ts`: only null or an `ApiError` 401 does) and
+  no second refresh with the same stored token follows.
+- `handleSessionExpired` refreshes through the token provider (the new token stays cached) and is not re-entrant.
+- `signIn` and `signUp` hooks prime the provider (`primeAccessToken`, `prime` in `auth-token.ts`).
+- `signIn` logs the new token out when `/users/me` fails and throws a plain `Error`, never a 401 `ApiError`.
+- i18n key `auth.errors.inactiveUser` (en, vi) for the backend 400 "Inactive user".
+- Tests use a fake server with single-use refresh tokens and family revocation (`src/lib/auth-service.test.ts`).
+- Deferred (no code): refresh token lost if SecureStore fails after a successful rotation; cleanup of legacy Better Auth SecureStore
+  entries; `handleSessionExpired` swallowing keystore errors. The backend will add a short reuse grace window separately.
+
 ## Deferred
 
 Phone verification: `docs/superpowers/backlog/2026-10-25-auth-session-store.md`.

@@ -12,8 +12,8 @@ Backend: external FastAPI (no Expo `+api` routes). Test API for experiments: dum
   fetch shared by concurrent callers). The refresh token is single use: each refresh rotates it and the new one is persisted
   to SecureStore before the access token is returned; the service shares one request between concurrent callers.
   `src/lib/session.ts` builds the app's `apiClient` from it: a 401 triggers a refresh, and `onSessionExpired` makes one more
-  refresh attempt and signs the user out only when the server rejected the refresh token (401, null); a network failure or 5xx
-  keeps the user signed in (verified: `src/lib/auth-service.test.ts`, `src/lib/session.test.ts`). Login and register use
+  refresh through the provider (its token stays cached) and signs the user out only when the server rejected the refresh token (401, null); a network failure or 5xx
+  keeps the user signed in; a refresh that throws (offline, timeout) never fires `onSessionExpired` nor a second refresh. Sign-in primes the provider with its access token (verified: `src/lib/auth-service.test.ts`, `src/lib/session.test.ts`). Login and register use
   form or JSON bodies outside `createApiClient` (they are the auth calls themselves). Errors use FastAPI's `{detail}`.
 - Errors (`src/lib/errors.ts`): `ApiError` (FastAPI `{detail}` string or 422 list), `NetworkError`, `ContractError` (never retried). Throw; never return fallback data. `isRetryable` = network or 5xx.
 - One `<feature>/api.ts` calls the client and parses; `<feature>/queries.ts` holds the key factory and `queryOptions`; the key contains every variable `queryFn` uses.

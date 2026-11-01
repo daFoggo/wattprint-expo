@@ -35,6 +35,8 @@ export type SignInResult = { accessToken: string; user: AuthUser };
 
 const DEFAULT_STORAGE_KEY = 'wattprint.refresh-token';
 const DEFAULT_TIMEOUT_MS = 15_000;
+// A refresh that times out may already have rotated the token on the server, so give it more time.
+const REFRESH_TIMEOUT_MS = 30_000;
 
 type Reply = { status: number; ok: boolean; body: unknown };
 
@@ -72,9 +74,9 @@ export function createAuthService(options: AuthServiceOptions) {
   // Bumped by sign-in and sign-out: a refresh that started before must not write the old session back.
   let epoch = 0;
 
-  async function call(path: string, init: RequestInit): Promise<Reply> {
+  async function call(path: string, init: RequestInit, limitMs = timeoutMs): Promise<Reply> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), limitMs);
     try {
       const response = await fetchFn(`${baseUrl}${path}`, { ...init, signal: controller.signal });
       const text = await response.text();
@@ -92,12 +94,16 @@ export function createAuthService(options: AuthServiceOptions) {
     }
   }
 
-  function json(path: string, body: unknown, headers?: Record<string, string>): Promise<Reply> {
-    return call(path, {
-      method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify(body),
-    });
+  function json(path: string, body: unknown, limitMs?: number): Promise<Reply> {
+    return call(
+      path,
+      {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+      limitMs,
+    );
   }
 
   function failure(reply: Reply): ApiError {
@@ -117,15 +123,26 @@ export function createAuthService(options: AuthServiceOptions) {
     epoch += 1;
     await storage.set(key, tokens.refresh_token);
 
-    const me = await call('/users/me', {
-      headers: { Accept: 'application/json', Authorization: `Bearer ${tokens.access_token}` },
-    }).catch(async (error: unknown) => {
+    // No half session: when the profile cannot be loaded, give the new token back to the server.
+    const abandon = async () => {
+      await json('/auth/logout', { refresh_token: tokens.refresh_token }).catch(() => undefined);
       await storage.remove(key);
+    };
+    let me: Reply;
+    try {
+      me = await call('/users/me', {
+        headers: { Accept: 'application/json', Authorization: `Bearer ${tokens.access_token}` },
+      });
+    } catch (error) {
+      await abandon();
       throw error;
-    });
+    }
     if (!me.ok) {
-      await storage.remove(key);
-      throw failure(me);
+      await abandon();
+      // Not an ApiError 401: that would read as "wrong password" although the password was accepted.
+      throw new Error(`Could not load the signed-in user (HTTP ${me.status})`, {
+        cause: failure(me),
+      });
     }
     return { accessToken: tokens.access_token, user: parse(userSchema, me.body, '/users/me') };
   }
@@ -140,16 +157,29 @@ export function createAuthService(options: AuthServiceOptions) {
     return signIn(input);
   }
 
-  async function rotate(): Promise<string | null> {
+  // STALE: a sign-in or sign-out happened while the request was in flight, so its answer belongs to
+  // a session that is gone.
+  const STALE = Symbol('stale');
+
+  async function rotate(): Promise<string | null | typeof STALE> {
     const startedIn = epoch;
     const stored = await storage.get(key);
     if (!stored) return null;
 
-    const reply = await json('/auth/refresh', { refresh_token: stored });
+    const reply = await json('/auth/refresh', { refresh_token: stored }, REFRESH_TIMEOUT_MS);
 
+    if (startedIn !== epoch) {
+      // Hand a rotated token we will not use back to the server instead of leaving it live.
+      const spare = tokenPairSchema.safeParse(reply.body);
+      if (reply.ok && spare.success) {
+        await json('/auth/logout', { refresh_token: spare.data.refresh_token }).catch(
+          () => undefined,
+        );
+      }
+      return STALE;
+    }
     if (reply.status === 401) {
-      // Only drop the token we sent: a sign-in during the request may have stored a newer one.
-      if ((await storage.get(key)) === stored) await storage.remove(key);
+      await storage.remove(key);
       return null;
     }
     if (!reply.ok) {
@@ -157,30 +187,51 @@ export function createAuthService(options: AuthServiceOptions) {
     }
     const tokens = parse(tokenPairSchema, reply.body, '/auth/refresh');
     // The old token is spent now: persist the new one before anything else can fail or return.
-    if (startedIn !== epoch) return null;
     await storage.set(key, tokens.refresh_token);
     return tokens.access_token;
   }
 
+  // One retry when the session changed under the request: callers that joined it (for example the
+  // first request of a user who just signed in) get a token for the current session, not null.
+  async function rotateCurrent(): Promise<string | null> {
+    const first = await rotate();
+    if (first !== STALE) return first;
+    const second = await rotate();
+    return second === STALE ? null : second;
+  }
+
   // null: no session (nothing stored, or the server rejected the refresh token, which is then removed).
-  // NetworkError: could not tell (offline, 5xx); the stored token is kept.
+  // NetworkError: could not tell (offline, timeout, 5xx); the stored token is kept.
   function refreshAccessToken(): Promise<string | null> {
-    refreshing ??= rotate().finally(() => {
+    refreshing ??= rotateCurrent().finally(() => {
       refreshing = null;
     });
     return refreshing;
   }
 
   async function signOut(): Promise<void> {
+    // A refresh in flight rotates the token: wait for it, so the logout uses the newest one and the
+    // spent token is never presented (a reused refresh token revokes the whole chain).
+    await refreshing?.catch(() => undefined);
     epoch += 1;
     const stored = await storage.get(key).catch(() => null);
-    await storage.remove(key);
-    if (!stored) return;
+    let removeError: unknown;
+    let removeFailed = false;
     try {
-      await json('/auth/logout', { refresh_token: stored });
-    } catch {
-      // Best effort: the token is already gone locally.
+      await storage.remove(key);
+    } catch (error) {
+      removeFailed = true;
+      removeError = error;
     }
+    if (stored) {
+      try {
+        await json('/auth/logout', { refresh_token: stored });
+      } catch {
+        // Best effort.
+      }
+    }
+    // Never leave the token behind silently: both steps were attempted, now say that one failed.
+    if (removeFailed) throw removeError;
   }
 
   async function hasStoredSession(): Promise<boolean> {

@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { ApiError } from '@/lib/errors';
 
 import { authService } from '@/lib/auth-client';
-import { signOutAndClear } from '@/lib/session';
+import { primeAccessToken, signOutAndClear } from '@/lib/session';
 import { useAuthStore } from '@/stores/auth-store';
 
 import { useSignIn } from './use-sign-in';
@@ -15,7 +15,7 @@ import { useSignUp } from './use-sign-up';
 jest.mock('@/lib/auth-client', () => ({
   authService: { signIn: jest.fn(), signUp: jest.fn() },
 }));
-jest.mock('@/lib/session', () => ({ signOutAndClear: jest.fn() }));
+jest.mock('@/lib/session', () => ({ signOutAndClear: jest.fn(), primeAccessToken: jest.fn() }));
 
 const signIn = authService.signIn as unknown as jest.Mock;
 const signUp = authService.signUp as unknown as jest.Mock;
@@ -44,6 +44,7 @@ describe('useSignIn', () => {
     );
 
     expect(signIn).toHaveBeenCalledWith({ email: 'a@example.com', password: 'password123' });
+    expect(primeAccessToken).toHaveBeenCalledWith('a');
     expect(useAuthStore.getState()).toMatchObject({ status: 'signedIn', user });
   });
 
@@ -69,6 +70,7 @@ describe('useSignUp', () => {
     await act(() => result.current.mutateAsync(input));
 
     expect(signUp).toHaveBeenCalledWith(input);
+    expect(primeAccessToken).toHaveBeenCalledWith('a');
     expect(useAuthStore.getState()).toMatchObject({ status: 'signedIn', user });
   });
 

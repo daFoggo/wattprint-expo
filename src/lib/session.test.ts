@@ -8,20 +8,22 @@ import { useAuthStore } from '@/stores/auth-store';
 import {
   apiClient,
   bootstrapAuth,
+  primeAccessToken,
   clearUserScope,
   handleSessionExpired,
   signOutAndClear,
 } from './session';
 
 jest.mock('@/lib/auth-client', () => ({
-  authService: { signOut: jest.fn(), refreshAccessToken: jest.fn(), hasStoredSession: jest.fn() },
+  authService: { signOut: jest.fn(), hasStoredSession: jest.fn() },
   fetchApiToken: jest.fn(),
 }));
 
 const signOut = authService.signOut as unknown as jest.Mock;
-const refresh = authService.refreshAccessToken as unknown as jest.Mock;
 const hasStoredSession = authService.hasStoredSession as unknown as jest.Mock;
 const mockFetchApiToken = fetchApiToken as unknown as jest.Mock;
+// handleSessionExpired refreshes through the token provider, which calls fetchApiToken.
+const refresh = mockFetchApiToken;
 
 function jwt(secondsFromNow: number): string {
   const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
@@ -88,6 +90,52 @@ describe('handleSessionExpired', () => {
     await handleSessionExpired();
     expect(signOut).not.toHaveBeenCalled();
     expect(useAuthStore.getState().status).toBe('signedIn');
+  });
+
+  it('does not loop: a null refresh asks the server once, then signs out once', async () => {
+    refresh.mockResolvedValue(null);
+    await handleSessionExpired();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(refresh).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('caches the refreshed token, so the next request does not rotate again', async () => {
+    const fresh = jwt(900);
+    refresh.mockResolvedValue(fresh);
+    await handleSessionExpired();
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    const fetchMock = jest.fn(() => ok({ id: 'u1' }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    await apiClient.request('/me', { schema: z.object({ id: z.string() }) });
+
+    expect(refresh).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(init.headers.Authorization).toBe(`Bearer ${fresh}`);
+  });
+});
+
+describe('primeAccessToken', () => {
+  it('lets the first request use the sign-in token without fetching another', async () => {
+    clearUserScope();
+    refresh.mockReset();
+    const token = jwt(900);
+    const fetchMock = jest.fn(() => ok({ id: 'u1' }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    primeAccessToken(token);
+    await apiClient.request('/me', { schema: z.object({ id: z.string() }) });
+
+    expect(refresh).not.toHaveBeenCalled();
+    const [, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      { headers: Record<string, string> },
+    ];
+    expect(init.headers.Authorization).toBe(`Bearer ${token}`);
   });
 });
 
@@ -178,6 +226,9 @@ describe('apiClient', () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(signOut).not.toHaveBeenCalled();
+    // The token for the request, then one refresh that failed: no second refresh with the same
+    // stored refresh token (the spent-token replay would revoke the session).
+    expect(mockFetchApiToken).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -15,6 +15,12 @@ const tokens = createTokenProvider({
   },
 });
 
+// The access token a sign-in just returned becomes the cached one, so the first API call does not
+// rotate the refresh token again.
+export function primeAccessToken(token: string): void {
+  tokens.prime(token);
+}
+
 // Forget everything that belongs to the current user: the cached JWT and the query cache.
 export function clearUserScope(): void {
   tokens.clear();
@@ -33,15 +39,23 @@ export async function signOutAndClear(): Promise<void> {
   }
 }
 
-// Called when the API rejected a fresh token. One refresh decides: no session (null) signs the user
-// out; a network or server failure must not (the app has to keep working offline).
+let expiring = false;
+
+// Called when the API rejected a fresh token. One refresh through the token provider decides (and
+// its new token stays cached, so later requests use it instead of rotating again): no session
+// (null) signs the user out; a network or server failure must not (the app has to keep working
+// offline). Not re-entrant: the provider's own null-token hook cannot start a second round.
 export async function handleSessionExpired(): Promise<void> {
+  if (expiring) return;
+  expiring = true;
   try {
-    if (await authService.refreshAccessToken()) return;
+    if (await tokens.refresh()) return;
+    await signOutAndClear().catch(() => undefined);
   } catch {
-    return;
+    // Network or server failure: keep the user signed in.
+  } finally {
+    expiring = false;
   }
-  await signOutAndClear().catch(() => undefined);
 }
 
 // Start-up: a stored refresh token means signed in, without asking the server (works offline; the
@@ -60,6 +74,7 @@ export async function bootstrapAuth(): Promise<void> {
 export const apiClient = createApiClient({
   baseUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
   getAccessToken: tokens.getToken,
-  refreshAccessToken: () => tokens.refresh().catch(() => null),
+  // A failure propagates: the client treats it as "unknown", only a null token ends the session.
+  refreshAccessToken: () => tokens.refresh(),
   onSessionExpired: () => void handleSessionExpired(),
 });

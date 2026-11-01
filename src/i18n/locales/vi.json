@@ -108,7 +108,8 @@
     },
     "errors": {
       "invalidCredentials": "Sai email hoặc mật khẩu",
-      "emailTaken": "Email này đã có tài khoản"
+      "emailTaken": "Email này đã có tài khoản",
+      "inactiveUser": "Tài khoản này đã bị vô hiệu hóa"
     },
     "signIn": {
       "title": "Đăng nhập",

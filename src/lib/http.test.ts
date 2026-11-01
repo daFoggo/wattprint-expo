@@ -216,7 +216,7 @@ describe('createApiClient 401 refresh', () => {
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
   });
 
-  it('expires the session when the refresh itself throws', async () => {
+  it('keeps the session when the refresh itself fails (offline, timeout)', async () => {
     const { client, onSessionExpired } = make({
       refreshAccessToken: jest.fn(async () => {
         throw new NetworkError('offline');
@@ -226,7 +226,7 @@ describe('createApiClient 401 refresh', () => {
     await expect(client.request('/me', { schema: itemSchema })).rejects.toMatchObject({
       status: 401,
     });
-    expect(onSessionExpired).toHaveBeenCalledTimes(1);
+    expect(onSessionExpired).not.toHaveBeenCalled();
   });
 
   it('does not try to refresh without a refresh function', async () => {

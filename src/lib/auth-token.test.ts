@@ -128,4 +128,17 @@ describe('createTokenProvider', () => {
 
     expect(fetchToken).toHaveBeenCalledTimes(2);
   });
+
+  it('uses a primed token without fetching, until it nears expiry', async () => {
+    const { provider, fetchToken, advance, expiringIn } = setup();
+    fetchToken.mockResolvedValue(expiringIn(15 * 60_000));
+    provider.prime(expiringIn(15 * 60_000));
+
+    await provider.getToken();
+    expect(fetchToken).not.toHaveBeenCalled();
+
+    advance(15 * 60_000 - 10_000);
+    await provider.getToken();
+    expect(fetchToken).toHaveBeenCalledTimes(1);
+  });
 });
