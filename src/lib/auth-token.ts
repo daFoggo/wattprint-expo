@@ -22,7 +22,7 @@ function expiryMs(token: string): number {
   }
 }
 
-// Keeps the API JWT in memory only. Never persist it: the session lives in SecureStore (expoClient).
+// Keeps the API JWT in memory only. Never persist it: only the refresh token lives in SecureStore (auth-client).
 export function createTokenProvider(options: TokenProviderOptions) {
   const { fetchToken } = options;
   const now = options.now ?? Date.now;
@@ -57,6 +57,13 @@ export function createTokenProvider(options: TokenProviderOptions) {
     refresh(): Promise<string | null> {
       cached = null;
       return load();
+    },
+    // Seeds the cache with a token that was just issued (sign-in), so the first request does not
+    // fetch another one.
+    prime(token: string): void {
+      generation += 1;
+      pending = null;
+      cached = { token, expiresAt: expiryMs(token) };
     },
     clear(): void {
       generation += 1;

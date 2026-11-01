@@ -1,8 +1,9 @@
 import { env } from '@/env';
-import { authClient, fetchApiToken } from '@/lib/auth-client';
+import { authService, fetchApiToken } from '@/lib/auth-client';
 import { createTokenProvider } from '@/lib/auth-token';
 import { createApiClient } from '@/lib/http';
 import { queryClient } from '@/lib/query-client';
+import { useAuthStore } from '@/stores/auth-store';
 
 const tokens = createTokenProvider({
   fetchToken: async () => {
@@ -14,6 +15,12 @@ const tokens = createTokenProvider({
   },
 });
 
+// The access token a sign-in just returned becomes the cached one, so the first API call does not
+// rotate the refresh token again.
+export function primeAccessToken(token: string): void {
+  tokens.prime(token);
+}
+
 // Forget everything that belongs to the current user: the cached JWT and the query cache.
 export function clearUserScope(): void {
   tokens.clear();
@@ -21,28 +28,53 @@ export function clearUserScope(): void {
 }
 
 // The local cleanup runs before the remote call, so a slow or failing sign-out can never leave the
-// previous user's token or data for the next user. A remote failure still reaches the caller.
+// previous user's token or data for the next user. The store is updated even when the remote call
+// fails (the user is signed out locally either way); the failure still reaches the caller.
 export async function signOutAndClear(): Promise<void> {
   clearUserScope();
-  await authClient.signOut();
+  try {
+    await authService.signOut();
+  } finally {
+    useAuthStore.getState().setSignedOut();
+  }
 }
 
-// Called when the API rejected a fresh token. Only a server that says "no session" signs the user
-// out; a network or server failure must not (the app has to keep working offline).
+let expiring = false;
+
+// Called when the API rejected a fresh token. One refresh through the token provider decides (and
+// its new token stays cached, so later requests use it instead of rotating again): no session
+// (null) signs the user out; a network or server failure must not (the app has to keep working
+// offline). Not re-entrant: the provider's own null-token hook cannot start a second round.
 export async function handleSessionExpired(): Promise<void> {
+  if (expiring) return;
+  expiring = true;
   try {
-    const { data, error } = await authClient.getSession({ query: { disableCookieCache: true } });
-    if (data) return;
-    if (error && error.status !== 401) return;
+    if (await tokens.refresh()) return;
+    await signOutAndClear().catch(() => undefined);
   } catch {
-    return;
+    // Network or server failure: keep the user signed in.
+  } finally {
+    expiring = false;
   }
-  await signOutAndClear().catch(() => undefined);
+}
+
+// Start-up: a stored refresh token means signed in, without asking the server (works offline; the
+// first API call refreshes, and a rejected token then signs the user out). No token, or an
+// unreadable store, means signed out.
+export async function bootstrapAuth(): Promise<void> {
+  const { status, setSignedIn, setSignedOut } = useAuthStore.getState();
+  if (status !== 'unknown') return;
+  const stored = await authService.hasStoredSession().catch(() => false);
+  // A sign-in or sign-out that finished while the store was being read wins.
+  if (useAuthStore.getState().status !== 'unknown') return;
+  if (stored) setSignedIn();
+  else setSignedOut();
 }
 
 export const apiClient = createApiClient({
   baseUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
   getAccessToken: tokens.getToken,
-  refreshAccessToken: () => tokens.refresh().catch(() => null),
+  // A failure propagates: the client treats it as "unknown", only a null token ends the session.
+  refreshAccessToken: () => tokens.refresh(),
   onSessionExpired: () => void handleSessionExpired(),
 });

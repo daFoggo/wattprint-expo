@@ -20,7 +20,7 @@ Pick the first row that fits.
 | Which item or filter a screen shows, and must survive a deep link | Route params, `useLocalSearchParams` | a `[id]` route reading `useLocalSearchParams` (no example in the repo since 2026-10-26) |
 | Draft or toggle used by one component tree                        | `useState` / `useReducer`            | `showModal` in `src/screens/settings/index.tsx`; TanStack Form for form fields (`sample-form.tsx`); lifted: `DeviceStatesProvider` in `src/features/devices/device-states.tsx`, mounted above `NativeTabs` in `src/app/(app)/_layout.tsx` so Home and Devices share one `useState` (verified: those files) |
 | Client preference that must survive app restarts, read by several screens | Zustand + MMKV              | `src/stores/preferences-store.ts` (theme)                                    |
-| Secret (refresh token, API key)                                   | `expo-secure-store`                  | the Better Auth session (cookie, via `expoClient`) in `src/lib/auth-client.ts` (verified: file); base-check in `src/screens/settings/index.tsx` |
+| Secret (refresh token, API key)                                   | `expo-secure-store`                  | the FastAPI refresh token (key `wattprint.refresh-token`) in `src/lib/auth-client.ts` (verified: file); base-check in `src/screens/settings/index.tsx` |
 
 Notes:
 
@@ -173,13 +173,23 @@ the default".
 
 ## 6. Logout and user-scoped state
 
-Auth is Better Auth (spec `docs/superpowers/specs/2026-10-30-better-auth-integration-design.md`). The session lives in
-SecureStore, written by `expoClient` (`src/lib/auth-client.ts`); there is no Zustand session store, the route guard reads
-`authClient.useSession()` in `src/app/_layout.tsx`. The JWT for FastAPI is held in memory only by `createTokenProvider`
-(`src/lib/auth-token.ts`) and is never persisted or logged. Sign-out is `signOutAndClear` (`src/lib/session.ts`): drop the
-cached JWT and `queryClient.clear()` first, then the remote sign-out, so a slow or failing remote call cannot leave the
-previous user's data behind (verified: `src/lib/session.test.ts`). `useSessionGate` (`src/hooks/use-session-gate.ts`) repeats
-that cleanup whenever the signed-in user id changes (for example a session that ended on the server). No user-scoped Zustand store exists yet. The rule for any store added later:
+Auth is the FastAPI-native JWT backend (`/auth/register`, `/auth/token`, `/auth/refresh`, `/auth/logout`, `/users/me`; see the report
+`docs/superpowers/reports/2026-11-01-fastapi-jwt-auth.md`). Three places hold session state:
+
+- **Refresh token**: SecureStore, one key `wattprint.refresh-token`, written only by `src/lib/auth-service.ts` through the
+  storage built in `src/lib/auth-client.ts`. It is single use and rotated on every refresh, so the new one is persisted before
+  the new access token is returned, and refreshes are single-flight (a second concurrent refresh with the spent token would
+  fail and revoke the chain). A 401 from `/auth/refresh` removes it; a network error or 5xx keeps it.
+- **Access JWT** (15 min): memory only, in `createTokenProvider` (`src/lib/auth-token.ts`); never persisted or logged.
+- **Session status**: `src/stores/auth-store.ts`, an in-memory Zustand store (`unknown | signedIn | signedOut`, optional user),
+  never persisted. `bootstrapAuth` (`src/lib/session.ts`, started by `useSessionGate`) sets `signedIn` when a refresh token is
+  stored, without asking the server (works offline), else `signedOut`; the route guard in `src/app/_layout.tsx` reads
+  `useSessionGate` (`src/hooks/use-session-gate.ts`).
+
+Sign-out is `signOutAndClear` (`src/lib/session.ts`): drop the cached JWT and `queryClient.clear()` first, then the service
+sign-out (best-effort `/auth/logout`, the stored token is always removed), then the store becomes `signedOut` (verified:
+`src/lib/session.test.ts`). `useSessionGate` repeats the cleanup when a signed-in session ends or its user changes. The
+auth store is user scoped and is reset by `setSignedOut`; no other user-scoped store exists yet. The rule for any store added later:
 
 | Store scope                     | On logout                                                                             |
 | ------------------------------- | ------------------------------------------------------------------------------------- |

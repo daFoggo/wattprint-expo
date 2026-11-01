@@ -66,8 +66,16 @@ export function createApiClient(options: ApiClientOptions) {
   // no token expires the session, once per settled refresh.
   function refreshOnce(): Promise<string | null> {
     refreshing ??= (async () => {
-      const token = refreshAccessToken ? await refreshAccessToken().catch(() => null) : null;
-      if (!token) onSessionExpired?.();
+      let rejected = true;
+      const token = refreshAccessToken
+        ? await refreshAccessToken().catch((error: unknown) => {
+            // A refresh that could not be completed (offline, timeout) proves nothing about the
+            // session: keep it. Only "no token" or an explicit 401 means the session is over.
+            rejected = error instanceof ApiError && error.status === 401;
+            return null;
+          })
+        : null;
+      if (!token && rejected) onSessionExpired?.();
       return token;
     })().finally(() => {
       refreshing = null;

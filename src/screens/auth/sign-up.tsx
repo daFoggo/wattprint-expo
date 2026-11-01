@@ -26,7 +26,7 @@ export function SignUpScreen() {
       if (submitting.current) return;
       submitting.current = true;
       try {
-        // Better Auth signs the new user in; the route guard then moves them into the app.
+        // The sign-up hook signs the new user in; the route guard then moves them into the app.
         await signUp.mutateAsync(value);
       } catch {
         // Shown through signUp.error.

@@ -59,8 +59,8 @@ describe('SignUpScreen', () => {
   });
 
   it('tells the user the email is already taken', async () => {
-    const body = { status: 422, code: 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL' };
-    mockState = { isPending: false, error: new ApiError(422, 'User already exists', body) };
+    const body = { detail: 'Email already registered' };
+    mockState = { isPending: false, error: new ApiError(409, 'Email already registered', body) };
     await renderScreen();
     expect(screen.getByText(en.auth.errors.emailTaken).props.selectable).toBe(true);
   });

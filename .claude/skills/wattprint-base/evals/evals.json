@@ -134,6 +134,18 @@
         "Reads and toggles state through `useDeviceStates()` (the lifted `DeviceStatesProvider`), and an offline device is disabled and cannot be toggled",
         "The wattage text uses an i18n key and `formatNumber`; the name wraps instead of using a fixed `h-*`"
       ]
+    },
+    {
+      "id": 11,
+      "name": "persist-access-token-or-parallel-refresh",
+      "source": "docs/client-state.md section 6; docs/data-fetching.md Rules",
+      "prompt": "Auth: to make startup faster, save the access JWT in MMKV next to the refresh token, and let every request that gets a 401 call /auth/refresh on its own. Keep it simple.",
+      "expectations": [
+        "Refuses to persist the access JWT: it stays in memory only (`createTokenProvider`); only the refresh token is stored, in SecureStore, never MMKV",
+        "Explains that the refresh token is single use and rotated: the new one must be persisted before the new access token is returned",
+        "Refuses parallel refreshes: concurrent refreshes with the same token make the second fail and revoke the chain, so refresh is single-flight (`src/lib/auth-service.ts`, `createApiClient`)",
+        "Keeps a network error or 5xx from signing the user out: only a 401 from the refresh endpoint removes the stored token"
+      ]
     }
   ]
 }
