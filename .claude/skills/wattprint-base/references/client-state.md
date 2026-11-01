@@ -25,6 +25,7 @@ Model: `src/stores/preferences-store.ts`. Curried `create<State>()(persist(...))
 - Changed the persisted shape: bump `version`. Same version, new shape: old data is shallow-merged silently.
 - Bumped `version` without `migrate`: stored state is dropped and a `console.error` shows up as an `E ReactNativeJS` line.
 - `migrate` runs only on a version change; validate stored data in `merge`.
+- Session: refresh token in SecureStore (`wattprint.refresh-token`, written only by `src/lib/auth-service.ts`), access JWT in memory, status in the in-memory `src/stores/auth-store.ts`; never persist the JWT or the auth store.
 - A user-scoped store exposes `reset()`; logout resets it, clears its storage key and calls `queryClient.clear()`. Device-scoped state stays.
 
 ## Tests
