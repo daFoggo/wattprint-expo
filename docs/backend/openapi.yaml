@@ -1,0 +1,1831 @@
+openapi: 3.2.0
+$self: https://api.wattprint.example/openapi.yaml
+info:
+  title: WattPrint API
+  version: 0.1.0-draft
+  summary: Home energy monitoring, device-level disaggregation, goals and an energy assistant.
+  description: |
+    Draft contract derived from the Sense app screens (see docs/backend/requirements.md). It is a proposal for the
+    FastAPI backend, not the implemented API: when the backend exists, its generated /openapi.json wins.
+
+    Conventions
+    - Power is in watts (W), energy in kilowatt-hours (kWh), time is RFC 3339 UTC; the home has an IANA time zone.
+    - Money is `{ amount, currency }` with an ISO 4217 code. Costs are estimates, not a bill.
+    - Errors are RFC 9457 `application/problem+json`.
+    - Lists use opaque cursors (`cursor`, `limit`) and return `{ items, nextCursor }`.
+servers:
+  - url: https://api.wattprint.example/v1
+    description: Production placeholder
+  - url: http://localhost:8000/v1
+    description: Local FastAPI
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+    summary: Sign in and session
+    kind: area
+  - name: Account
+    summary: Profile, push tokens, notification preferences
+    kind: area
+  - name: Homes
+    summary: Homes, rooms, profile
+    kind: area
+  - name: Tariff
+    summary: Electricity rate, billing cycle, time-of-use
+    kind: area
+  - name: Sources
+    summary: Monitors, sensor sources, integrations
+    kind: area
+  - name: Now
+    summary: Today's cost, live power, timeline
+    kind: screen
+  - name: Meter
+    summary: Power time series
+    kind: screen
+  - name: Dashboard
+    summary: Usage, compare, insights, goals
+    kind: screen
+  - name: Devices
+    summary: Detected devices and their settings
+    kind: screen
+  - name: Device alerts
+    summary: Basic and custom alerts of one device
+    kind: screen
+    parent: Devices
+  - name: Notifications
+    summary: Inbox
+    kind: area
+  - name: Assistant
+    summary: Chat about energy use (proposed, not in the Sense frames)
+    kind: area
+  - name: Support
+    summary: Problem reports and app config
+    kind: area
+  - name: Ingest
+    summary: Hardware-facing, not called by the app
+    kind: machine
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      summary: Create an account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '201':
+          description: Account created and signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Sign in with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '200':
+          description: Signed in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Rotate the refresh token and get a new access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '200':
+          description: New token pair; the old refresh token is invalid
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenPair' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Revoke the refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        '204': { description: Revoked }
+  /auth/password/forgot:
+    post:
+      tags: [Auth]
+      operationId: forgotPassword
+      summary: Email a reset link (always 202, to avoid account enumeration)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '202': { description: Accepted }
+  /auth/password/change:
+    post:
+      tags: [Auth]
+      operationId: changePassword
+      summary: Change the password (Settings > Security)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string, format: password }
+                newPassword: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: Changed; other sessions are revoked }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /me:
+    get:
+      tags: [Account]
+      operationId: getMe
+      summary: Current user
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [Account]
+      operationId: updateMe
+      summary: Update name, language or unit preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserPatch' }
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Account]
+      operationId: deleteMe
+      summary: Delete the account and all its data (asynchronous erase)
+      responses:
+        '202': { description: Erase scheduled }
+  /me/push-tokens:
+    post:
+      tags: [Account]
+      operationId: registerPushToken
+      summary: Register or refresh this device's push token (idempotent per token)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, platform]
+              properties:
+                token: { type: string }
+                platform: { type: string, enum: [android, ios] }
+                locale: { type: string, examples: [vi] }
+      responses:
+        '204': { description: Stored }
+    delete:
+      tags: [Account]
+      operationId: unregisterPushToken
+      summary: Remove a push token (on logout)
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Removed }
+  /me/notification-preferences:
+    get:
+      tags: [Account]
+      operationId: getNotificationPreferences
+      summary: Which categories may push
+      responses:
+        '200':
+          description: Preferences
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPreferences' }
+    put:
+      tags: [Account]
+      operationId: setNotificationPreferences
+      summary: Replace the preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationPreferences' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPreferences' }
+  /me/notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: Notification inbox, newest first
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPage' }
+  /me/notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      operationId: markNotificationRead
+      summary: Mark one notification read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Marked }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /homes:
+    get:
+      tags: [Homes]
+      operationId: listHomes
+      summary: Homes the user belongs to
+      responses:
+        '200':
+          description: Homes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Home' }
+    post:
+      tags: [Homes]
+      operationId: createHome
+      summary: Create a home (onboarding)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HomeInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Home' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Homes]
+      operationId: getHome
+      summary: Home profile (Settings > My Home)
+      responses:
+        '200':
+          description: The home
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Home' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Homes]
+      operationId: updateHome
+      summary: Update the home profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HomePatch' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Home' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/rooms:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Homes]
+      operationId: listRooms
+      summary: Rooms of the home
+      responses:
+        '200':
+          description: Rooms
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Room' }
+    post:
+      tags: [Homes]
+      operationId: createRoom
+      summary: Add a room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 60 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+  /homes/{homeId}/rooms/{roomId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - name: roomId
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      tags: [Homes]
+      operationId: renameRoom
+      summary: Rename a room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 60 }
+      responses:
+        '200':
+          description: Renamed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Room' }
+    delete:
+      tags: [Homes]
+      operationId: deleteRoom
+      summary: Delete a room; its devices become unassigned
+      responses:
+        '204': { description: Deleted }
+  /homes/{homeId}/tariff:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Tariff]
+      operationId: getTariff
+      summary: Rate, billing cycle and cost display (Settings > Electricity Info)
+      responses:
+        '200':
+          description: The tariff
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tariff' }
+    put:
+      tags: [Tariff]
+      operationId: setTariff
+      summary: Replace the tariff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TariffInput' }
+      responses:
+        '200':
+          description: Saved; cost figures are recomputed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tariff' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/tariff/time-of-use:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Tariff]
+      operationId: listTimeOfUsePeriods
+      summary: Time-of-use periods that override the base rate
+      responses:
+        '200':
+          description: Periods
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/TimeOfUsePeriod' }
+    post:
+      tags: [Tariff]
+      operationId: createTimeOfUsePeriod
+      summary: Add a period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TimeOfUsePeriodInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeOfUsePeriod' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/tariff/time-of-use/{periodId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - name: periodId
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [Tariff]
+      operationId: replaceTimeOfUsePeriod
+      summary: Replace a period
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TimeOfUsePeriodInput' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeOfUsePeriod' }
+    delete:
+      tags: [Tariff]
+      operationId: deleteTimeOfUsePeriod
+      summary: Remove a period
+      responses:
+        '204': { description: Removed }
+  /homes/{homeId}/data-sources:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Sources]
+      operationId: listDataSources
+      summary: Data, sensor and integration sources (Settings > Connected Devices)
+      responses:
+        '200':
+          description: Sources grouped by kind
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/DataSource' }
+  /homes/{homeId}/data-sources/{sourceId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - name: sourceId
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      tags: [Sources]
+      operationId: updateDataSource
+      summary: Enable or disable a sensor source or network listening
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataSource' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /homes/{homeId}/integrations/{provider}/link:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - name: provider
+        in: path
+        required: true
+        schema: { type: string, examples: [philips-hue, tp-link-kasa, ecobee] }
+    post:
+      tags: [Sources]
+      operationId: linkIntegration
+      summary: Start linking a third-party account (returns the provider authorisation URL)
+      responses:
+        '200':
+          description: Redirect the user to this URL; the backend finishes the exchange
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authorizeUrl]
+                properties:
+                  authorizeUrl: { type: string, format: uri }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Sources]
+      operationId: unlinkIntegration
+      summary: Disconnect and delete the stored provider tokens
+      responses:
+        '204': { description: Unlinked }
+  /homes/{homeId}/monitors:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Sources]
+      operationId: listMonitors
+      summary: Energy monitors installed in the home (Settings > System)
+      responses:
+        '200':
+          description: Monitors with connection state and firmware
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Monitor' }
+    post:
+      tags: [Sources]
+      operationId: claimMonitor
+      summary: Claim a monitor by its serial number and pairing code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [serial, pairingCode]
+              properties:
+                serial: { type: string }
+                pairingCode: { type: string }
+      responses:
+        '201':
+          description: Claimed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Monitor' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /homes/{homeId}/now:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Now]
+      operationId: getNow
+      summary: Snapshot for the Now tab
+      description: One call for the headline, the comparison sentence and the bubbles; the timeline is a separate list.
+      responses:
+        '200':
+          description: The snapshot
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NowSnapshot' }
+  /homes/{homeId}/power/live:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Now, Meter]
+      operationId: streamLivePower
+      summary: Live whole-home power, one event per second
+      description: |
+        Server-sent events. The client reads it with `fetch` and an own parser (no EventSource in React Native).
+        The connection is closed after at most 15 minutes; the client reconnects with `Last-Event-ID`.
+      parameters:
+        - name: Last-Event-ID
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              itemSchema: { $ref: '#/components/schemas/LivePowerEvent' }
+  /homes/{homeId}/timeline:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Now, Devices]
+      operationId: listTimeline
+      summary: Device on/off events, newest first
+      description: Home-wide for the Now tab, or one device with `deviceId` (device detail). Runs of events may be grouped by the server.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: deviceId
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+      responses:
+        '200':
+          description: A page of events
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimelinePage' }
+  /homes/{homeId}/meter:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Meter, Devices]
+      operationId: getMeterSeries
+      summary: Power time series for the Meter tab, a device or solar
+      description: Server downsamples to at most `maxPoints`; the client never aggregates raw samples.
+      parameters:
+        - name: resolution
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/MeterResolution' }
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date-time }
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [consumption, solar, net]
+            default: consumption
+        - name: deviceId
+          in: query
+          description: Limit to one device; only valid with channel=consumption
+          schema: { type: string }
+        - name: maxPoints
+          in: query
+          schema: { type: integer, minimum: 10, maximum: 2000, default: 600 }
+      responses:
+        '200':
+          description: The series
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MeterSeries' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/usage:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Dashboard, Devices]
+      operationId: getUsage
+      summary: Energy and cost per bucket (bar charts, month vs last month)
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema: { type: string, enum: [day, week, month, year, billing-cycle] }
+        - name: anchor
+          in: query
+          description: Any instant inside the wanted period; default now
+          schema: { type: string, format: date-time }
+        - name: deviceId
+          in: query
+          schema: { type: string }
+        - name: compareToPrevious
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        '200':
+          description: Buckets with totals
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UsageReport' }
+  /homes/{homeId}/compare:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Dashboard]
+      operationId: getNeighbourComparison
+      summary: Where this home sits among similar homes nearby
+      responses:
+        '200':
+          description: Comparison, or a reason it is not available
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comparison' }
+  /homes/{homeId}/insights:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Dashboard]
+      operationId: listInsights
+      summary: Banners and tips (seasonal, anomalies)
+      responses:
+        '200':
+          description: Insights, most relevant first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Insight' }
+  /homes/{homeId}/goals:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Dashboard]
+      operationId: listGoals
+      summary: Usage goals and their progress
+      responses:
+        '200':
+          description: Goals
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Goal' }
+    post:
+      tags: [Dashboard]
+      operationId: createGoal
+      summary: Create a goal (alert when a limit is reached)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Goal' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/goals/{goalId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - name: goalId
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [Dashboard]
+      operationId: replaceGoal
+      summary: Replace a goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GoalInput' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Goal' }
+    delete:
+      tags: [Dashboard]
+      operationId: deleteGoal
+      summary: Delete a goal
+      responses:
+        '204': { description: Deleted }
+  /homes/{homeId}/devices:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Devices]
+      operationId: listDevices
+      summary: Devices of the home with live state
+      description: Includes the synthetic devices `always-on` and `other` so the Now bubbles and the list agree.
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: roomId
+          in: query
+          schema: { type: string }
+        - name: state
+          in: query
+          schema: { type: string, enum: [on, off] }
+      responses:
+        '200':
+          description: A page of devices
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DevicePage' }
+    post:
+      tags: [Devices]
+      operationId: createDevice
+      summary: Add a device by hand (smart plug or a manual entry)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/devices/{deviceId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Devices]
+      operationId: getDevice
+      summary: Device detail with average power while on and yearly cost
+      responses:
+        '200':
+          description: The device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Devices]
+      operationId: updateDevice
+      summary: Rename, move, change icon or the Manage switches (timeline, basic alerts)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DevicePatch' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceDetail' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Devices]
+      operationId: deleteDevice
+      summary: Delete the device; its history is kept under Other
+      responses:
+        '204': { description: Deleted }
+  /homes/{homeId}/devices/{deviceId}/name-suggestions:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Devices]
+      operationId: listNameSuggestions
+      summary: How other users named similar devices, with shares
+      responses:
+        '200':
+          description: Suggestions, largest share first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/NameSuggestion' }
+  /homes/{homeId}/devices/{deviceId}/merge:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - $ref: '#/components/parameters/DeviceId'
+    post:
+      tags: [Devices]
+      operationId: mergeDevice
+      summary: Merge this device into another; history moves to the target
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetDeviceId]
+              properties:
+                targetDeviceId: { type: string }
+      responses:
+        '200':
+          description: The merged device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceDetail' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /homes/{homeId}/devices/{deviceId}/custom-alerts:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Device alerts]
+      operationId: listCustomAlerts
+      summary: Custom alerts of the device
+      responses:
+        '200':
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CustomAlert' }
+    post:
+      tags: [Device alerts]
+      operationId: createCustomAlert
+      summary: Add a custom alert (for example on for longer than N minutes)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomAlertInput' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomAlert' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /homes/{homeId}/devices/{deviceId}/custom-alerts/{alertId}:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - $ref: '#/components/parameters/DeviceId'
+      - name: alertId
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [Device alerts]
+      operationId: replaceCustomAlert
+      summary: Replace an alert
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomAlertInput' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomAlert' }
+    delete:
+      tags: [Device alerts]
+      operationId: deleteCustomAlert
+      summary: Delete an alert
+      responses:
+        '204': { description: Deleted }
+  /homes/{homeId}/devices/{deviceId}/problem-reports:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - $ref: '#/components/parameters/DeviceId'
+    post:
+      tags: [Support]
+      operationId: reportDeviceProblem
+      summary: Report a wrong detection (feeds model training)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind]
+              properties:
+                kind:
+                  type: string
+                  enum: [wrong-name, wrong-usage, duplicate, never-on, other]
+                message: { type: string, maxLength: 1000 }
+      responses:
+        '202': { description: Accepted }
+  /homes/{homeId}/chat/conversations:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+    get:
+      tags: [Assistant]
+      operationId: listConversations
+      summary: Past conversations
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConversationPage' }
+    post:
+      tags: [Assistant]
+      operationId: createConversation
+      summary: Start a conversation
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Conversation' }
+  /homes/{homeId}/chat/conversations/{conversationId}/messages:
+    parameters:
+      - $ref: '#/components/parameters/HomeId'
+      - name: conversationId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      tags: [Assistant]
+      operationId: listChatMessages
+      summary: Messages of a conversation, oldest first
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatMessagePage' }
+    post:
+      tags: [Assistant]
+      operationId: sendChatMessage
+      summary: Send a message and stream the answer
+      description: |
+        The answer arrives as server-sent events: `delta` events with text, one `done` event with the stored message,
+        or an `error` event. The client aborts by closing the connection; the server then stores the partial answer.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, minLength: 1, maxLength: 4000 }
+                clientMessageId: { type: string, description: Idempotency key for retries }
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              itemSchema: { $ref: '#/components/schemas/ChatEvent' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /meta/config:
+    get:
+      tags: [Support]
+      operationId: getAppConfig
+      summary: Minimum app version, feature flags, support links (Settings > About)
+      security: []
+      responses:
+        '200':
+          description: Config
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [minAppVersion, features]
+                properties:
+                  minAppVersion: { type: string, examples: [1.0.0] }
+                  features:
+                    type: object
+                    additionalProperties: { type: boolean }
+                  supportUrl: { type: string, format: uri }
+  /ingest/readings:
+    post:
+      tags: [Ingest]
+      operationId: ingestReadings
+      summary: Monitor uploads a batch of samples
+      description: |
+        Called by the monitor hardware, never by the app. Samples may arrive late and out of order; the server
+        dedupes on `(monitorId, at)` and returns the highest accepted timestamp so the monitor can trim its buffer.
+      security:
+        - monitorKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monitorId, samples]
+              properties:
+                monitorId: { type: string }
+                samples:
+                  type: array
+                  maxItems: 3600
+                  items: { $ref: '#/components/schemas/RawSample' }
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [acceptedUntil]
+                properties:
+                  acceptedUntil: { type: string, format: date-time }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived access token from /auth/login or /auth/refresh
+    monitorKey:
+      type: apiKey
+      in: header
+      name: X-Monitor-Key
+      description: Per-monitor secret issued when the monitor is claimed
+  parameters:
+    HomeId:
+      name: homeId
+      in: path
+      required: true
+      schema: { type: string }
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string }
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque value from `nextCursor`
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+  responses:
+    Unauthorized:
+      summary: Missing, expired or invalid credentials
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      summary: No such resource, or not yours
+      description: Not found
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      summary: State conflict
+      description: Conflict
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationFailed:
+      summary: Body or query failed validation
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    RateLimited:
+      summary: Too many requests
+      description: Rate limited
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount: { type: number }
+        currency: { type: string, minLength: 3, maxLength: 3, examples: [VND] }
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+    TokenPair:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn: { type: integer, description: Access token lifetime in seconds }
+    User:
+      type: object
+      required: [id, email]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        displayName: { type: string }
+        locale: { type: string, enum: [vi, en] }
+    UserPatch:
+      type: object
+      minProperties: 1
+      properties:
+        displayName: { type: string, maxLength: 80 }
+        locale: { type: string, enum: [vi, en] }
+    NotificationPreferences:
+      type: object
+      required: [deviceAlerts, goals, insights, product]
+      properties:
+        deviceAlerts: { type: boolean }
+        goals: { type: boolean }
+        insights: { type: boolean }
+        product: { type: boolean }
+        quietHours:
+          type: object
+          required: [from, to]
+          properties:
+            from: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+            to: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+    Notification:
+      type: object
+      required: [id, category, title, createdAt, read]
+      properties:
+        id: { type: string }
+        category: { type: string, enum: [device-alert, goal, insight, product] }
+        title: { type: string }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+        read: { type: boolean }
+        target:
+          type: object
+          description: Where a tap goes
+          properties:
+            deviceId: { type: string }
+            goalId: { type: string }
+    NotificationPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Notification' }
+        nextCursor: { type: [string, 'null'] }
+    Home:
+      allOf:
+        - $ref: '#/components/schemas/HomeInput'
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string }
+    HomeInput:
+      type: object
+      required: [name, postalCode, timeZone]
+      properties:
+        name: { type: string, maxLength: 80 }
+        postalCode: { type: string }
+        countryCode: { type: string, minLength: 2, maxLength: 2 }
+        timeZone: { type: string, examples: [Asia/Ho_Chi_Minh] }
+        homeType: { type: string, enum: [single-family, apartment, townhouse, other] }
+        sizeSquareMeters: { type: integer, minimum: 1 }
+        yearBuiltDecade: { type: integer, examples: [2020] }
+        occupants: { type: integer, minimum: 1 }
+        occupancyType: { type: string, enum: [full-time, part-time, vacation] }
+        basementType: { type: string, enum: [none, partial, full] }
+    HomePatch:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string, maxLength: 80 }
+        postalCode: { type: string }
+        timeZone: { type: string }
+        homeType: { type: string, enum: [single-family, apartment, townhouse, other] }
+        sizeSquareMeters: { type: integer, minimum: 1 }
+        yearBuiltDecade: { type: integer }
+        occupants: { type: integer, minimum: 1 }
+        occupancyType: { type: string, enum: [full-time, part-time, vacation] }
+        basementType: { type: string, enum: [none, partial, full] }
+    Room:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+    TariffInput:
+      type: object
+      required: [kind, currency]
+      properties:
+        kind:
+          type: string
+          enum: [average, flat, tiered]
+          description: '`average` is the regional default the app shows with a warning to update it'
+        currency: { type: string, minLength: 3, maxLength: 3 }
+        flatRatePerKwh: { type: number, minimum: 0 }
+        tiers:
+          type: array
+          description: Block tariff, ascending by `upToKwh`; the last tier has no `upToKwh`
+          items:
+            type: object
+            required: [ratePerKwh]
+            properties:
+              upToKwh: { type: number, minimum: 0 }
+              ratePerKwh: { type: number, minimum: 0 }
+        billingCycleStartDay: { type: [integer, 'null'], minimum: 1, maximum: 28 }
+        showCost: { type: boolean }
+    Tariff:
+      allOf:
+        - $ref: '#/components/schemas/TariffInput'
+        - type: object
+          required: [effectiveRatePerKwh, isEstimate]
+          properties:
+            effectiveRatePerKwh: { type: number }
+            isEstimate: { type: boolean, description: True while `kind` is `average` }
+            sourceLabel: { type: string, description: 'For example a regional average' }
+    TimeOfUsePeriodInput:
+      type: object
+      required: [name, startTime, endTime, daysOfWeek, ratePerKwh]
+      properties:
+        name: { type: string }
+        startTime: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+        endTime: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+        daysOfWeek:
+          type: array
+          minItems: 1
+          items: { type: integer, minimum: 1, maximum: 7, description: ISO weekday, 1 = Monday }
+        months:
+          type: array
+          items: { type: integer, minimum: 1, maximum: 12 }
+        ratePerKwh: { type: number, minimum: 0 }
+    TimeOfUsePeriod:
+      allOf:
+        - $ref: '#/components/schemas/TimeOfUsePeriodInput'
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string }
+    DataSource:
+      type: object
+      required: [id, kind, name, status]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [data, sensor, integration] }
+        name: { type: string }
+        status:
+          type: string
+          enum: [enabled, disabled, searching, connected, error]
+        detail: { type: string, description: 'For example "57 lights connected"' }
+        toggleable: { type: boolean }
+    Monitor:
+      type: object
+      required: [id, serial, online]
+      properties:
+        id: { type: string }
+        serial: { type: string }
+        online: { type: boolean }
+        lastSeenAt: { type: string, format: date-time }
+        firmwareVersion: { type: string }
+        wifiSignalPercent: { type: integer, minimum: 0, maximum: 100 }
+    NowSnapshot:
+      type: object
+      required: [asOf, today, currentWatts, bubbles]
+      properties:
+        asOf: { type: string, format: date-time }
+        today:
+          type: object
+          required: [cost, kwh]
+          properties:
+            cost: { $ref: '#/components/schemas/Money' }
+            kwh: { type: number }
+            comparison:
+              type: string
+              enum: [much-less, less, similar, more, much-more]
+              description: Against the same weekday over recent weeks; the client maps it to copy
+        currentWatts: { type: number }
+        bubbles:
+          type: array
+          items:
+            type: object
+            required: [deviceId, name, watts]
+            properties:
+              deviceId: { type: string }
+              name: { type: string }
+              watts: { type: number }
+              synthetic: { type: boolean }
+    LivePowerEvent:
+      type: object
+      required: [at, watts]
+      properties:
+        at: { type: string, format: date-time }
+        watts: { type: number }
+        devices:
+          type: array
+          description: Per-device watts when the model is confident; omitted otherwise
+          items:
+            type: object
+            required: [deviceId, watts]
+            properties:
+              deviceId: { type: string }
+              watts: { type: number }
+    TimelineEvent:
+      type: object
+      required: [id, at, deviceId, deviceName, kind]
+      properties:
+        id: { type: string }
+        at: { type: string, format: date-time }
+        deviceId: { type: string }
+        deviceName: { type: string }
+        roomName: { type: string }
+        kind: { type: string, enum: [turned-on, turned-off, ran-for, ran-n-times] }
+        durationSeconds: { type: integer, minimum: 0 }
+        occurrences: { type: integer, minimum: 2 }
+        children:
+          type: array
+          description: The raw events behind a grouped row (expand arrow)
+          items: { $ref: '#/components/schemas/TimelineEvent' }
+    TimelinePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TimelineEvent' }
+        nextCursor: { type: [string, 'null'] }
+    MeterResolution:
+      type: string
+      enum: [minute, hour, day, week, month]
+    MeterSeries:
+      type: object
+      required: [resolution, from, to, unit, points]
+      properties:
+        resolution: { $ref: '#/components/schemas/MeterResolution' }
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        unit: { type: string, enum: [W] }
+        maxWatts: { type: number }
+        points:
+          type: array
+          items:
+            type: object
+            required: [at, watts]
+            properties:
+              at: { type: string, format: date-time }
+              watts: { type: number }
+              minWatts: { type: number }
+              maxWatts: { type: number }
+    UsageBucket:
+      type: object
+      required: [start, kwh, cost]
+      properties:
+        start: { type: string, format: date-time }
+        kwh: { type: number, minimum: 0 }
+        cost: { $ref: '#/components/schemas/Money' }
+    UsageReport:
+      type: object
+      required: [period, from, to, buckets, total]
+      properties:
+        period: { type: string }
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        buckets:
+          type: array
+          items: { $ref: '#/components/schemas/UsageBucket' }
+        total:
+          type: object
+          required: [kwh, cost]
+          properties:
+            kwh: { type: number }
+            cost: { $ref: '#/components/schemas/Money' }
+        previous:
+          type: object
+          description: Same shape one period earlier; present when `compareToPrevious` is true
+          properties:
+            buckets:
+              type: array
+              items: { $ref: '#/components/schemas/UsageBucket' }
+            total:
+              type: object
+              properties:
+                kwh: { type: number }
+                cost: { $ref: '#/components/schemas/Money' }
+            changePercent: { type: number, description: Negative when using less }
+        homeTotal:
+          type: object
+          description: For a device report, the home's total in the same period (the "$2.39 / $334" label)
+          properties:
+            cost: { $ref: '#/components/schemas/Money' }
+    Comparison:
+      type: object
+      required: [available]
+      properties:
+        available: { type: boolean }
+        unavailableReason:
+          type: string
+          enum: [too-few-homes, no-postal-code, not-enough-history]
+        percentile: { type: integer, minimum: 0, maximum: 100, description: Share of nearby homes you use more than }
+        yourAverageWatts: { type: number }
+        bands:
+          type: array
+          items:
+            type: object
+            required: [label, fromWatts]
+            properties:
+              label: { type: string }
+              fromWatts: { type: number }
+              toWatts: { type: [number, 'null'] }
+        peerCount: { type: integer }
+        windowDays: { type: integer }
+    Insight:
+      type: object
+      required: [id, kind, title]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [seasonal, anomaly, saving-tip, watt-check, lab] }
+        title: { type: string }
+        body: { type: string }
+        imageUrl: { type: string, format: uri }
+        action:
+          type: object
+          required: [label, route]
+          properties:
+            label: { type: string }
+            route: { type: string, description: App route the button opens }
+    GoalInput:
+      type: object
+      required: [metric, period, limit]
+      properties:
+        metric: { type: string, enum: [kwh, cost] }
+        period: { type: string, enum: [day, week, month, billing-cycle] }
+        limit: { type: number, exclusiveMinimum: 0 }
+        deviceId: { type: string, description: Omit for the whole home }
+        notifyAtPercent:
+          type: array
+          items: { type: integer, minimum: 1, maximum: 200 }
+    Goal:
+      allOf:
+        - $ref: '#/components/schemas/GoalInput'
+        - type: object
+          required: [id, progress]
+          properties:
+            id: { type: string }
+            progress:
+              type: object
+              required: [value, percent]
+              properties:
+                value: { type: number }
+                percent: { type: number }
+    DeviceInput:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        type: { $ref: '#/components/schemas/DeviceType' }
+        roomId: { type: [string, 'null'] }
+        ratedWatts: { type: number, exclusiveMinimum: 0 }
+    DeviceType:
+      type: string
+      description: Aligned with deviceTypeSchema in the app, extended for the Sense icon set
+      enum: [light, ac, fridge, tv, washer, dryer, stove, oven, toaster, ev, water_heater, pump, plug, other]
+    Device:
+      type: object
+      required: [id, name, type, state, status]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { $ref: '#/components/schemas/DeviceType' }
+        roomId: { type: [string, 'null'] }
+        state: { type: string, enum: [on, off] }
+        status: { type: string, enum: [online, offline] }
+        currentWatts: { type: number, minimum: 0 }
+        ratedWatts: { type: number }
+        origin: { type: string, enum: [detected, smart-plug, integration, manual, synthetic] }
+        lastStateChangeAt: { type: string, format: date-time }
+    DevicePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Device' }
+        nextCursor: { type: [string, 'null'] }
+    DeviceDetail:
+      allOf:
+        - $ref: '#/components/schemas/Device'
+        - type: object
+          required: [stats, settings]
+          properties:
+            nameConfirmed: { type: boolean, description: False while the community-names card is shown }
+            stats:
+              type: object
+              required: [averageWattsWhileOn]
+              properties:
+                averageWattsWhileOn: { type: number }
+                yearlyCost: { $ref: '#/components/schemas/Money' }
+                monthToDateKwh: { type: number }
+            settings:
+              type: object
+              required: [showOnTimeline, alertOnTurnOn, alertOnTurnOff]
+              properties:
+                showOnTimeline: { type: boolean }
+                alertOnTurnOn: { type: boolean }
+                alertOnTurnOff: { type: boolean }
+    DevicePatch:
+      type: object
+      minProperties: 1
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        nameConfirmed: { type: boolean }
+        type: { $ref: '#/components/schemas/DeviceType' }
+        roomId: { type: [string, 'null'] }
+        showOnTimeline: { type: boolean }
+        alertOnTurnOn: { type: boolean }
+        alertOnTurnOff: { type: boolean }
+    NameSuggestion:
+      type: object
+      required: [name, sharePercent]
+      properties:
+        name: { type: string }
+        type: { $ref: '#/components/schemas/DeviceType' }
+        sharePercent: { type: integer, minimum: 0, maximum: 100 }
+    CustomAlertInput:
+      type: object
+      required: [condition]
+      properties:
+        condition:
+          type: string
+          enum: [on-longer-than, on-at-time-window, uses-more-than-watts, uses-more-than-kwh-per-day]
+        thresholdMinutes: { type: integer, minimum: 1 }
+        thresholdWatts: { type: number, minimum: 1 }
+        thresholdKwh: { type: number, exclusiveMinimum: 0 }
+        windowFrom: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+        windowTo: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+        enabled: { type: boolean, default: true }
+    CustomAlert:
+      allOf:
+        - $ref: '#/components/schemas/CustomAlertInput'
+        - type: object
+          required: [id]
+          properties:
+            id: { type: string }
+            lastTriggeredAt: { type: string, format: date-time }
+    Conversation:
+      type: object
+      required: [id, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        createdAt: { type: string, format: date-time }
+    ConversationPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Conversation' }
+        nextCursor: { type: [string, 'null'] }
+    ChatMessage:
+      type: object
+      required: [id, role, text, createdAt]
+      properties:
+        id: { type: string }
+        role: { type: string, enum: [user, assistant] }
+        text: { type: string }
+        createdAt: { type: string, format: date-time }
+        cards:
+          type: array
+          description: Optional rich results the answer cites (a chart range, a device)
+          items:
+            type: object
+            required: [kind]
+            properties:
+              kind: { type: string, enum: [device, usage-range, goal] }
+              deviceId: { type: string }
+              from: { type: string, format: date-time }
+              to: { type: string, format: date-time }
+    ChatMessagePage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ChatMessage' }
+        nextCursor: { type: [string, 'null'] }
+    ChatEvent:
+      description: One server-sent event; the SSE `event:` field carries the discriminator and `data:` a JSON object
+      oneOf:
+        - $ref: '#/components/schemas/ChatDelta'
+        - $ref: '#/components/schemas/ChatDone'
+        - $ref: '#/components/schemas/ChatError'
+      discriminator:
+        propertyName: type
+        mapping:
+          delta: '#/components/schemas/ChatDelta'
+          done: '#/components/schemas/ChatDone'
+          error: '#/components/schemas/ChatError'
+    ChatDelta:
+      type: object
+      required: [type, text]
+      properties:
+        type: { type: string, const: delta }
+        text: { type: string }
+    ChatDone:
+      type: object
+      required: [type, message]
+      properties:
+        type: { type: string, const: done }
+        message: { $ref: '#/components/schemas/ChatMessage' }
+    ChatError:
+      type: object
+      required: [type, problem]
+      properties:
+        type: { type: string, const: error }
+        problem: { $ref: '#/components/schemas/Problem' }
+    RawSample:
+      type: object
+      required: [at, watts]
+      properties:
+        at: { type: string, format: date-time }
+        watts: { type: number }
+        volts: { type: number }
+        hertz: { type: number }
+        channels:
+          type: array
+          description: Per-circuit or per-plug watts when the hardware has them
+          items:
+            type: object
+            required: [id, watts]
+            properties:
+              id: { type: string }
+              watts: { type: number }
