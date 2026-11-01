@@ -1,7 +1,7 @@
 # Auth and session store
 
 Status 2026-11-01: implemented with the FastAPI-native JWT backend (in-memory auth store), see
-`docs/superpowers/reports/2026-11-01-fastapi-jwt-auth.md` (supersedes the earlier 2026-10-30 auth report). Open: the phone verification listed there.
+`docs/superpowers/reports/2026-11-01-fastapi-jwt-auth.md`. Open: the phone verification listed there.
 
 Opened: 2026-10-25. Source: `docs/superpowers/specs/2026-10-25-data-architecture-design.md`, `docs/data-fetching.md`.
 
