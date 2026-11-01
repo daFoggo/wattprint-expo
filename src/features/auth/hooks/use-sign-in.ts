@@ -1,15 +1,15 @@
 import { useMutation } from '@tanstack/react-query';
 
-import { toAuthError } from '@/features/auth/auth-error';
 import type { SignInInput } from '@/features/auth/schemas';
-import { authClient } from '@/lib/auth-client';
+import { authService } from '@/lib/auth-client';
+import { useAuthStore } from '@/stores/auth-store';
 
 export function useSignIn() {
   return useMutation({
     mutationFn: async (input: SignInInput) => {
-      const { data, error } = await authClient.signIn.email(input);
-      if (error) throw toAuthError(error);
-      return data;
+      const { user } = await authService.signIn(input);
+      useAuthStore.getState().setSignedIn(user);
+      return user;
     },
   });
 }

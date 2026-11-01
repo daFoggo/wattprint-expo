@@ -2,22 +2,30 @@ import { NetworkError } from '@/lib/errors';
 import { queryClient } from '@/lib/query-client';
 import { z } from 'zod';
 
-import { authClient, fetchApiToken } from '@/lib/auth-client';
+import { authService, fetchApiToken } from '@/lib/auth-client';
+import { useAuthStore } from '@/stores/auth-store';
 
-import { apiClient, clearUserScope, handleSessionExpired, signOutAndClear } from './session';
+import {
+  apiClient,
+  bootstrapAuth,
+  clearUserScope,
+  handleSessionExpired,
+  signOutAndClear,
+} from './session';
 
 jest.mock('@/lib/auth-client', () => ({
-  authClient: { signOut: jest.fn(), getSession: jest.fn() },
+  authService: { signOut: jest.fn(), refreshAccessToken: jest.fn(), hasStoredSession: jest.fn() },
   fetchApiToken: jest.fn(),
 }));
 
-const signOut = authClient.signOut as unknown as jest.Mock;
-const getSession = authClient.getSession as unknown as jest.Mock;
+const signOut = authService.signOut as unknown as jest.Mock;
+const refresh = authService.refreshAccessToken as unknown as jest.Mock;
+const hasStoredSession = authService.hasStoredSession as unknown as jest.Mock;
 const mockFetchApiToken = fetchApiToken as unknown as jest.Mock;
 
 function jwt(secondsFromNow: number): string {
   const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
-  return `${b64({ alg: 'EdDSA' })}.${b64({ exp: Math.floor(Date.now() / 1000) + secondsFromNow })}.sig`;
+  return `${b64({ alg: 'HS256' })}.${b64({ exp: Math.floor(Date.now() / 1000) + secondsFromNow })}.sig`;
 }
 
 const ok = (body: unknown, status = 200) =>
@@ -25,7 +33,8 @@ const ok = (body: unknown, status = 200) =>
 
 describe('signOutAndClear', () => {
   beforeEach(() => {
-    signOut.mockReset().mockResolvedValue({ data: { success: true }, error: null });
+    signOut.mockReset().mockResolvedValue(undefined);
+    useAuthStore.setState({ status: 'signedIn', user: null });
     jest.spyOn(queryClient, 'clear').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
@@ -52,41 +61,69 @@ describe('signOutAndClear', () => {
 
 describe('handleSessionExpired', () => {
   beforeEach(() => {
-    signOut.mockReset().mockResolvedValue({ data: null, error: null });
-    getSession.mockReset();
+    signOut.mockReset().mockResolvedValue(undefined);
+    refresh.mockReset();
+    useAuthStore.setState({ status: 'signedIn', user: null });
     jest.spyOn(queryClient, 'clear').mockImplementation(() => undefined);
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it('signs out when the server has no session any more', async () => {
-    getSession.mockResolvedValue({ data: null, error: null });
+  it('signs out when the refresh finds no session (null)', async () => {
+    refresh.mockResolvedValue(null);
     await handleSessionExpired();
-    expect(getSession).toHaveBeenCalledWith({ query: { disableCookieCache: true } });
+    expect(refresh).toHaveBeenCalledTimes(1);
     expect(signOut).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState().status).toBe('signedOut');
   });
 
-  it('signs out when the server answers 401', async () => {
-    getSession.mockResolvedValue({ data: null, error: { status: 401, message: 'no' } });
-    await handleSessionExpired();
-    expect(signOut).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps the user signed in when the session is still alive', async () => {
-    getSession.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+  it('keeps the user signed in when the refresh works', async () => {
+    refresh.mockResolvedValue(jwt(900));
     await handleSessionExpired();
     expect(signOut).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().status).toBe('signedIn');
   });
 
   it('keeps the user signed in on a network failure', async () => {
-    getSession.mockRejectedValue(new NetworkError('offline'));
+    refresh.mockRejectedValue(new NetworkError('offline'));
     await handleSessionExpired();
     expect(signOut).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().status).toBe('signedIn');
+  });
+});
+
+describe('bootstrapAuth', () => {
+  beforeEach(() => {
+    hasStoredSession.mockReset();
+    refresh.mockReset();
+    useAuthStore.setState({ status: 'unknown', user: null });
   });
 
-  it('keeps the user signed in on a server error', async () => {
-    getSession.mockResolvedValue({ data: null, error: { status: 503, message: 'down' } });
-    await handleSessionExpired();
-    expect(signOut).not.toHaveBeenCalled();
+  it('is signed in when a refresh token is stored, without calling the server', async () => {
+    hasStoredSession.mockResolvedValue(true);
+    await bootstrapAuth();
+    expect(useAuthStore.getState().status).toBe('signedIn');
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('is signed out when nothing is stored', async () => {
+    hasStoredSession.mockResolvedValue(false);
+    await bootstrapAuth();
+    expect(useAuthStore.getState().status).toBe('signedOut');
+  });
+
+  it('is signed out when the store cannot be read', async () => {
+    hasStoredSession.mockRejectedValue(new Error('keystore'));
+    await bootstrapAuth();
+    expect(useAuthStore.getState().status).toBe('signedOut');
+  });
+
+  it('does not overwrite a status that was set while it was reading', async () => {
+    hasStoredSession.mockImplementation(async () => {
+      useAuthStore.getState().setSignedOut();
+      return true;
+    });
+    await bootstrapAuth();
+    expect(useAuthStore.getState().status).toBe('signedOut');
   });
 });
 
@@ -97,8 +134,8 @@ describe('apiClient', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     mockFetchApiToken.mockReset();
-    getSession.mockReset();
-    signOut.mockReset().mockResolvedValue({ data: null, error: null });
+    refresh.mockReset();
+    signOut.mockReset().mockResolvedValue(undefined);
     global.fetch = fetchMock as unknown as typeof fetch;
     jest.spyOn(queryClient, 'clear').mockImplementation(() => undefined);
     return signOutAndClear();
@@ -133,7 +170,7 @@ describe('apiClient', () => {
     mockFetchApiToken
       .mockResolvedValueOnce(jwt(900))
       .mockRejectedValueOnce(new NetworkError('offline'));
-    getSession.mockRejectedValue(new NetworkError('offline'));
+    refresh.mockRejectedValue(new NetworkError('offline'));
     fetchMock.mockReturnValue(ok({ detail: 'Invalid or expired token' }, 401));
     signOut.mockClear();
 
@@ -151,8 +188,8 @@ describe('user scope', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     mockFetchApiToken.mockReset();
-    getSession.mockReset();
-    signOut.mockReset().mockResolvedValue({ data: null, error: null });
+    refresh.mockReset();
+    signOut.mockReset().mockResolvedValue(undefined);
     global.fetch = fetchMock as unknown as typeof fetch;
     jest.spyOn(queryClient, 'clear').mockImplementation(() => undefined);
     clearUserScope();
@@ -184,9 +221,9 @@ describe('user scope', () => {
     expect(mockFetchApiToken.mock.calls.length).toBe(fetched + 1);
   });
 
-  it('signs the user out when the auth service says the session is gone while fetching a token', async () => {
+  it('signs the user out when the refresh finds no session while fetching a token', async () => {
     mockFetchApiToken.mockResolvedValue(null);
-    getSession.mockResolvedValue({ data: null, error: null });
+    refresh.mockResolvedValue(null);
     fetchMock.mockImplementation(() => ok({ detail: 'Not authenticated' }, 401));
 
     await expect(apiClient.request('/me', { schema })).rejects.toMatchObject({ status: 401 });

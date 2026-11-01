@@ -1,61 +1,40 @@
-import { NetworkError } from '@/lib/errors';
+import * as SecureStore from 'expo-secure-store';
 
-import { expoClient } from '@better-auth/expo/client';
-import { createAuthClient } from 'better-auth/react';
+import { authService, fetchApiToken, REFRESH_TOKEN_KEY, secureStorage } from './auth-client';
 
-import { authClient, fetchApiToken } from './auth-client';
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
+}));
 
-jest.mock('better-auth/react', () => {
-  const token = jest.fn();
-  return { createAuthClient: jest.fn(() => ({ token })) };
-});
-jest.mock('better-auth/client/plugins', () => ({ jwtClient: () => ({ id: 'jwt' }) }));
-jest.mock('@better-auth/expo/client', () => ({ expoClient: jest.fn(() => ({ id: 'expo' })) }));
-jest.mock('expo-secure-store', () => ({ __esModule: true, marker: 'secure-store' }));
-
-const mockToken = authClient.token as unknown as jest.Mock;
-const mockExpoClient = expoClient as unknown as jest.Mock;
-const mockCreateAuthClient = createAuthClient as unknown as jest.Mock;
+const getItem = SecureStore.getItemAsync as jest.Mock;
+const setItem = SecureStore.setItemAsync as jest.Mock;
+const deleteItem = SecureStore.deleteItemAsync as jest.Mock;
 
 describe('auth client', () => {
-  beforeEach(() => mockToken.mockReset());
+  beforeEach(() => jest.clearAllMocks());
 
-  it('stores the session in SecureStore under the wattprint scheme and prefix', () => {
-    expect(authClient).toBeDefined();
-    expect(mockExpoClient).toHaveBeenCalledWith(
-      expect.objectContaining({
-        scheme: 'wattprint',
-        storagePrefix: 'wattprint',
-        storage: expect.objectContaining({ marker: 'secure-store' }),
-      }),
-    );
+  it('uses one SecureStore key under the wattprint prefix', () => {
+    expect(REFRESH_TOKEN_KEY).toBe('wattprint.refresh-token');
+    // SecureStore only accepts letters, digits, ".", "-" and "_" in keys.
+    expect(REFRESH_TOKEN_KEY).toMatch(/^[A-Za-z0-9._-]+$/);
   });
 
-  it('points at the local auth service when EXPO_PUBLIC_AUTH_URL is unset', () => {
-    expect(mockCreateAuthClient).toHaveBeenCalledWith(
-      expect.objectContaining({ baseURL: 'http://localhost:3000' }),
-    );
+  it('backs the storage with SecureStore', async () => {
+    getItem.mockResolvedValue('r1');
+    await expect(secureStorage.get('k')).resolves.toBe('r1');
+    await secureStorage.set('k', 'v');
+    await secureStorage.remove('k');
+    expect(getItem).toHaveBeenCalledWith('k');
+    expect(setItem).toHaveBeenCalledWith('k', 'v');
+    expect(deleteItem).toHaveBeenCalledWith('k');
   });
 
-  describe('fetchApiToken', () => {
-    it('returns the JWT', async () => {
-      mockToken.mockResolvedValue({ data: { token: 'jwt-1' }, error: null });
-      await expect(fetchApiToken()).resolves.toBe('jwt-1');
-    });
-
-    it('returns null when the server rejects the session (401)', async () => {
-      mockToken.mockResolvedValue({ data: null, error: { status: 401, message: 'Unauthorized' } });
-      await expect(fetchApiToken()).resolves.toBeNull();
-    });
-
-    it('throws NetworkError on a server error', async () => {
-      mockToken.mockResolvedValue({ data: null, error: { status: 500, message: 'boom' } });
-      await expect(fetchApiToken()).rejects.toBeInstanceOf(NetworkError);
-    });
-
-    it('throws NetworkError when the request itself fails', async () => {
-      mockToken.mockRejectedValue(new TypeError('Network request failed'));
-      await expect(fetchApiToken()).rejects.toBeInstanceOf(NetworkError);
-    });
+  it('exports fetchApiToken as the service refresh (null without a stored session)', async () => {
+    expect(fetchApiToken).toBe(authService.refreshAccessToken);
+    getItem.mockResolvedValue(null);
+    await expect(fetchApiToken()).resolves.toBeNull();
+    expect(getItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
   });
 });
