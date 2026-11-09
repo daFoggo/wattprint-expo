@@ -88,12 +88,12 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 
 - No Expo Go. Use the dev build on the physical phone (Pixel 8a, adb serial `3C081JEKB17021`; always
   `adb -s 3C081JEKB17021 ...`): `pnpm android` for native changes, `npx expo start --dev-client` for JS-only changes.
-  Metro is reached through `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, so the deep link uses `localhost:8081`.
+  Metro is reached through `adb -s 3C081JEKB17021 reverse tcp:11094 tcp:11094`, so the deep link uses `localhost:11094`.
   FastAPI and Keycloak (docker compose in `wattprint-fastapi`) are reached the same way:
-  `adb -s 3C081JEKB17021 reverse tcp:8000 tcp:8000` and `... reverse tcp:8180 tcp:8180` (the app defaults `EXPO_PUBLIC_API_URL` to `http://localhost:8000/api/v1`; without
+  `adb -s 3C081JEKB17021 reverse tcp:11093 tcp:11093` and `... reverse tcp:11095 tcp:11095` (the app defaults `EXPO_PUBLIC_API_URL` to `http://localhost:11093/api/v1`; without
   `adb reverse`, set it to the LAN IP of the machine).
 - Fallback (optional): the emulator `Medium_Phone_API_37.0` (`emulator-5554`). Its builds are x86 and the phone is ARM, so an
-  x86 apk does not install on the phone; use the matching device for each build and use `10.0.2.2:8081` in the deep link there.
+  x86 apk does not install on the phone; use the matching device for each build and use `10.0.2.2:11094` in the deep link there.
 - Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S`: no `E` lines.
 - Android on Windows needs `LongPathsEnabled=1`, SDK CMake 4.x, JDK 17, `ANDROID_HOME`, and `CMAKE_POLICY_VERSION_MINIMUM=3.5` in the
   environment of `pnpm android` (Skia's CMakeLists declares `cmake_minimum_required 3.4.1`; PowerShell:

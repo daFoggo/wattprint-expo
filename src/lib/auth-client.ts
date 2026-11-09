@@ -25,7 +25,7 @@ export const secureStorage: AuthStorage = {
 if (env.EXPO_PUBLIC_APP_ENV === 'production' && !env.EXPO_PUBLIC_KEYCLOAK_URL) {
   throw new Error('EXPO_PUBLIC_KEYCLOAK_URL is required in production');
 }
-const issuer = env.EXPO_PUBLIC_KEYCLOAK_URL ?? 'http://localhost:8180/realms/wattprint';
+const issuer = env.EXPO_PUBLIC_KEYCLOAK_URL ?? 'http://localhost:11095/realms/wattprint';
 
 // Must be registered in the realm client (`wattprint://auth`).
 const redirectUri = makeRedirectUri({ scheme: 'wattprint', path: 'auth' });
@@ -51,7 +51,7 @@ async function promptLogin() {
 }
 
 export const authService = createAuthService({
-  apiUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
+  apiUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:11093/api/v1',
   issuer,
   clientId: KEYCLOAK_CLIENT_ID,
   storage: secureStorage,

@@ -121,7 +121,7 @@ search with Pacer plus `keepPreviousData`, no mirrored query data in stores.
 ## 8. Release-build measurement method (checklist for a perf claim)
 
 1. Record the commit, build variant and device (the phone, serial `3C081JEKB17021`, or the emulator AVD `Medium_Phone_API_37.0` as a labelled fallback; never mix the two in one comparison).
-2. Build release: `npx expo run:android --variant release --no-bundler`; confirm Metro is off (port 8081 not listening) and the
+2. Build release: `npx expo run:android --variant release --no-bundler`; confirm Metro is off (port 11094 not listening) and the
    embedded bundle renders (screenshot).
 3. Control the cache state (cold: `am force-stop`; warm: data already fetched) and say which one each number is.
 4. Run n >= 5 per cell, 10 for cold start, alternate A/B order, report median and min-max.

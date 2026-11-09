@@ -83,7 +83,7 @@ export async function bootstrapAuth(): Promise<void> {
 }
 
 export const apiClient = createApiClient({
-  baseUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
+  baseUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:11093/api/v1',
   getAccessToken: tokens.getToken,
   // A failure propagates: the client treats it as "unknown", only a null token ends the session.
   refreshAccessToken: () => tokens.refresh(),

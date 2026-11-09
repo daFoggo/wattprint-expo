@@ -13,9 +13,9 @@ export type AuthStorage = {
 export type AuthCode = { code: string; codeVerifier: string; redirectUri: string };
 
 export type AuthServiceOptions = {
-  // FastAPI base URL including the version prefix, e.g. http://localhost:8000/api/v1
+  // FastAPI base URL including the version prefix, e.g. http://localhost:11093/api/v1
   apiUrl: string;
-  // Keycloak realm URL, e.g. http://localhost:8180/realms/wattprint (must equal the token `iss`).
+  // Keycloak realm URL, e.g. http://localhost:11095/realms/wattprint (must equal the token `iss`).
   issuer: string;
   clientId: string;
   storage: AuthStorage;

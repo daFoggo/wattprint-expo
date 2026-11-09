@@ -41,9 +41,9 @@ npx expo-doctor      # all checks must pass
 pnpm android         # then verify on the phone (screenshot + logcat with no E ReactNativeJS lines)
 ```
 
-Verification device: the physical phone. Forward Metro with `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, then relaunch via the
+Verification device: the physical phone. Forward Metro with `adb -s 3C081JEKB17021 reverse tcp:11094 tcp:11094`, then relaunch via the
 dev-client deep link with `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
-Emulator fallback (optional): use `adb -s emulator-5554` and `10.0.2.2:8081` in the deep link; emulator builds are x86 and the
+Emulator fallback (optional): use `adb -s emulator-5554` and `10.0.2.2:11094` in the deep link; emulator builds are x86 and the
 phone is ARM, so an x86 apk does not install on the phone.
 
 Device check (debug app id `com.dafoggo.wattprint.dev`): start Metro, relaunch the app, take a screenshot
@@ -96,8 +96,8 @@ app.config.ts, app.json, eas.json, metro.config.js, eslint.config.js, jest.setup
 ## Environment
 
 `src/env.ts` validates `EXPO_PUBLIC_APP_ENV` (`development` | `preview` | `production`, default
-`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) (default `http://localhost:8000/api/v1`, use the LAN IP on a
-physical phone without `adb reverse`) and `EXPO_PUBLIC_KEYCLOAK_URL` (the Keycloak realm URL, default `http://localhost:8180/realms/wattprint`; it must equal the API's `KEYCLOAK_ISSUER`) at startup. `EXPO_PUBLIC_*` values are inlined into the
+`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) (default `http://localhost:11093/api/v1`, use the LAN IP on a
+physical phone without `adb reverse`) and `EXPO_PUBLIC_KEYCLOAK_URL` (the Keycloak realm URL, default `http://localhost:11095/realms/wattprint`; it must equal the API's `KEYCLOAK_ISSUER`) at startup. `EXPO_PUBLIC_*` values are inlined into the
 bundle and are never secret. Read them only through static dot access (`process.env.EXPO_PUBLIC_X`),
 as `src/env.ts` does; destructuring or bracket access is not inlined.
 

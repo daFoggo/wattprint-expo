@@ -23,8 +23,8 @@ Use before installing a package, touching gluestack, reading env vars, verifying
 ## Gates before "done"
 
 `pnpm check` (lint with zero warnings, typecheck, jest), `pnpm format:check`, `npx expo-doctor`, and for UI or native work the
-physical phone: `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, relaunch the dev build (`com.dafoggo.wattprint.dev`) with the
-`localhost:8081` deep link from AGENTS.md, take a screenshot, read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S` for no `E`
+physical phone: `adb -s 3C081JEKB17021 reverse tcp:11094 tcp:11094`, relaunch the dev build (`com.dafoggo.wattprint.dev`) with the
+`localhost:11094` deep link from AGENTS.md, take a screenshot, read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S` for no `E`
 lines, then stop Metro. The emulator (`Medium_Phone_API_37.0`, `emulator-5554`) is an optional fallback; its builds are x86 and the
 phone is ARM, so an x86 apk does not install on the phone. `pnpm android` with CMake 4.x needs `CMAKE_POLICY_VERSION_MINIMUM=3.5` in the
 environment (Skia). Report real output, failures included.

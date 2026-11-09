@@ -16,7 +16,7 @@ info:
 servers:
   - url: https://api.wattprint.example/v1
     description: Production placeholder
-  - url: http://localhost:8000/v1
+  - url: http://localhost:11093/v1
     description: Local FastAPI
 security:
   - bearerAuth: []
