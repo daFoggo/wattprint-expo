@@ -78,7 +78,7 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   files; extract to shared only when a second feature needs it. Data rules and choices (staleTime,
   FlashList for a few hundred rows or more, placeholder from list rows): `docs/data-fetching.md`.
 - Routes: the tabs live in `src/app/(app)` (one folder per tab with its own `_layout.tsx` Stack) and are shown only to a
-  signed-in user (`Stack.Protected` in the root layout); sign-in and sign-up are in `src/app/(auth)`; the root layout exports
+  signed-in user (`Stack.Protected` in the root layout); sign-in is in `src/app/(auth)`; the root layout exports
   `ErrorBoundary`; `+not-found.tsx` exists. User-visible strings use i18n keys (en and vi, same keys); error
   text is `selectable`.
 - Keep `nodeLinker: hoisted` and LF line endings (`.gitattributes`); Prettier requires LF.
@@ -89,8 +89,8 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
 - No Expo Go. Use the dev build on the physical phone (Pixel 8a, adb serial `3C081JEKB17021`; always
   `adb -s 3C081JEKB17021 ...`): `pnpm android` for native changes, `npx expo start --dev-client` for JS-only changes.
   Metro is reached through `adb -s 3C081JEKB17021 reverse tcp:8081 tcp:8081`, so the deep link uses `localhost:8081`.
-  FastAPI (docker compose in `wattprint-fastapi`, auth included) is reached the same way:
-  `adb -s 3C081JEKB17021 reverse tcp:8000 tcp:8000` (the app defaults `EXPO_PUBLIC_API_URL` to `http://localhost:8000/api/v1`; without
+  FastAPI and Keycloak (docker compose in `wattprint-fastapi`) are reached the same way:
+  `adb -s 3C081JEKB17021 reverse tcp:8000 tcp:8000` and `... reverse tcp:8180 tcp:8180` (the app defaults `EXPO_PUBLIC_API_URL` to `http://localhost:8000/api/v1`; without
   `adb reverse`, set it to the LAN IP of the machine).
 - Fallback (optional): the emulator `Medium_Phone_API_37.0` (`emulator-5554`). Its builds are x86 and the phone is ARM, so an
   x86 apk does not install on the phone; use the matching device for each build and use `10.0.2.2:8081` in the deep link there.

@@ -8,6 +8,7 @@ describe('env', () => {
     expect(parseEnv({})).toEqual({
       EXPO_PUBLIC_APP_ENV: 'development',
       EXPO_PUBLIC_API_URL: undefined,
+      EXPO_PUBLIC_KEYCLOAK_URL: undefined,
     });
   });
 

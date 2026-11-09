@@ -2,6 +2,12 @@ import * as SecureStore from 'expo-secure-store';
 
 import { authService, fetchApiToken, REFRESH_TOKEN_KEY, secureStorage } from './auth-client';
 
+jest.mock('expo-web-browser', () => ({ maybeCompleteAuthSession: jest.fn() }));
+jest.mock('expo-auth-session', () => ({
+  AuthRequest: jest.fn(),
+  makeRedirectUri: () => 'wattprint://auth',
+  Prompt: { Login: 'login' },
+}));
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),

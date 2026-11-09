@@ -1,10 +1,20 @@
-import { ApiError, NetworkError } from '@/lib/errors';
+import { ContractError, NetworkError } from '@/lib/errors';
 
-import { createAuthService, type AuthStorage } from './auth-service';
+import { createAuthService, oidcEndpoints, type AuthStorage } from './auth-service';
 
 const KEY = 'wattprint.refresh-token';
-const BASE = 'http://api.test/api/v1';
-const user = { id: 'u1', email: 'a@example.com', full_name: 'An', is_active: true };
+const ISSUER = 'http://kc.test/realms/wattprint';
+const API = 'http://api.test/api/v1';
+const TOKEN = `${ISSUER}/protocol/openid-connect/token`;
+const LOGOUT = `${ISSUER}/protocol/openid-connect/logout`;
+const user = {
+  id: 'u1',
+  email: 'a@example.com',
+  full_name: 'An',
+  is_active: true,
+  roles: ['admin'],
+};
+const code = { code: 'c1', codeVerifier: 'v1', redirectUri: 'wattprint://auth' };
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const data = new Map(Object.entries(initial));
@@ -31,505 +41,300 @@ const reply = (status: number, body?: unknown) =>
 
 type Route = (init: RequestInit) => Promise<unknown>;
 
-// A fake fetch routed by "METHOD /path"; an unknown route fails the test.
+// A fake fetch routed by "METHOD url"; an unknown route fails the test.
 function fakeFetch(routes: Record<string, Route>) {
   const calls: { route: string; init: RequestInit }[] = [];
   const fn = jest.fn((input: string, init: RequestInit) => {
-    const route = `${init.method ?? 'GET'} ${input.replace(BASE, '')}`;
+    const route = `${init.method ?? 'GET'} ${input}`;
     calls.push({ route, init });
     const handler = routes[route];
-    if (!handler) throw new Error(`unexpected request ${route}`);
+    if (!handler) throw new Error(`unexpected request: ${route}`);
     return handler(init);
   });
   return { fn: fn as unknown as typeof fetch, calls };
 }
 
-const tokens = (access: string, refresh: string) =>
-  reply(200, { access_token: access, refresh_token: refresh, token_type: 'bearer' });
+const bodyOf = (init: RequestInit) => new URLSearchParams(String(init.body));
 
-describe('signIn', () => {
-  it('posts the form, persists the refresh token and returns the access token and the user', async () => {
-    const { storage, data } = memoryStorage();
-    const { fn, calls } = fakeFetch({
-      'POST /auth/token': () => tokens('access-1', 'refresh-1'),
-      'GET /users/me': () => reply(200, user),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    const result = await service.signIn({ email: 'a+b@example.com', password: 'p w&1' });
-
-    expect(result).toEqual({ accessToken: 'access-1', user });
-    expect(data.get(KEY)).toBe('refresh-1');
-    const [form, me] = calls;
-    expect(form.init.body).toBe('username=a%2Bb%40example.com&password=p%20w%261');
-    expect((form.init.headers as Record<string, string>)['Content-Type']).toBe(
-      'application/x-www-form-urlencoded',
-    );
-    expect((me.init.headers as Record<string, string>).Authorization).toBe('Bearer access-1');
+function setup(
+  routes: Record<string, Route>,
+  opts: { stored?: Record<string, string>; prompt?: () => Promise<typeof code | null> } = {},
+) {
+  const { storage, data } = memoryStorage(opts.stored);
+  const http = fakeFetch(routes);
+  const service = createAuthService({
+    apiUrl: API,
+    issuer: ISSUER,
+    clientId: 'wattprint-mobile',
+    storage,
+    prompt: opts.prompt ?? (() => Promise.resolve(code)),
+    fetchFn: http.fn,
   });
+  return { service, storage, data, ...http };
+}
 
-  it('rejects a wrong password with a 401 ApiError and stores nothing', async () => {
-    const { storage, data } = memoryStorage();
-    const { fn } = fakeFetch({
-      'POST /auth/token': () => reply(401, { detail: 'Incorrect email or password' }),
+const tokens = { access_token: 'a1', refresh_token: 'r1' };
+
+describe('oidcEndpoints', () => {
+  it('uses the Keycloak realm paths', () => {
+    expect(oidcEndpoints(ISSUER)).toEqual({
+      authorizationEndpoint: `${ISSUER}/protocol/openid-connect/auth`,
+      tokenEndpoint: TOKEN,
+      endSessionEndpoint: LOGOUT,
     });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    const error = await service
-      .signIn({ email: 'a@example.com', password: 'wrong-password' })
-      .catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(ApiError);
-    expect(error).toMatchObject({ status: 401, message: 'Incorrect email or password' });
-    expect(data.size).toBe(0);
-  });
-
-  it('throws NetworkError when the service cannot be reached', async () => {
-    const { storage } = memoryStorage();
-    const { fn } = fakeFetch({
-      'POST /auth/token': () => Promise.reject(new TypeError('Network request failed')),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await expect(
-      service.signIn({ email: 'a@example.com', password: 'password123' }),
-    ).rejects.toBeInstanceOf(NetworkError);
-  });
-
-  it('hands the new token back and keeps nothing when loading the user fails', async () => {
-    const { storage, data } = memoryStorage();
-    const { fn, calls } = fakeFetch({
-      'POST /auth/token': () => tokens('access-1', 'refresh-1'),
-      'GET /users/me': () => reply(500, { detail: 'boom' }),
-      'POST /auth/logout': () => reply(204),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await expect(
-      service.signIn({ email: 'a@example.com', password: 'password123' }),
-    ).rejects.toThrow(/Could not load the signed-in user/);
-
-    expect(data.size).toBe(0);
-    const logout = calls.find((c) => c.route === 'POST /auth/logout');
-    expect(JSON.parse(logout?.init.body as string)).toEqual({ refresh_token: 'refresh-1' });
-  });
-
-  it('does not report a /users/me 401 as wrong credentials', async () => {
-    const { storage, data } = memoryStorage();
-    const { fn } = fakeFetch({
-      'POST /auth/token': () => tokens('access-1', 'refresh-1'),
-      'GET /users/me': () => reply(401, { detail: 'Invalid or expired token' }),
-      'POST /auth/logout': () => Promise.reject(new TypeError('offline')),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    const error = await service
-      .signIn({ email: 'a@example.com', password: 'password123' })
-      .catch((e: unknown) => e);
-
-    expect(error).not.toBeInstanceOf(ApiError);
-    expect(data.size).toBe(0);
   });
 });
 
-describe('signUp', () => {
-  it('registers with full_name, then signs in', async () => {
-    const { storage, data } = memoryStorage();
-    const { fn, calls } = fakeFetch({
-      'POST /auth/register': () => reply(201, user),
-      'POST /auth/token': () => tokens('access-1', 'refresh-1'),
-      'GET /users/me': () => reply(200, user),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    const result = await service.signUp({
-      email: 'a@example.com',
-      password: 'password123',
-      name: 'An',
+describe('signIn', () => {
+  it('exchanges the code (PKCE), stores the refresh token and loads the user', async () => {
+    const { service, data, calls } = setup({
+      [`POST ${TOKEN}`]: () => reply(200, tokens),
+      [`GET ${API}/users/me`]: () => reply(200, user),
     });
 
-    expect(result.user).toEqual(user);
-    expect(JSON.parse(calls[0].init.body as string)).toEqual({
-      email: 'a@example.com',
-      password: 'password123',
-      full_name: 'An',
+    await expect(service.signIn()).resolves.toEqual({ accessToken: 'a1', user });
+
+    const form = bodyOf(calls[0]!.init);
+    expect(Object.fromEntries(form)).toEqual({
+      grant_type: 'authorization_code',
+      client_id: 'wattprint-mobile',
+      code: 'c1',
+      redirect_uri: 'wattprint://auth',
+      code_verifier: 'v1',
     });
-    expect(data.get(KEY)).toBe('refresh-1');
+    expect((calls[1]!.init.headers as Record<string, string>).Authorization).toBe('Bearer a1');
+    expect(data.get(KEY)).toBe('r1');
   });
 
-  it('surfaces an already registered email as a 409 ApiError and does not sign in', async () => {
-    const { storage } = memoryStorage();
-    const { fn, calls } = fakeFetch({
-      'POST /auth/register': () => reply(409, { detail: 'Email already registered' }),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await expect(
-      service.signUp({ email: 'a@example.com', password: 'password123' }),
-    ).rejects.toMatchObject({
-      status: 409,
-      message: 'Email already registered',
-    });
-    expect(calls).toHaveLength(1);
+  it('returns null and changes nothing when the user closes the browser', async () => {
+    const { service, fn, data } = setup({}, { prompt: () => Promise.resolve(null) });
+    await expect(service.signIn()).resolves.toBeNull();
+    expect(fn).not.toHaveBeenCalled();
+    expect(data.size).toBe(0);
   });
 
-  it('reads a 422 validation list into the message', async () => {
-    const { storage } = memoryStorage();
-    const { fn } = fakeFetch({
-      'POST /auth/register': () =>
-        reply(422, { detail: [{ loc: ['body', 'email'], msg: 'bad email', type: 'x' }] }),
+  it('throws an ApiError with the Keycloak description when the code is rejected', async () => {
+    const { service, data } = setup({
+      [`POST ${TOKEN}`]: () =>
+        reply(400, { error: 'invalid_grant', error_description: 'Code not valid' }),
     });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+    await expect(service.signIn()).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 400,
+      message: 'Code not valid',
+    });
+    expect(data.size).toBe(0);
+  });
 
-    await expect(service.signUp({ email: 'x', password: 'password123' })).rejects.toMatchObject({
-      status: 422,
-      message: 'bad email',
+  it('rejects a token response without a refresh token', async () => {
+    const { service } = setup({ [`POST ${TOKEN}`]: () => reply(200, { access_token: 'a1' }) });
+    await expect(service.signIn()).rejects.toBeInstanceOf(ContractError);
+  });
+
+  it('gives the session back and stores nothing when the profile cannot be loaded', async () => {
+    const { service, data, calls } = setup({
+      [`POST ${TOKEN}`]: () => reply(200, tokens),
+      [`GET ${API}/users/me`]: () => reply(403, { detail: 'Inactive user' }),
+      [`POST ${LOGOUT}`]: () => reply(204),
     });
+    await expect(service.signIn()).rejects.toThrow(
+      /Could not load the signed-in user \(HTTP 403\)/,
+    );
+    expect(data.size).toBe(0);
+    expect(bodyOf(calls.at(-1)!.init).get('refresh_token')).toBe('r1');
+  });
+
+  it('revokes a leftover token of a lost session and returns null if signed out meanwhile', async () => {
+    let service!: ReturnType<typeof setup>['service'];
+    const s = setup(
+      {
+        [`POST ${TOKEN}`]: () => reply(200, tokens),
+        [`GET ${API}/users/me`]: async () => {
+          await service.signOut();
+          return reply(200, user);
+        },
+        [`POST ${LOGOUT}`]: () => reply(204),
+      },
+      { stored: { [KEY]: 'old' } },
+    );
+    service = s.service;
+    await expect(service.signIn()).resolves.toBeNull();
+    const revoked = s.calls
+      .filter((c) => c.route === `POST ${LOGOUT}`)
+      .map((c) => bodyOf(c.init).get('refresh_token'));
+    expect(revoked).toEqual(expect.arrayContaining(['old', 'r1']));
+    expect(s.data.has(KEY)).toBe(false);
+  });
+
+  it('gives the session back when the API is unreachable', async () => {
+    const { service, data } = setup({
+      [`POST ${TOKEN}`]: () => reply(200, tokens),
+      [`GET ${API}/users/me`]: () => Promise.reject(new TypeError('offline')),
+      [`POST ${LOGOUT}`]: () => reply(204),
+    });
+    await expect(service.signIn()).rejects.toBeInstanceOf(NetworkError);
+    expect(data.size).toBe(0);
   });
 });
 
 describe('refreshAccessToken', () => {
-  it('returns null without a request when nothing is stored', async () => {
-    const { storage } = memoryStorage();
-    const { fn } = fakeFetch({});
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+  const refreshRoute = (r: Route) => ({ [`POST ${TOKEN}`]: r });
 
+  it('is null without a stored token and makes no request', async () => {
+    const { service, fn } = setup({});
     await expect(service.refreshAccessToken()).resolves.toBeNull();
     expect(fn).not.toHaveBeenCalled();
   });
 
-  it('rotates: sends the stored token and persists the new refresh token', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn, calls } = fakeFetch({
-      'POST /auth/refresh': () => tokens('access-2', 'refresh-2'),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await expect(service.refreshAccessToken()).resolves.toBe('access-2');
-
-    expect(JSON.parse(calls[0].init.body as string)).toEqual({ refresh_token: 'refresh-1' });
-    expect(data.get(KEY)).toBe('refresh-2');
+  it('returns a fresh access token and keeps the refresh token Keycloak reuses', async () => {
+    const { service, data, calls } = setup(
+      refreshRoute(() => reply(200, { access_token: 'a2', refresh_token: 'r1' })),
+      { stored: { [KEY]: 'r1' } },
+    );
+    await expect(service.refreshAccessToken()).resolves.toBe('a2');
+    expect(bodyOf(calls[0]!.init).get('grant_type')).toBe('refresh_token');
+    expect(data.get(KEY)).toBe('r1');
   });
 
-  it('removes the stored token and returns null on 401', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn } = fakeFetch({
-      'POST /auth/refresh': () => reply(401, { detail: 'Invalid refresh token' }),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+  it('stores a rotated refresh token', async () => {
+    const { service, data } = setup(
+      refreshRoute(() => reply(200, { access_token: 'a2', refresh_token: 'r2' })),
+      { stored: { [KEY]: 'r1' } },
+    );
+    await service.refreshAccessToken();
+    expect(data.get(KEY)).toBe('r2');
+  });
 
+  it('shares one request between concurrent callers', async () => {
+    const { service, fn } = setup(
+      refreshRoute(() => reply(200, { access_token: 'a2' })),
+      {
+        stored: { [KEY]: 'r1' },
+      },
+    );
+    const [a, b] = await Promise.all([service.refreshAccessToken(), service.refreshAccessToken()]);
+    expect([a, b]).toEqual(['a2', 'a2']);
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it('is null and forgets the token when Keycloak says the session ended (invalid_grant)', async () => {
+    const { service, data } = setup(
+      refreshRoute(() => reply(400, { error: 'invalid_grant' })),
+      {
+        stored: { [KEY]: 'r1' },
+      },
+    );
     await expect(service.refreshAccessToken()).resolves.toBeNull();
     expect(data.has(KEY)).toBe(false);
   });
 
-  it('keeps the stored token and throws NetworkError when the network fails', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn } = fakeFetch({
-      'POST /auth/refresh': () => Promise.reject(new TypeError('offline')),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+  it('keeps a rotated token in memory when storage refuses it, and writes it on the next call', async () => {
+    let n = 0;
+    const { service, data, storage, calls } = setup(
+      refreshRoute(() => reply(200, { access_token: `a${++n}`, refresh_token: `r${n + 1}` })),
+      { stored: { [KEY]: 'r1' } },
+    );
+    (storage.set as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
 
-    await expect(service.refreshAccessToken()).rejects.toBeInstanceOf(NetworkError);
-    expect(data.get(KEY)).toBe('refresh-1');
-  });
-
-  it('keeps the stored token and throws NetworkError on a 5xx', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn } = fakeFetch({ 'POST /auth/refresh': () => reply(503, { detail: 'down' }) });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await expect(service.refreshAccessToken()).rejects.toBeInstanceOf(NetworkError);
-    expect(data.get(KEY)).toBe('refresh-1');
-  });
-
-  it('shares one /auth/refresh request between concurrent callers', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn, calls } = fakeFetch({
-      'POST /auth/refresh': () => tokens('access-2', 'refresh-2'),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    const results = await Promise.all([
-      service.refreshAccessToken(),
-      service.refreshAccessToken(),
-      service.refreshAccessToken(),
-    ]);
-
-    expect(results).toEqual(['access-2', 'access-2', 'access-2']);
-    expect(calls.filter((c) => c.route === 'POST /auth/refresh')).toHaveLength(1);
-    expect(data.get(KEY)).toBe('refresh-2');
-  });
-
-  it('allows a new refresh after the previous one settled', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    let n = 1;
-    const { fn, calls } = fakeFetch({
-      'POST /auth/refresh': () => {
-        n += 1;
-        return tokens(`access-${n}`, `refresh-${n}`);
-      },
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+    await expect(service.refreshAccessToken()).resolves.toBe('a1');
+    expect(data.get(KEY)).toBe('r1'); // the spent token is still on disk
+    expect(await service.hasStoredSession()).toBe(true);
 
     await service.refreshAccessToken();
-    await expect(service.refreshAccessToken()).resolves.toBe('access-3');
+    // The second refresh used the unsaved r2, not the spent r1, and its answer was stored.
+    expect(bodyOf(calls[1]!.init).get('refresh_token')).toBe('r2');
+    expect(data.get(KEY)).toBe('r3');
+  });
 
-    expect(JSON.parse(calls[1].init.body as string)).toEqual({ refresh_token: 'refresh-2' });
-    expect(data.get(KEY)).toBe('refresh-3');
+  it('keeps the token on a 400 that is not invalid_grant (misconfiguration)', async () => {
+    const { service, data } = setup(
+      refreshRoute(() => reply(400, { error: 'invalid_client' })),
+      {
+        stored: { [KEY]: 'r1' },
+      },
+    );
+    await expect(service.refreshAccessToken()).rejects.toBeInstanceOf(NetworkError);
+    expect(data.get(KEY)).toBe('r1');
+  });
+
+  it('keeps the token and throws NetworkError on a 5xx or when offline', async () => {
+    const down = setup(
+      refreshRoute(() => reply(503)),
+      { stored: { [KEY]: 'r1' } },
+    );
+    await expect(down.service.refreshAccessToken()).rejects.toBeInstanceOf(NetworkError);
+    expect(down.data.get(KEY)).toBe('r1');
+
+    const offline = setup(
+      refreshRoute(() => Promise.reject(new TypeError('offline'))),
+      {
+        stored: { [KEY]: 'r1' },
+      },
+    );
+    await expect(offline.service.refreshAccessToken()).rejects.toBeInstanceOf(NetworkError);
+    expect(offline.data.get(KEY)).toBe('r1');
+  });
+
+  it('does not write a stale answer back when a sign-out happened meanwhile', async () => {
+    let release!: (v: unknown) => void;
+    const slow = new Promise((resolve) => (release = resolve));
+    const { service, data } = setup(
+      {
+        [`POST ${TOKEN}`]: () => slow,
+        [`POST ${LOGOUT}`]: () => reply(204),
+      },
+      { stored: { [KEY]: 'r1' } },
+    );
+    const pending = service.refreshAccessToken();
+    await Promise.resolve();
+    // signOut waits for the refresh in flight, so release it first.
+    const out = service.signOut();
+    release(await reply(200, { access_token: 'a2', refresh_token: 'r9' }));
+    await out;
+    await pending.catch(() => undefined);
+    expect(data.has(KEY)).toBe(false);
   });
 });
 
 describe('signOut', () => {
-  it('posts the refresh token to /auth/logout and removes it', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn, calls } = fakeFetch({ 'POST /auth/logout': () => reply(204) });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
+  it('removes the token and ends the Keycloak session with it', async () => {
+    const { service, data, calls } = setup(
+      { [`POST ${LOGOUT}`]: () => reply(204) },
+      { stored: { [KEY]: 'r1' } },
+    );
     await service.signOut();
-
-    expect(JSON.parse(calls[0].init.body as string)).toEqual({ refresh_token: 'refresh-1' });
     expect(data.has(KEY)).toBe(false);
+    const form = bodyOf(calls[0]!.init);
+    expect(form.get('refresh_token')).toBe('r1');
+    expect(form.get('client_id')).toBe('wattprint-mobile');
   });
 
-  it('removes the token even when /auth/logout fails', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn } = fakeFetch({
-      'POST /auth/logout': () => Promise.reject(new TypeError('offline')),
-    });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
+  it('still signs out locally when Keycloak is unreachable', async () => {
+    const { service, data } = setup(
+      { [`POST ${LOGOUT}`]: () => Promise.reject(new TypeError('offline')) },
+      { stored: { [KEY]: 'r1' } },
+    );
     await expect(service.signOut()).resolves.toBeUndefined();
     expect(data.has(KEY)).toBe(false);
   });
 
-  it('removes the token when /auth/logout answers 500', async () => {
-    const { storage, data } = memoryStorage({ [KEY]: 'refresh-1' });
-    const { fn } = fakeFetch({ 'POST /auth/logout': () => reply(500, { detail: 'boom' }) });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
+  it('makes no request when nothing is stored, and reports a failed removal', async () => {
+    const none = setup({});
+    await none.service.signOut();
+    expect(none.fn).not.toHaveBeenCalled();
 
-    await service.signOut();
-    expect(data.has(KEY)).toBe(false);
-  });
-
-  it('makes no request when nothing is stored', async () => {
-    const { storage } = memoryStorage();
-    const { fn } = fakeFetch({});
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await service.signOut();
-    expect(fn).not.toHaveBeenCalled();
+    const { service, storage } = setup(
+      { [`POST ${LOGOUT}`]: () => reply(204) },
+      { stored: { [KEY]: 'r1' } },
+    );
+    (storage.remove as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
+    await expect(service.signOut()).rejects.toThrow('keystore locked');
   });
 });
 
 describe('hasStoredSession', () => {
-  it('reflects whether a refresh token is stored', async () => {
-    const { storage } = memoryStorage();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fakeFetch({}).fn });
-    expect(await service.hasStoredSession()).toBe(false);
-    await storage.set(KEY, 'refresh-1');
-    expect(await service.hasStoredSession()).toBe(true);
-  });
-});
-
-// A server with the real replay rules: a refresh token works once; presenting a spent or revoked one
-// fails with 401 and revokes the whole family (every token issued from the same sign-in).
-function replayServer() {
-  let counter = 0;
-  let families = 0;
-  const issued = new Map<string, { family: number; used: boolean }>();
-  const revoked = new Set<number>();
-  const log: string[] = [];
-  let gate: Promise<void> | null = null;
-
-  const issue = (family: number) => {
-    counter += 1;
-    const token = `r${counter}`;
-    issued.set(token, { family, used: false });
-    return token;
-  };
-  const pair = (refresh: string) => tokens(`access-for-${refresh}`, refresh);
-  const bodyOf = (init: RequestInit) =>
-    JSON.parse(init.body as string) as { refresh_token: string };
-
-  const routes: Record<string, Route> = {
-    'POST /auth/token': () => {
-      families += 1;
-      return pair(issue(families));
-    },
-    'GET /users/me': () => reply(200, user),
-    'POST /auth/refresh': async (init) => {
-      const presented = bodyOf(init).refresh_token;
-      log.push(`refresh:${presented}`);
-      const info = issued.get(presented);
-      let answer: Promise<unknown>;
-      if (!info || revoked.has(info.family)) {
-        answer = reply(401, { detail: 'Invalid refresh token' });
-      } else if (info.used) {
-        revoked.add(info.family);
-        answer = reply(401, { detail: 'Refresh token reuse detected' });
-      } else {
-        info.used = true;
-        answer = pair(issue(info.family));
-      }
-      if (gate) await gate;
-      return answer;
-    },
-    'POST /auth/logout': (init) => {
-      const presented = bodyOf(init).refresh_token;
-      log.push(`logout:${presented}`);
-      const info = issued.get(presented);
-      if (info) revoked.add(info.family);
-      return reply(204);
-    },
-  };
-
-  return {
-    ...fakeFetch(routes),
-    log,
-    // Holds the answer of every /auth/refresh (after the server processed it) until released.
-    hold: () => {
-      let release!: () => void;
-      gate = new Promise<void>((resolve) => (release = resolve));
-      return () => {
-        gate = null;
-        release();
-      };
-    },
-    live: () => [...issued].filter(([, i]) => !i.used && !revoked.has(i.family)).map(([t]) => t),
-  };
-}
-
-describe('against a server that enforces single-use refresh tokens', () => {
-  const credentials = { email: 'a@example.com', password: 'password123' };
-  const tick = () => new Promise((resolve) => setImmediate(resolve));
-
-  it('signs out with the newest token when a refresh is in flight', async () => {
-    const { storage, data } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    const release = server.hold();
-    const pending = service.refreshAccessToken();
-    await tick();
-    const signedOut = service.signOut();
-    await tick();
-    release();
-
-    await expect(pending).resolves.toBe('access-for-r2');
-    await signedOut;
-    expect(server.log).toEqual(['refresh:r1', 'logout:r2']);
-    expect(server.live()).toEqual([]);
-    expect(data.has(KEY)).toBe(false);
-  });
-
-  it('gives a caller that joined a refresh across a sign-in a token for the new session', async () => {
-    const { storage, data } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    const release = server.hold();
-    const pending = service.refreshAccessToken();
-    await tick();
-    await service.signIn({ email: 'b@example.com', password: 'password123' });
-    release();
-
-    // The first answer belongs to the old session; the retry uses what is stored now (r3, user B).
-    await expect(pending).resolves.toBe('access-for-r4');
-    expect(data.get(KEY)).toBe('r4');
-    expect(server.log).toContain('refresh:r3');
-    expect(server.log).toContain('logout:r2');
-  });
-
-  it('never presents a spent token: sequential refreshes keep working', async () => {
-    const { storage } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
-    expect(server.log).toEqual(['refresh:r1', 'refresh:r2']);
-  });
-});
-
-describe('signOut with a failing store', () => {
-  it('still logs out on the server, then surfaces the storage error', async () => {
-    const { storage } = memoryStorage({ [KEY]: 'refresh-1' });
-    (storage.remove as jest.Mock).mockRejectedValue(new Error('keystore locked'));
-    const { fn, calls } = fakeFetch({ 'POST /auth/logout': () => reply(204) });
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: fn });
-
-    await expect(service.signOut()).rejects.toThrow('keystore locked');
-    expect(calls.map((c) => c.route)).toEqual(['POST /auth/logout']);
-  });
-});
-
-describe('when storage fails after a successful rotation', () => {
-  const credentials = { email: 'a@example.com', password: 'password123' };
-
-  it('keeps the new token in memory and never replays the spent one', async () => {
-    const { storage, data } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    (storage.set as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
-    // The spent r1 must not stay on disk: a restart would replay it and revoke the chain.
-    expect(data.has(KEY)).toBe(false);
-
-    // The next refresh presents r2 (not the spent r1) and writes it back first.
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
-    expect(server.log).toEqual(['refresh:r1', 'refresh:r2']);
-    expect(data.get(KEY)).toBe('r3');
-  });
-
-  it('does not leave the previous user token on disk when a later sign-in cannot save', async () => {
-    const { storage, data } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    // A's sign-out cannot delete the token: it stays on disk.
-    (storage.remove as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
-    await expect(service.signOut()).rejects.toThrow('keystore locked');
-    expect(data.get(KEY)).toBe('r1');
-
-    // B signs in but the store refuses the write: A's token must go, B works from memory.
-    (storage.set as jest.Mock).mockRejectedValueOnce(new Error('keystore locked'));
-    await service.signIn({ email: 'b@example.com', password: 'password123' });
-    expect(data.has(KEY)).toBe(false);
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
-  });
-
-  it('keeps the session alive for the app run when storage never works again', async () => {
-    const { storage } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    (storage.set as jest.Mock).mockRejectedValue(new Error('keystore locked'));
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r2');
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r3');
-    await expect(service.refreshAccessToken()).resolves.toBe('access-for-r4');
-    expect(server.log).toEqual(['refresh:r1', 'refresh:r2', 'refresh:r3']);
-    expect(await service.hasStoredSession()).toBe(true);
-  });
-
-  it('signs out with the unsaved token', async () => {
-    const { storage } = memoryStorage();
-    const server = replayServer();
-    const service = createAuthService({ baseUrl: BASE, storage, fetchFn: server.fn });
-    await service.signIn(credentials);
-
-    (storage.set as jest.Mock).mockRejectedValue(new Error('keystore locked'));
-    await service.refreshAccessToken();
-    await service.signOut();
-
-    expect(server.log).toEqual(['refresh:r1', 'logout:r2']);
-    expect(server.live()).toEqual([]);
-    expect(await service.hasStoredSession()).toBe(false);
+  it('reflects the stored refresh token', async () => {
+    expect(await setup({}).service.hasStoredSession()).toBe(false);
+    expect(await setup({}, { stored: { [KEY]: 'r1' } }).service.hasStoredSession()).toBe(true);
   });
 });

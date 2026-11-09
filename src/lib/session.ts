@@ -29,16 +29,13 @@ export function clearUserScope(): void {
   queryClient.clear();
 }
 
-// The local cleanup runs before the remote call, so a slow or failing sign-out can never leave the
-// previous user's token or data for the next user. The store is updated even when the remote call
-// fails (the user is signed out locally either way); the failure still reaches the caller.
+// The local cleanup, including the store, runs before the remote call, so a slow (offline) or failing
+// sign-out never keeps the user on screen nor leaves the previous user's token or data for the next
+// user; a failure still reaches the caller.
 export async function signOutAndClear(): Promise<void> {
   clearUserScope();
-  try {
-    await authService.signOut();
-  } finally {
-    useAuthStore.getState().setSignedOut();
-  }
+  useAuthStore.getState().setSignedOut();
+  await authService.signOut();
 }
 
 let expiring = false;

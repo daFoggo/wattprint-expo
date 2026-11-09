@@ -10,17 +10,13 @@ import { useAuthStore } from '@/stores/auth-store';
 
 import { useSignIn } from './use-sign-in';
 import { useSignOut } from './use-sign-out';
-import { useSignUp } from './use-sign-up';
 
-jest.mock('@/lib/auth-client', () => ({
-  authService: { signIn: jest.fn(), signUp: jest.fn() },
-}));
+jest.mock('@/lib/auth-client', () => ({ authService: { signIn: jest.fn() } }));
 jest.mock('@/lib/session', () => ({ signOutAndClear: jest.fn(), primeAccessToken: jest.fn() }));
 
 const signIn = authService.signIn as unknown as jest.Mock;
-const signUp = authService.signUp as unknown as jest.Mock;
 const mockSignOut = signOutAndClear as unknown as jest.Mock;
-const user = { id: 'u1', email: 'a@example.com', full_name: 'An', is_active: true };
+const user = { id: 'u1', email: 'a@example.com', full_name: 'An', is_active: true, roles: [] };
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -39,54 +35,30 @@ describe('useSignIn', () => {
     signIn.mockResolvedValue({ accessToken: 'a', user });
     const { result } = await renderHook(() => useSignIn(), { wrapper });
 
-    await act(() =>
-      result.current.mutateAsync({ email: 'a@example.com', password: 'password123' }),
-    );
+    await act(() => result.current.mutateAsync());
 
-    expect(signIn).toHaveBeenCalledWith({ email: 'a@example.com', password: 'password123' });
     expect(primeAccessToken).toHaveBeenCalledWith('a');
     expect(useAuthStore.getState()).toMatchObject({ status: 'signedIn', user });
   });
 
-  it('rejects with the ApiError of a wrong password and stays signed out', async () => {
-    signIn.mockRejectedValue(new ApiError(401, 'Incorrect email or password', {}));
+  it('stays signed out when the user closes the browser', async () => {
+    signIn.mockResolvedValue(null);
     const { result } = await renderHook(() => useSignIn(), { wrapper });
 
-    await act(() => result.current.mutate({ email: 'a@example.com', password: 'wrong-password' }));
+    await act(() => result.current.mutateAsync());
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toBeInstanceOf(ApiError);
-    expect(result.current.error).toMatchObject({ status: 401 });
+    expect(primeAccessToken).not.toHaveBeenCalled();
     expect(useAuthStore.getState().status).toBe('signedOut');
   });
-});
 
-describe('useSignUp', () => {
-  it('sends email, password and name, then signs the user in', async () => {
-    signUp.mockResolvedValue({ accessToken: 'a', user });
-    const { result } = await renderHook(() => useSignUp(), { wrapper });
-    const input = { email: 'a@example.com', password: 'password123', name: 'An' };
+  it('rejects with the ApiError of the backend and stays signed out', async () => {
+    signIn.mockRejectedValue(new ApiError(409, 'Email belongs to another account', {}));
+    const { result } = await renderHook(() => useSignIn(), { wrapper });
 
-    await act(() => result.current.mutateAsync(input));
-
-    expect(signUp).toHaveBeenCalledWith(input);
-    expect(primeAccessToken).toHaveBeenCalledWith('a');
-    expect(useAuthStore.getState()).toMatchObject({ status: 'signedIn', user });
-  });
-
-  it('surfaces an already registered email as an ApiError', async () => {
-    signUp.mockRejectedValue(new ApiError(409, 'Email already registered', {}));
-    const { result } = await renderHook(() => useSignUp(), { wrapper });
-
-    await act(() =>
-      result.current.mutate({ email: 'a@example.com', password: 'password123', name: 'An' }),
-    );
+    await act(() => result.current.mutate());
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toMatchObject({
-      status: 409,
-      message: 'Email already registered',
-    });
+    expect(result.current.error).toMatchObject({ status: 409 });
     expect(useAuthStore.getState().status).toBe('signedOut');
   });
 });

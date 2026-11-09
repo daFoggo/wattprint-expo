@@ -1,6 +1,6 @@
 import { useAuthStore } from './auth-store';
 
-const user = { id: 'u1', email: 'a@example.com', full_name: 'An', is_active: true };
+const user = { id: 'u1', email: 'a@example.com', full_name: 'An', is_active: true, roles: [] };
 
 beforeEach(() => useAuthStore.setState({ status: 'unknown', user: null }));
 

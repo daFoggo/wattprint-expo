@@ -41,8 +41,9 @@ test('no template scripts; web deps only as the recorded peer exception', () => 
   // Recorded exception (step 1.9): react-native-web and react-dom are required peers of
   // @gluestack-ui/core, @gluestack-ui/utils and @tanstack/react-pacer (expo-doctor).
   // They must stay unused: see the import scan below.
-  // The regex below only exempts these two recorded exceptions; any other *web* package fails.
-  const allowed = ['react-native-web', 'react-dom'];
+  // expo-web-browser is not web support: it opens the system browser (Custom Tabs) for the Keycloak login.
+  // The regex below only exempts these recorded exceptions; any other *web* package fails.
+  const allowed = ['react-native-web', 'react-dom', 'expo-web-browser'];
   const webLike = Object.keys({ ...pkg.dependencies, ...(pkg.devDependencies ?? {}) }).filter(
     (name) => /(^|[-/])web($|[-/])/.test(name) && !allowed.includes(name),
   );

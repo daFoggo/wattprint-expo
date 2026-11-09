@@ -173,21 +173,21 @@ the default".
 
 ## 6. Logout and user-scoped state
 
-Auth is the FastAPI-native JWT backend (`/auth/register`, `/auth/token`, `/auth/refresh`, `/auth/logout`, `/users/me`; see the report
-`docs/superpowers/reports/2026-11-01-fastapi-jwt-auth.md`). Three places hold session state:
+Auth is Keycloak (OIDC authorization code + PKCE in the system browser, public client `wattprint-mobile`; realm in
+`wattprint-fastapi/keycloak/realm`); FastAPI verifies the access token and serves `/users/me`. Three places hold session state:
 
 - **Refresh token**: SecureStore, one key `wattprint.refresh-token`, written only by `src/lib/auth-service.ts` through the
-  storage built in `src/lib/auth-client.ts`. It is single use and rotated on every refresh, so the new one is persisted before
-  the new access token is returned, and refreshes are single-flight (a second concurrent refresh with the spent token would
-  fail and revoke the chain). A 401 from `/auth/refresh` removes it; a network error or 5xx keeps it.
-- **Access JWT** (15 min): memory only, in `createTokenProvider` (`src/lib/auth-token.ts`); never persisted or logged.
+  storage built in `src/lib/auth-client.ts`. Keycloak reuses it unless the realm turns rotation on; a rotated one is persisted
+  before the new access token is returned, and refreshes are single-flight. A 400 `invalid_grant` from the token endpoint
+  removes it; a network error or 5xx keeps it.
+- **Access token** (15 min, Keycloak): memory only, in `createTokenProvider` (`src/lib/auth-token.ts`); never persisted or logged.
 - **Session status**: `src/stores/auth-store.ts`, an in-memory Zustand store (`unknown | signedIn | signedOut`, optional user),
   never persisted. `bootstrapAuth` (`src/lib/session.ts`, started by `useSessionGate`) sets `signedIn` when a refresh token is
   stored, without asking the server (works offline), else `signedOut`; the route guard in `src/app/_layout.tsx` reads
   `useSessionGate` (`src/hooks/use-session-gate.ts`).
 
 Sign-out is `signOutAndClear` (`src/lib/session.ts`): drop the cached JWT and `queryClient.clear()` first, then the service
-sign-out (best-effort `/auth/logout`, the stored token is always removed), then the store becomes `signedOut` (verified:
+sign-out (best-effort Keycloak `logout` with the refresh token, the stored token is always removed), then the store becomes `signedOut` (verified:
 `src/lib/session.test.ts`). `useSessionGate` repeats the cleanup when a signed-in session ends or its user changes. The
 auth store is user scoped and is reset by `setSignedOut`; no other user-scoped store exists yet. The rule for any store added later:
 

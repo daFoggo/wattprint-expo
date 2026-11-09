@@ -25,6 +25,10 @@
       "night": "Ban đêm"
     }
   },
+  "profile": {
+    "roles": "Vai trò: {{roles}}",
+    "reload": "Tải lại từ API"
+  },
   "settings": {
     "title": "Cài đặt",
     "theme": "Giao diện: {{theme}}",
@@ -97,31 +101,14 @@
     "chartSummary": "{{range}}: {{total}} kWh, cao nhất {{peak}}"
   },
   "auth": {
-    "email": "Email",
-    "password": "Mật khẩu",
-    "name": "Tên",
-    "validation": {
-      "emailInvalid": "Nhập địa chỉ email hợp lệ",
-      "passwordShort": "Mật khẩu phải có ít nhất 8 ký tự",
-      "nameRequired": "Nhập tên của bạn",
-      "nameTooLong": "Tên tối đa 64 ký tự"
-    },
     "errors": {
-      "invalidCredentials": "Sai email hoặc mật khẩu",
-      "emailTaken": "Email này đã có tài khoản",
+      "emailTaken": "Email này thuộc về một tài khoản khác",
       "inactiveUser": "Tài khoản này đã bị vô hiệu hóa"
     },
     "signIn": {
       "title": "Đăng nhập",
       "subtitle": "Chào mừng bạn quay lại Wattprint",
-      "submit": "Đăng nhập",
-      "toSignUp": "Chưa có tài khoản? Tạo tài khoản"
-    },
-    "signUp": {
-      "title": "Tạo tài khoản",
-      "subtitle": "Bắt đầu theo dõi điện năng trong nhà",
-      "submit": "Tạo tài khoản",
-      "toSignIn": "Đã có tài khoản? Đăng nhập"
+      "submit": "Đăng nhập"
     }
   }
 }

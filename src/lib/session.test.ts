@@ -60,10 +60,17 @@ describe('signOutAndClear', () => {
     expect(mockFetchApiToken.mock.calls.length).toBe(calls + 1);
   });
 
+  it('signs out locally at once, before the remote call finishes', async () => {
+    signOut.mockReturnValue(new Promise(() => undefined));
+    void signOutAndClear();
+    expect(useAuthStore.getState().status).toBe('signedOut');
+  });
+
   it('still clears local state when the remote sign-out fails', async () => {
     signOut.mockRejectedValue(new Error('offline'));
     await expect(signOutAndClear()).rejects.toThrow('offline');
     expect(queryClient.clear).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState().status).toBe('signedOut');
   });
 });
 

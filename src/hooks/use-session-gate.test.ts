@@ -10,7 +10,13 @@ jest.mock('@/lib/session', () => ({ clearUserScope: jest.fn(), bootstrapAuth: je
 const mockClear = clearUserScope as unknown as jest.Mock;
 const mockBootstrap = bootstrapAuth as unknown as jest.Mock;
 
-const user = (id: string) => ({ id, email: `${id}@example.com`, full_name: null, is_active: true });
+const user = (id: string) => ({
+  id,
+  email: `${id}@example.com`,
+  full_name: null,
+  is_active: true,
+  roles: [],
+});
 
 beforeEach(() => {
   jest.useFakeTimers();

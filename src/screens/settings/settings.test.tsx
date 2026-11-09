@@ -19,6 +19,8 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+jest.mock('@/features/profile/components/profile-card', () => ({ ProfileCard: () => null }));
+
 const mockSignOut = jest.fn();
 jest.mock('@/features/auth/hooks/use-sign-out', () => ({
   useSignOut: () => ({ mutate: mockSignOut, isPending: false }),

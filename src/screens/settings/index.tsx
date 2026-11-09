@@ -14,6 +14,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from '@/components/ui/modal';
+import { ProfileCard } from '@/features/profile/components/profile-card';
 import { useSignOut } from '@/features/auth/hooks/use-sign-out';
 import { usePreferencesStore, type ThemePreference } from '@/stores/preferences-store';
 
@@ -50,6 +51,8 @@ export function Settings() {
       <Text accessibilityRole="header" className="text-foreground text-3xl font-bold">
         {t('settings.title')}
       </Text>
+
+      <ProfileCard />
 
       <Text className="text-muted-foreground text-sm">
         {t('settings.theme', { theme: t(`settings.themes.${theme}`) })}

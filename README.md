@@ -71,7 +71,7 @@ scripts/contrast-report.js      prints WCAG contrast ratios for the tokens in sr
 scripts/docs-links.test.ts      guards docs: relative links, backticked repo paths, skills named in AGENTS.md
 scripts/config-guard.test.ts    guards config (no web, no template leftovers, Metro/Uniwind wiring)
 scripts/app-identity.js|.test.ts  env => application id suffix; eas.json assertions
-src/app/                        routes only: _layout.tsx (ErrorBoundary, auth guard), +not-found.tsx, (auth) sign-in and sign-up, (app) the tabs: one folder with a Stack per tab: (home), (devices), (energy), (settings)
+src/app/                        routes only: _layout.tsx (ErrorBoundary, auth guard), +not-found.tsx, (auth) sign-in (Keycloak), (app) the tabs: one folder with a Stack per tab: (home), (devices), (energy), (settings)
 src/components/ui/              gluestack-ui v5 components (hand-copied): button, input, modal, icon, provider, card, switch, badge, progress, heading, text, pressable, divider
 src/features/devices/          mock-backed slice: schemas, mock data, selectors, DeviceStatesProvider, rows, screen
 src/features/energy/           mock-backed slice: schemas, mock data, selectors, victory-native chart, summaries, screen
@@ -96,8 +96,8 @@ app.config.ts, app.json, eas.json, metro.config.js, eslint.config.js, jest.setup
 ## Environment
 
 `src/env.ts` validates `EXPO_PUBLIC_APP_ENV` (`development` | `preview` | `production`, default
-`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) (also the auth base URL: register, token, refresh and logout live under it; default `http://localhost:8000/api/v1`, use the LAN IP on a
-physical phone without `adb reverse`) at startup. `EXPO_PUBLIC_*` values are inlined into the
+`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) (default `http://localhost:8000/api/v1`, use the LAN IP on a
+physical phone without `adb reverse`) and `EXPO_PUBLIC_KEYCLOAK_URL` (the Keycloak realm URL, default `http://localhost:8180/realms/wattprint`; it must equal the API's `KEYCLOAK_ISSUER`) at startup. `EXPO_PUBLIC_*` values are inlined into the
 bundle and are never secret. Read them only through static dot access (`process.env.EXPO_PUBLIC_X`),
 as `src/env.ts` does; destructuring or bracket access is not inlined.
 

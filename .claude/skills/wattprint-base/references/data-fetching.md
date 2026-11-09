@@ -5,19 +5,19 @@ Use for any request to the FastAPI backend, query keys, cache timing, or a data 
 
 ## Decision matrix
 
-| Need                  | Pattern                                                                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any HTTP call         | Feature `<feature>/api.ts` calls `createApiClient` (`src/lib/http.ts`) with a Zod `schema` per call                                                   |
-| A failure             | Throw `ApiError`, `NetworkError` or `ContractError` (`src/lib/errors.ts`); never return fallback data                                                 |
-| Retrying              | Only `isRetryable` (network, 5xx), fewer than 2 times; mutations never retry; `ContractError` never                                                   |
-| Query key             | Factory in `<feature>/queries.ts`; the key holds every variable `queryFn` uses                                                                        |
-| Freshness             | Defaults in `src/lib/query-client.ts` (`staleTime` 30 s); tune per query, never default to 0                                                          |
-| Detail screen         | Cached list row as `placeholderData`                                                                                                                  |
-| Search box            | Debounce 300 ms with TanStack Pacer plus `keepPreviousData`                                                                                           |
-| Screen states         | `components/states/{loading,empty,error}-state`; paused offline is `OfflineState`; a failed refresh keeps cached data with a banner                   |
-| Long lists            | FlashList v2 from a few hundred rows; row images use `expo-image` with `recyclingKey`                                                                 |
-| Login or refresh call | `auth: false`: no token sent, never triggers a refresh                                                                                                |
-| Auth tokens           | `src/lib/auth-service.ts` (FastAPI JWT): refresh token single use, rotated and persisted before use, one refresh in flight; access JWT in memory only |
+| Need                  | Pattern                                                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any HTTP call         | Feature `<feature>/api.ts` calls `createApiClient` (`src/lib/http.ts`) with a Zod `schema` per call                                                                     |
+| A failure             | Throw `ApiError`, `NetworkError` or `ContractError` (`src/lib/errors.ts`); never return fallback data                                                                   |
+| Retrying              | Only `isRetryable` (network, 5xx), fewer than 2 times; mutations never retry; `ContractError` never                                                                     |
+| Query key             | Factory in `<feature>/queries.ts`; the key holds every variable `queryFn` uses                                                                                          |
+| Freshness             | Defaults in `src/lib/query-client.ts` (`staleTime` 30 s); tune per query, never default to 0                                                                            |
+| Detail screen         | Cached list row as `placeholderData`                                                                                                                                    |
+| Search box            | Debounce 300 ms with TanStack Pacer plus `keepPreviousData`                                                                                                             |
+| Screen states         | `components/states/{loading,empty,error}-state`; paused offline is `OfflineState`; a failed refresh keeps cached data with a banner                                     |
+| Long lists            | FlashList v2 from a few hundred rows; row images use `expo-image` with `recyclingKey`                                                                                   |
+| Login or refresh call | `auth: false`: no token sent, never triggers a refresh                                                                                                                  |
+| Auth tokens           | `src/lib/auth-service.ts` (Keycloak OIDC + PKCE): refresh token in SecureStore (a rotated one persisted before use), one refresh in flight; access token in memory only |
 
 ## Never do
 

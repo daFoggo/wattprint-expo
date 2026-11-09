@@ -9,10 +9,18 @@ export type AuthStorage = {
   remove: (key: string) => Promise<void>;
 };
 
+// What the browser step of the authorization-code + PKCE flow hands back.
+export type AuthCode = { code: string; codeVerifier: string; redirectUri: string };
+
 export type AuthServiceOptions = {
   // FastAPI base URL including the version prefix, e.g. http://localhost:8000/api/v1
-  baseUrl: string;
+  apiUrl: string;
+  // Keycloak realm URL, e.g. http://localhost:8180/realms/wattprint (must equal the token `iss`).
+  issuer: string;
+  clientId: string;
   storage: AuthStorage;
+  // Opens the Keycloak login in the system browser. null: the user closed it.
+  prompt: () => Promise<AuthCode | null>;
   fetchFn?: typeof fetch;
   // Storage key of the refresh token. SecureStore accepts letters, digits, `.`, `-` and `_`.
   storageKey?: string;
@@ -24,32 +32,35 @@ export const userSchema = z.object({
   email: z.string(),
   full_name: z.string().nullable(),
   is_active: z.boolean(),
+  roles: z.array(z.string()),
 });
 export type AuthUser = z.infer<typeof userSchema>;
 
-const tokenPairSchema = z.object({ access_token: z.string(), refresh_token: z.string() });
+// Keycloak rotates the refresh token only when the realm turns that on, so it is optional on refresh.
+const tokenSchema = z.object({ access_token: z.string(), refresh_token: z.string().optional() });
 
-export type SignInInput = { email: string; password: string };
-export type SignUpInput = SignInInput & { name?: string };
 export type SignInResult = { accessToken: string; user: AuthUser };
 
 const DEFAULT_STORAGE_KEY = 'wattprint.refresh-token';
 const DEFAULT_TIMEOUT_MS = 15_000;
-// A refresh that times out may already have rotated the token on the server, so give it more time.
-const REFRESH_TIMEOUT_MS = 30_000;
+
+export function oidcEndpoints(issuer: string) {
+  const base = `${issuer}/protocol/openid-connect`;
+  return {
+    authorizationEndpoint: `${base}/auth`,
+    tokenEndpoint: `${base}/token`,
+    endSessionEndpoint: `${base}/logout`,
+  };
+}
 
 type Reply = { status: number; ok: boolean; body: unknown };
 
+// FastAPI answers `{detail}`, Keycloak `{error, error_description}`.
 function detailOf(body: unknown): ApiErrorDetail {
-  if (typeof body !== 'object' || body === null || !('detail' in body)) return undefined;
-  const { detail } = body;
+  if (typeof body !== 'object' || body === null) return undefined;
+  const { detail, error_description: description } = body as Record<string, unknown>;
   if (typeof detail === 'string') return detail;
-  if (Array.isArray(detail)) {
-    const items = detail.filter(
-      (d): d is { msg: string } => typeof (d as { msg?: unknown } | null)?.msg === 'string',
-    );
-    return items.length > 0 ? items : undefined;
-  }
+  if (typeof description === 'string') return description;
   return undefined;
 }
 
@@ -61,49 +72,45 @@ function parse<S extends z.ZodType>(schema: S, body: unknown, what: string): z.o
   return parsed.data;
 }
 
-// Auth against the FastAPI-native JWT backend. Pure on purpose (no React Native imports): storage and
-// fetch are injected. The access token is returned to the caller and never stored here; only the
-// single-use refresh token is persisted.
+const formBody = (fields: Record<string, string>) =>
+  Object.entries(fields)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
+
+// Sign-in through Keycloak (OIDC authorization code + PKCE, public client). Pure on purpose (no React
+// Native imports): storage, fetch and the browser step are injected. The access token is returned to
+// the caller and never stored here; only the refresh token is persisted.
 export function createAuthService(options: AuthServiceOptions) {
-  const { baseUrl, storage } = options;
+  const { apiUrl, clientId, storage, prompt } = options;
   const fetchFn = options.fetchFn ?? ((input, init) => fetch(input, init));
   const key = options.storageKey ?? DEFAULT_STORAGE_KEY;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const { tokenEndpoint, endSessionEndpoint } = oidcEndpoints(options.issuer);
 
   let refreshing: Promise<string | null> | null = null;
   // Bumped by sign-in and sign-out: a refresh that started before must not write the old session back.
   let epoch = 0;
-  // A rotated refresh token that could not be written to storage. The old one is spent on the server,
-  // so this one is the only valid token: it is the source of truth until storage accepts it.
+  // A rotated refresh token that storage refused. Keycloak revokes the old one on use, so this is the only
+  // valid token until a write succeeds: it wins over storage and is written again on the next call.
   let unsaved: string | null = null;
 
-  async function persist(token: string): Promise<void> {
+  async function save(token: string): Promise<void> {
     unsaved = token;
     try {
       await storage.set(key, token);
       if (unsaved === token) unsaved = null;
     } catch {
-      // Kept in memory and written again on the next call; the session works for this app run.
-      // The previous token on disk is spent (or belongs to the last user): drop it, so a restart
-      // lands signed out instead of replaying it, which the server answers by revoking everything.
-      await storage.remove(key).catch(() => undefined);
+      // Kept in memory: the session survives this app run.
     }
   }
 
-  async function currentToken(): Promise<string | null> {
-    if (unsaved !== null) {
-      const token = unsaved;
-      await persist(token);
-      return token;
-    }
-    return storage.get(key);
-  }
+  const currentToken = async () => unsaved ?? (await storage.get(key));
 
-  async function call(path: string, init: RequestInit, limitMs = timeoutMs): Promise<Reply> {
+  async function call(url: string, init: RequestInit): Promise<Reply> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), limitMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetchFn(`${baseUrl}${path}`, { ...init, signal: controller.signal });
+      const response = await fetchFn(url, { ...init, signal: controller.signal });
       const text = await response.text();
       let body: unknown = text;
       try {
@@ -119,69 +126,71 @@ export function createAuthService(options: AuthServiceOptions) {
     }
   }
 
-  function json(path: string, body: unknown, limitMs?: number): Promise<Reply> {
-    return call(
-      path,
-      {
-        method: 'POST',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      },
-      limitMs,
-    );
-  }
-
-  function failure(reply: Reply): ApiError {
-    return new ApiError(reply.status, detailOf(reply.body), reply.body);
-  }
-
-  async function signIn(input: SignInInput): Promise<SignInResult> {
-    const form = `username=${encodeURIComponent(input.email)}&password=${encodeURIComponent(input.password)}`;
-    const reply = await call('/auth/token', {
+  function form(url: string, fields: Record<string, string>): Promise<Reply> {
+    return call(url, {
       method: 'POST',
       headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form,
+      body: formBody(fields),
+    });
+  }
+
+  const failure = (reply: Reply) => new ApiError(reply.status, detailOf(reply.body), reply.body);
+
+  // Ends the Keycloak session of this refresh token. Best effort.
+  const revoke = (refreshToken: string) =>
+    form(endSessionEndpoint, { client_id: clientId, refresh_token: refreshToken }).catch(
+      () => undefined,
+    );
+
+  // null: the user closed the browser, nothing changed.
+  async function signIn(): Promise<SignInResult | null> {
+    const auth = await prompt();
+    if (!auth) return null;
+    const reply = await form(tokenEndpoint, {
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      code: auth.code,
+      redirect_uri: auth.redirectUri,
+      code_verifier: auth.codeVerifier,
     });
     if (!reply.ok) throw failure(reply);
-    const tokens = parse(tokenPairSchema, reply.body, '/auth/token');
+    const tokens = parse(tokenSchema, reply.body, 'token');
+    if (!tokens.refresh_token) {
+      throw new ContractError('Token response has no refresh_token', []);
+    }
+    const refreshToken = tokens.refresh_token;
 
+    // No half session: when the profile cannot be loaded, end the Keycloak session again.
+    const abandon = async () => {
+      await revoke(refreshToken);
+      await storage.remove(key).catch(() => undefined);
+    };
+    // A refresh in flight may still rotate the old token: let it finish so `previous` is the live one.
+    await refreshing?.catch(() => undefined);
     epoch += 1;
     unsaved = null;
-    await persist(tokens.refresh_token);
-
-    // No half session: when the profile cannot be loaded, give the new token back to the server.
-    const abandon = async () => {
-      await json('/auth/logout', { refresh_token: tokens.refresh_token }).catch(() => undefined);
-      unsaved = null;
-      await storage.remove(key);
-    };
-    let me: Reply;
+    const mine = epoch;
     try {
-      me = await call('/users/me', {
+      // A token left over from a session we lost track of must not stay alive at Keycloak.
+      const previous = await storage.get(key).catch(() => null);
+      if (previous && previous !== refreshToken) void revoke(previous);
+      await storage.set(key, refreshToken);
+      const me = await call(`${apiUrl}/users/me`, {
         headers: { Accept: 'application/json', Authorization: `Bearer ${tokens.access_token}` },
       });
+      if (!me.ok) {
+        // Not a plain ApiError: a 401 here would read as "wrong password" although Keycloak accepted it.
+        throw new Error(`Could not load the signed-in user (HTTP ${me.status})`, {
+          cause: failure(me),
+        });
+      }
+      const user = parse(userSchema, me.body, '/users/me');
+      // A sign-out during the profile call already ended this session: do not sign in again.
+      return epoch === mine ? { accessToken: tokens.access_token, user } : null;
     } catch (error) {
       await abandon();
       throw error;
     }
-    if (!me.ok) {
-      await abandon();
-      // Not an ApiError 401: that would read as "wrong password" although the password was accepted.
-      throw new Error(`Could not load the signed-in user (HTTP ${me.status})`, {
-        cause: failure(me),
-      });
-    }
-    return { accessToken: tokens.access_token, user: parse(userSchema, me.body, '/users/me') };
-  }
-
-  async function signUp(input: SignUpInput): Promise<SignInResult> {
-    const reply = await json('/auth/register', {
-      email: input.email,
-      password: input.password,
-      ...(input.name ? { full_name: input.name } : {}),
-    });
-    if (!reply.ok) throw failure(reply);
-    return signIn(input);
   }
 
   // STALE: a sign-in or sign-out happened while the request was in flight, so its answer belongs to
@@ -193,29 +202,30 @@ export function createAuthService(options: AuthServiceOptions) {
     const stored = await currentToken();
     if (!stored) return null;
 
-    const reply = await json('/auth/refresh', { refresh_token: stored }, REFRESH_TIMEOUT_MS);
+    const reply = await form(tokenEndpoint, {
+      grant_type: 'refresh_token',
+      client_id: clientId,
+      refresh_token: stored,
+    });
 
-    if (startedIn !== epoch) {
-      // Hand a rotated token we will not use back to the server instead of leaving it live.
-      const spare = tokenPairSchema.safeParse(reply.body);
-      if (reply.ok && spare.success) {
-        await json('/auth/logout', { refresh_token: spare.data.refresh_token }).catch(
-          () => undefined,
-        );
-      }
-      return STALE;
-    }
-    if (reply.status === 401) {
+    if (startedIn !== epoch) return STALE;
+    // Keycloak answers 400 invalid_grant when the session ended or the token expired. Other 4xx
+    // (invalid_client, a wrong realm URL) are deployment mistakes and must not sign everyone out.
+    if (
+      reply.status === 400 &&
+      (reply.body as { error?: unknown } | undefined)?.error === 'invalid_grant'
+    ) {
       unsaved = null;
-      await storage.remove(key);
+      await storage.remove(key).catch(() => undefined);
       return null;
     }
     if (!reply.ok) {
       throw new NetworkError(`Auth service answered HTTP ${reply.status}`, { cause: reply.body });
     }
-    const tokens = parse(tokenPairSchema, reply.body, '/auth/refresh');
-    // The old token is spent now: persist the new one before anything else can fail or return.
-    await persist(tokens.refresh_token);
+    const tokens = parse(tokenSchema, reply.body, 'token');
+    if (tokens.refresh_token && tokens.refresh_token !== stored) {
+      await save(tokens.refresh_token);
+    }
     return tokens.access_token;
   }
 
@@ -228,7 +238,7 @@ export function createAuthService(options: AuthServiceOptions) {
     return second === STALE ? null : second;
   }
 
-  // null: no session (nothing stored, or the server rejected the refresh token, which is then removed).
+  // null: no session (nothing stored, or Keycloak rejected the refresh token, which is then removed).
   // NetworkError: could not tell (offline, timeout, 5xx); the stored token is kept.
   function refreshAccessToken(): Promise<string | null> {
     refreshing ??= rotateCurrent().finally(() => {
@@ -238,8 +248,6 @@ export function createAuthService(options: AuthServiceOptions) {
   }
 
   async function signOut(): Promise<void> {
-    // A refresh in flight rotates the token: wait for it, so the logout uses the newest one and the
-    // spent token is never presented (a reused refresh token revokes the whole chain).
     await refreshing?.catch(() => undefined);
     epoch += 1;
     const stored = unsaved ?? (await storage.get(key).catch(() => null));
@@ -252,13 +260,7 @@ export function createAuthService(options: AuthServiceOptions) {
       removeFailed = true;
       removeError = error;
     }
-    if (stored) {
-      try {
-        await json('/auth/logout', { refresh_token: stored });
-      } catch {
-        // Best effort.
-      }
-    }
+    if (stored) await revoke(stored);
     // Never leave the token behind silently: both steps were attempted, now say that one failed.
     if (removeFailed) throw removeError;
   }
@@ -267,7 +269,7 @@ export function createAuthService(options: AuthServiceOptions) {
     return unsaved !== null || (await storage.get(key)) !== null;
   }
 
-  return { signUp, signIn, refreshAccessToken, signOut, hasStoredSession };
+  return { signIn, refreshAccessToken, signOut, hasStoredSession };
 }
 
 export type AuthService = ReturnType<typeof createAuthService>;
