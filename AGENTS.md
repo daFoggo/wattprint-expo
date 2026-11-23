@@ -4,12 +4,14 @@ Expo SDK 58 / React Native 0.88 base, Android dev build, pnpm. See `README.md` f
 
 ## Done commands
 
-Before calling work done, run and report real results:
+Before calling work done, run and report real results (the sdlc `verify` command, `pnpm format:check && pnpm check`, covers the first two; `npx expo-doctor` and device checks are run by hand or CI):
 
 - `pnpm check` (lint with zero warnings, typecheck, jest); lint includes the type-aware `@typescript-eslint/no-deprecated` for `src` (not vendored `components/ui`), so `pnpm lint` is noticeably slower
 - `pnpm format:check`
 - `npx expo-doctor`
 - For UI or native changes: run on the physical phone and verify (see Device verification).
+
+Process: follow the `sdlc:sdlc` skill (`.claude/sdlc.json`, rule cards in `.claude/rules/`, review policy in `REVIEW.md`).
 
 ## Read the doc before changing the area
 

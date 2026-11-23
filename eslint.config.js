@@ -18,6 +18,22 @@ module.exports = defineConfig([
     rules: { '@typescript-eslint/no-deprecated': 'error' },
   },
   {
+    // docs/components.md: own components take `ref` as a prop; vendored gluestack keeps upstream forwardRef.
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/components/ui/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='forwardRef']",
+          message:
+            'Take `ref` as a prop (docs/components.md); forwardRef is only for vendored src/components/ui.',
+        },
+      ],
+    },
+  },
+  {
     ignores: [
       'dist/*',
       'android/*',

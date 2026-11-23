@@ -50,3 +50,6 @@ claude-config-summary.md
 # Claude Code agent worktrees and personal settings (the project skill in .claude/skills is tracked)
 .claude/worktrees/
 .claude/settings.local.json
+
+# machine-only sdlc settings
+.claude/sdlc.local.json
