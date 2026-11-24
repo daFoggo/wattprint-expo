@@ -9,6 +9,11 @@ function identitySuffix(env) {
   return SUFFIXES[env];
 }
 
+// Each build its own URL scheme: with two installed, Keycloak's redirect (`<scheme>://auth`) opens the one that asked.
+function urlScheme(env) {
+  return `wattprint${identitySuffix(env).replace('.', '-')}`;
+}
+
 function applicationId(base, env) {
   if (typeof base !== 'string' || base.length === 0) {
     throw new Error('applicationId: base identifier must be a non-empty string');
@@ -16,4 +21,4 @@ function applicationId(base, env) {
   return `${base}${identitySuffix(env)}`;
 }
 
-module.exports = { ENVS, identitySuffix, applicationId };
+module.exports = { ENVS, identitySuffix, applicationId, urlScheme };

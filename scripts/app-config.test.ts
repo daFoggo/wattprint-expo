@@ -23,6 +23,9 @@ describe('app.config.ts', () => {
     expect(cfg.android.package).toBe(id);
     expect(cfg.ios.bundleIdentifier).toBe(id);
     expect(cfg.name).toBe(name);
+    expect(cfg.scheme).toBe(
+      env === 'production' ? 'wattprint' : `wattprint-${env === 'development' ? 'dev' : env}`,
+    );
   });
 
   it('throws on an invalid env', () => {

@@ -92,8 +92,8 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   `adb -s 3C081JEKB17021 ...`): `pnpm android` for native changes, `npx expo start --dev-client` for JS-only changes.
   Metro is reached through `adb -s 3C081JEKB17021 reverse tcp:11094 tcp:11094`, so the deep link uses `localhost:11094`.
   FastAPI and Keycloak (docker compose in `wattprint-fastapi`) are reached the same way:
-  `adb -s 3C081JEKB17021 reverse tcp:11093 tcp:11093` and `... reverse tcp:11095 tcp:11095` (the app defaults `EXPO_PUBLIC_API_URL` to `http://localhost:11093/api/v1`; without
-  `adb reverse`, set it to the LAN IP of the machine).
+  `adb -s 3C081JEKB17021 reverse tcp:11093 tcp:11093` and `... reverse tcp:11095 tcp:11095` (only when `EXPO_PUBLIC_API_URL`/`EXPO_PUBLIC_KEYCLOAK_URL` point at a local stack; unset,
+  the app uses the public API and realm, whose issuer is the only one Keycloak signs for).
 - Fallback (optional): the emulator `Medium_Phone_API_37.0` (`emulator-5554`). Its builds are x86 and the phone is ARM, so an
   x86 apk does not install on the phone; use the matching device for each build and use `10.0.2.2:11094` in the deep link there.
 - Check (app id `com.dafoggo.wattprint.dev`): relaunch the app, take a screenshot, and read `adb -s 3C081JEKB17021 logcat -d ReactNativeJS:V *:S`: no `E` lines.
@@ -102,7 +102,7 @@ Work records: `docs/superpowers/HANDOFF.md` (gates, standing rules), `specs/`, `
   `$env:CMAKE_POLICY_VERSION_MINIMUM='3.5'`). The plugin
   `plugins/with-android-cmake-dir.js` writes `cmake.dir` only on prebuild; an existing `android/` is not
   re-processed.
-- Deep-link relaunch: `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
+- Deep-link relaunch: `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint-dev://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. Each build has its own scheme (`wattprint-dev://`, `wattprint-preview://`, `wattprint://`, `scripts/app-identity.js`); an `android/` prebuilt before that still has `wattprint://` until the next prebuild (`pnpm android`).
 - Stop Metro after checking; do not leave it running.
 
 ## EAS

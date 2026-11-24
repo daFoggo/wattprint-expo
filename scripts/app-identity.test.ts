@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { ENVS, identitySuffix, applicationId } = require('./app-identity');
+const { ENVS, identitySuffix, applicationId, urlScheme } = require('./app-identity');
 
 const BASE = 'com.dafoggo.wattprint';
 
@@ -14,6 +14,14 @@ describe('app identity', () => {
   ])('maps %s', (env, suffix, id) => {
     expect(identitySuffix(env)).toBe(suffix);
     expect(applicationId(BASE, env)).toBe(id);
+  });
+
+  it.each([
+    ['development', 'wattprint-dev'],
+    ['preview', 'wattprint-preview'],
+    ['production', 'wattprint'],
+  ])('gives %s its own URL scheme, so sign-in returns to the build that asked', (env, scheme) => {
+    expect(urlScheme(env)).toBe(scheme);
   });
 
   it('exports the env list', () => {

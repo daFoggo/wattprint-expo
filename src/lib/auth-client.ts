@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { AuthRequest, makeRedirectUri, Prompt } from 'expo-auth-session';
 import * as SecureStore from 'expo-secure-store';
 import * as WebBrowser from 'expo-web-browser';
@@ -21,14 +22,13 @@ export const secureStorage: AuthStorage = {
   remove: (key) => SecureStore.deleteItemAsync(key),
 };
 
-// A production build has no localhost fallback: cleartext to localhost would fail on Android anyway.
-if (env.EXPO_PUBLIC_APP_ENV === 'production' && !env.EXPO_PUBLIC_KEYCLOAK_URL) {
-  throw new Error('EXPO_PUBLIC_KEYCLOAK_URL is required in production');
-}
-const issuer = env.EXPO_PUBLIC_KEYCLOAK_URL ?? 'http://localhost:11095/realms/wattprint';
+const issuer = env.EXPO_PUBLIC_KEYCLOAK_URL;
 
-// Must be registered in the realm client (`wattprint://auth`).
-const redirectUri = makeRedirectUri({ scheme: 'wattprint', path: 'auth' });
+// This build's scheme (app.config.ts: wattprint, wattprint-dev, wattprint-preview), each registered in the realm
+// client as `<scheme>://auth`. Without one, Keycloak would refuse every sign-in: say so at start.
+const scheme = Constants.expoConfig?.scheme;
+if (typeof scheme !== 'string') throw new Error('app.config.ts sets no URL scheme');
+export const redirectUri = makeRedirectUri({ scheme, path: 'auth' });
 
 async function promptLogin() {
   const request = new AuthRequest({
@@ -51,7 +51,7 @@ async function promptLogin() {
 }
 
 export const authService = createAuthService({
-  apiUrl: env.EXPO_PUBLIC_API_URL ?? 'http://localhost:11093/api/v1',
+  apiUrl: env.EXPO_PUBLIC_API_URL,
   issuer,
   clientId: KEYCLOAK_CLIENT_ID,
   storage: secureStorage,

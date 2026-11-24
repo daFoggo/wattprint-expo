@@ -1,4 +1,4 @@
-// Keycloak redirects the system browser to `wattprint://auth?code=...`. expo-auth-session reads that
+// Keycloak redirects the system browser to `<scheme>://auth?code=...` (wattprint, wattprint-dev, wattprint-preview). expo-auth-session reads that
 // URL itself; the router must not treat it as a route (there is none), so send it to the app root.
 // Needs a dev client or a release build: Expo Go's `exp://` URL is not a registered redirect.
 export function redirectAuthReturn(path: string): string {

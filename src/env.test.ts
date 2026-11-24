@@ -5,10 +5,11 @@ import { envSchema, parseEnv } from '@/env';
 
 describe('env', () => {
   it('applies defaults', () => {
+    // The public API and realm: the backend's Keycloak issues tokens for the public issuer only.
     expect(parseEnv({})).toEqual({
       EXPO_PUBLIC_APP_ENV: 'development',
-      EXPO_PUBLIC_API_URL: undefined,
-      EXPO_PUBLIC_KEYCLOAK_URL: undefined,
+      EXPO_PUBLIC_API_URL: 'https://api.wattprint.ptitai.org/api/v1',
+      EXPO_PUBLIC_KEYCLOAK_URL: 'https://auth.wattprint.ptitai.org/realms/wattprint',
     });
   });
 
@@ -20,8 +21,10 @@ describe('env', () => {
     expect(() => parseEnv({ EXPO_PUBLIC_API_URL: 'not a url' })).toThrow(/EXPO_PUBLIC_API_URL/);
   });
 
-  it('treats an empty url as undefined', () => {
-    expect(parseEnv({ EXPO_PUBLIC_API_URL: '' }).EXPO_PUBLIC_API_URL).toBeUndefined();
+  it('treats an empty url as unset', () => {
+    expect(parseEnv({ EXPO_PUBLIC_API_URL: '' }).EXPO_PUBLIC_API_URL).toBe(
+      'https://api.wattprint.ptitai.org/api/v1',
+    );
   });
 
   it('reads every key by static dot access', () => {

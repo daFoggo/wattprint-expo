@@ -1,13 +1,20 @@
 import * as SecureStore from 'expo-secure-store';
 
-import { authService, fetchApiToken, REFRESH_TOKEN_KEY, secureStorage } from './auth-client';
+import {
+  authService,
+  fetchApiToken,
+  redirectUri,
+  REFRESH_TOKEN_KEY,
+  secureStorage,
+} from './auth-client';
 
 jest.mock('expo-web-browser', () => ({ maybeCompleteAuthSession: jest.fn() }));
 jest.mock('expo-auth-session', () => ({
   AuthRequest: jest.fn(),
-  makeRedirectUri: () => 'wattprint://auth',
+  makeRedirectUri: ({ scheme, path }: { scheme: string; path: string }) => `${scheme}://${path}`,
   Prompt: { Login: 'login' },
 }));
+jest.mock('expo-constants', () => ({ expoConfig: { scheme: 'wattprint-dev' } }));
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(),
   setItemAsync: jest.fn(),
@@ -25,6 +32,10 @@ describe('auth client', () => {
     expect(REFRESH_TOKEN_KEY).toBe('wattprint.refresh-token');
     // SecureStore only accepts letters, digits, ".", "-" and "_" in keys.
     expect(REFRESH_TOKEN_KEY).toMatch(/^[A-Za-z0-9._-]+$/);
+  });
+
+  it("returns sign-in to this build's own scheme", () => {
+    expect(redirectUri).toBe('wattprint-dev://auth');
   });
 
   it('backs the storage with SecureStore', async () => {

@@ -42,7 +42,7 @@ pnpm android         # then verify on the phone (screenshot + logcat with no E R
 ```
 
 Verification device: the physical phone. Forward Metro with `adb -s 3C081JEKB17021 reverse tcp:11094 tcp:11094`, then relaunch via the
-dev-client deep link with `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. The three builds share the `wattprint://` scheme, so a deep link without `-p com.dafoggo.wattprint.dev` may open another installed variant.
+dev-client deep link with `adb -s 3C081JEKB17021 shell "am start -p com.dafoggo.wattprint.dev -a android.intent.action.VIEW -d 'wattprint-dev://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_onboarding=1&__expo_disable_fab=1&__expo_disable_auto_launch=1'"`. Each build has its own scheme (`wattprint-dev://`, `wattprint-preview://`, `wattprint://`), so sign-in returns to the build that asked.
 Emulator fallback (optional): use `adb -s emulator-5554` and `10.0.2.2:11094` in the deep link; emulator builds are x86 and the
 phone is ARM, so an x86 apk does not install on the phone.
 
@@ -96,8 +96,9 @@ app.config.ts, app.json, eas.json, metro.config.js, eslint.config.js, jest.setup
 ## Environment
 
 `src/env.ts` validates `EXPO_PUBLIC_APP_ENV` (`development` | `preview` | `production`, default
-`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix) (default `http://localhost:11093/api/v1`, use the LAN IP on a
-physical phone without `adb reverse`) and `EXPO_PUBLIC_KEYCLOAK_URL` (the Keycloak realm URL, default `http://localhost:11095/realms/wattprint`; it must equal the API's `KEYCLOAK_ISSUER`) at startup. `EXPO_PUBLIC_*` values are inlined into the
+`development`) and optional `EXPO_PUBLIC_API_URL` (FastAPI, with the `/api/v1` prefix, default `https://api.wattprint.ptitai.org/api/v1`) and
+`EXPO_PUBLIC_KEYCLOAK_URL` (the Keycloak realm URL, default `https://auth.wattprint.ptitai.org/realms/wattprint`; it must equal the
+API's `KEYCLOAK_ISSUER`, so set both only for a local stack with its own issuer) at startup. `EXPO_PUBLIC_*` values are inlined into the
 bundle and are never secret. Read them only through static dot access (`process.env.EXPO_PUBLIC_X`),
 as `src/env.ts` does; destructuring or bracket access is not inlined.
 
@@ -245,8 +246,8 @@ for `android.package` and `ios.bundleIdentifier`; `app.config.ts` appends a suff
 | production    | `com.dafoggo.wattprint`         | `Wattprint`               |
 
 Local `pnpm android` runs with the default env (`development`), so the local debug app is
-`com.dafoggo.wattprint.dev` (use it in `adb shell pm list packages`, `am force-stop`, `monkey -p`). The URL scheme
-`wattprint` is the same for all three. The `extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) was added by hand to `app.json` before login (the
+`com.dafoggo.wattprint.dev` (use it in `adb shell pm list packages`, `am force-stop`, `monkey -p`). Each has its own URL
+scheme (`wattprint-dev`, `wattprint-preview`, `wattprint`), so Keycloak's redirect opens the build that asked. The `extra.eas.projectId` (`b6012f6d-0fc1-4b6d-ad59-5451b11a3f70`) was added by hand to `app.json` before login (the
 dynamic `app.config.ts` prevents `eas init` from writing it); after login `eas init` reported the project already linked and
 wrote `owner` (`dafoggo`, matches `eas whoami`) to `app.json`. `eas config --platform android --profile <profile> --non-interactive`
 resolves for all three profiles. The display name changes the native app label on prebuild.

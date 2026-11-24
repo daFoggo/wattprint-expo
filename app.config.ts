@@ -1,7 +1,7 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { ENVS, applicationId } = require('./scripts/app-identity');
+const { ENVS, applicationId, urlScheme } = require('./scripts/app-identity');
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const appEnv = process.env.EXPO_PUBLIC_APP_ENV ?? 'development';
@@ -14,6 +14,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: appEnv === 'production' ? 'Wattprint' : `Wattprint (${appEnv})`,
     slug: config.slug ?? 'wattprint-expo',
+    scheme: urlScheme(appEnv),
     ios: {
       ...config.ios,
       bundleIdentifier: applicationId(config.ios?.bundleIdentifier, appEnv),
